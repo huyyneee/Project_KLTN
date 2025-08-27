@@ -1,0 +1,12 @@
+{
+  "name": "php-mvc-app",
+  "version": "1.0.0",
+  "scripts": {
+    "dev:css": "tailwindcss -i ./public/styles/tailwind.css -o ./public/assets/css/output.css --watch"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.0.0",
+    "postcss": "^8.0.0",
+    "autoprefixer": "^10.0.0"
+  }
+}
