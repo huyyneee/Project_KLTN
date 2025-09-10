@@ -3,6 +3,7 @@
 $routes = [
     '/' => ['controller' => 'HomeController', 'method' => 'index'],
     '/contact' => ['controller' => 'ContactController', 'method' => 'index'],
+    '/login' => ['controller' => 'HomeController', 'method' => 'login'],
 ];
 
 function route($uri, $routes)
