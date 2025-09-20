@@ -1,6 +1,10 @@
 <?php
-class ContactController {
+namespace App\Controllers;
+
+use App\Core\Controller;
+
+class ContactController extends Controller {
     public function index() {
-        include __DIR__ . '/../Views/contact.php';
+        $this->render('contact');
     }
 }

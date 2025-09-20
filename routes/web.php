@@ -6,6 +6,7 @@ $routes = [
     '/contact' => ['controller' => 'ContactController', 'method' => 'index'],
     '/about' => ['controller' => 'AboutController', 'method' => 'index'],
     // Thêm các route khác nếu cần
+        '/test' => ['controller' => 'TestController', 'method' => 'index'],
 ];
 
 function route($uri, $routes)
@@ -19,11 +20,9 @@ function route($uri, $routes)
         $route = $routes[$uri];
         $controllerName = $route['controller'];
         $methodName = $route['method'];
-        $controllerFile = __DIR__ . '/../app/Controllers/' . $controllerName . '.php';
-
-        if (file_exists($controllerFile)) {
-            require_once $controllerFile;
-            $controller = new $controllerName();
+        $controllerClass = 'App\\Controllers\\' . $controllerName;
+        if (class_exists($controllerClass)) {
+            $controller = new $controllerClass();
             if (method_exists($controller, $methodName)) {
                 $controller->$methodName();
             } else {
@@ -40,6 +39,7 @@ function route($uri, $routes)
     }
 }
 
+    // Đã định nghĩa route /test ở mảng $routes phía trên, không cần $router->get
 
 // Xử lý request
 $requestUri = $_SERVER['REQUEST_URI'];
