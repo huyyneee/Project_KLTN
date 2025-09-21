@@ -28,34 +28,22 @@
 						   <span class="font-semibold tracking-wide">DANH MỤC</span>
 					   </button>
 					   <div class="absolute left-0 mt-2 w-64 bg-white text-green-900 rounded shadow-lg border border-green-200 group-hover:block hidden transition-all duration-200 min-w-max z-50">
-						   <a href="#" class="flex items-center justify-between px-4 py-2 hover:bg-green-100">
-							   Chăm Sóc Da Mặt
-							   <svg class="w-4 h-4 ml-2 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
-						   </a>
-						   <a href="#" class="flex items-center justify-between px-4 py-2 hover:bg-green-100">
-							   Trang Điểm
-							   <svg class="w-4 h-4 ml-2 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
-						   </a>
-						   <a href="#" class="flex items-center justify-between px-4 py-2 hover:bg-green-100">
-							   Chăm Sóc Tóc Và Da Đầu
-							   <svg class="w-4 h-4 ml-2 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
-						   </a>
-						   <a href="#" class="flex items-center justify-between px-4 py-2 hover:bg-green-100">
-							   Chăm Sóc Cơ Thể
-							   <svg class="w-4 h-4 ml-2 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
-						   </a>
-						   <a href="#" class="flex items-center justify-between px-4 py-2 hover:bg-green-100">
-							   Chăm Sóc Cá Nhân
-							   <svg class="w-4 h-4 ml-2 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
-						   </a>
-						   <a href="#" class="flex items-center justify-between px-4 py-2 hover:bg-green-100">
-							   Nước Hoa
-							   <svg class="w-4 h-4 ml-2 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
-						   </a>
-						   <a href="#" class="flex items-center justify-between px-4 py-2 hover:bg-green-100">
-							   Thực Phẩm Chức Năng
-							   <svg class="w-4 h-4 ml-2 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
-						   </a>
+						   <?php if (!empty($categories) && is_array($categories)): ?>
+							   <?php foreach ($categories as $cat): ?>
+								   <a href="/danh-muc?cat=<?php echo urlencode($cat['id']); ?>" class="flex items-center justify-between px-4 py-2 hover:bg-green-100">
+									   <?php echo htmlspecialchars($cat['name']); ?>
+									   <svg class="w-4 h-4 ml-2 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg>
+								   </a>
+							   <?php endforeach; ?>
+						   <?php else: ?>
+							   <a href="#" class="flex items-center justify-between px-4 py-2 hover:bg-green-100">Chăm Sóc Da Mặt <svg class="w-4 h-4 ml-2 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></a>
+							   <a href="#" class="flex items-center justify-between px-4 py-2 hover:bg-green-100">Trang Điểm <svg class="w-4 h-4 ml-2 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></a>
+							   <a href="#" class="flex items-center justify-between px-4 py-2 hover:bg-green-100">Chăm Sóc Tóc Và Da Đầu <svg class="w-4 h-4 ml-2 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></a>
+							   <a href="#" class="flex items-center justify-between px-4 py-2 hover:bg-green-100">Chăm Sóc Cơ Thể <svg class="w-4 h-4 ml-2 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></a>
+							   <a href="#" class="flex items-center justify-between px-4 py-2 hover:bg-green-100">Chăm Sóc Cá Nhân <svg class="w-4 h-4 ml-2 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></a>
+							   <a href="#" class="flex items-center justify-between px-4 py-2 hover:bg-green-100">Nước Hoa <svg class="w-4 h-4 ml-2 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></a>
+							   <a href="#" class="flex items-center justify-between px-4 py-2 hover:bg-green-100">Thực Phẩm Chức Năng <svg class="w-4 h-4 ml-2 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></a>
+						   <?php endif; ?>
 					   </div>
 				   </div>
 				   <!-- Search box -->
