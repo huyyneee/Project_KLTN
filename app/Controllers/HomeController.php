@@ -2,14 +2,17 @@
 namespace App\Controllers;
 
 use App\Core\Controller;
-use App\Models\Category;
+use App\Models\CategoryModel;
 
-class HomeController extends Controller {
-	public function index() {
+class HomeController extends Controller
+{
+	public function index()
+	{
 		$error = null;
 		$categories = [];
 		try {
-			$categories = (new Category())->findAll();
+			$categoryModel = new CategoryModel();
+			$categories = $categoryModel->findAll();
 		} catch (\Exception $e) {
 			$error = $e->getMessage();
 		}
