@@ -1,14 +1,15 @@
 <?php
 namespace App\Controllers;
 
-use App\Models\Product;
+use App\Models\ProductModel;
 use App\Core\Controller;
 
 class ProductController extends Controller
 {
     public function index()
     {
-        $products = (new Product())->findAll();
+    $productModel = new ProductModel();
+    $products = $productModel->findAll();
         $this->render('products/index', ['products' => $products]);
     }
 }

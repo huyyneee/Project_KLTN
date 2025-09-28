@@ -1,14 +1,15 @@
 <?php
 namespace App\Controllers;
 
-use App\Models\Cart;
+use App\Models\CartModel;
 use App\Core\Controller;
 
 class CartController extends Controller
 {
     public function index()
     {
-        $carts = (new Cart())->findAll();
+    $cartModel = new CartModel();
+    $carts = $cartModel->findAll();
         $this->render('carts/index', ['carts' => $carts]);
     }
 }

@@ -1,14 +1,15 @@
 <?php
 namespace App\Controllers;
 
-use App\Models\OrderItem;
+use App\Models\OrderItemModel;
 use App\Core\Controller;
 
 class OrderItemController extends Controller
 {
     public function index()
     {
-        $orderItems = (new OrderItem())->findAll();
+    $orderItemModel = new OrderItemModel();
+    $orderItems = $orderItemModel->findAll();
         $this->render('order_items/index', ['orderItems' => $orderItems]);
     }
 }

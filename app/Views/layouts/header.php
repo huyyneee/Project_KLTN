@@ -7,9 +7,14 @@
 	<title><?= isset($title) ? $title : 'App' ?></title>
 	<link rel="stylesheet" href="/assets/css/output.css">
 	<style>
-		/* Dropdown hover for Tailwind JIT */
+		/* Dropdown hover for Tailwind JIT (fallback) */
 		.group:hover .group-hover\:block {
 			display: block;
+		}
+
+		/* JS-controlled open state (adds a small delay hide) */
+		.group.open .group-hover\:block {
+			display: block !important;
 		}
 	</style>
 </head>
@@ -37,7 +42,7 @@
 						class="absolute left-0 mt-2 w-64 bg-white text-green-900 rounded shadow-lg border border-green-200 group-hover:block hidden transition-all duration-200 min-w-max z-50">
 						<?php if (!empty($categories) && is_array($categories)): ?>
 							<?php foreach ($categories as $cat): ?>
-								<a href="/danh-muc?cat=<?php echo urlencode($cat['id']); ?>"
+								<a href="/danh-muc?cat=<?php echo urlencode($cat['name']); ?>"
 									class="flex items-center justify-between px-4 py-2 hover:bg-green-100">
 									<?php echo htmlspecialchars($cat['name']); ?>
 									<svg class="w-4 h-4 ml-2 text-gray-400" fill="none" stroke="currentColor" stroke-width="2"
@@ -95,5 +100,34 @@
 
 
 	<?php
+
+
+	// Add small script to make dropdown easier to interact with (delay hide)
+	// This script runs on pages that include header.php
+	?>
+	<script>
+	(function(){
+		if (typeof document === 'undefined') return;
+		var groups = document.querySelectorAll('.relative.group');
+		groups.forEach(function(g){
+			var timeout = null;
+			g.addEventListener('mouseenter', function(){
+				if (timeout) { clearTimeout(timeout); timeout = null; }
+				g.classList.add('open');
+			});
+			g.addEventListener('mouseleave', function(){
+				// delay closing so users can move mouse into the dropdown without it disappearing
+				timeout = setTimeout(function(){ g.classList.remove('open'); timeout = null; }, 250);
+			});
+			// For accessibility / touch: toggle on click
+			var btn = g.querySelector('button');
+			if (btn) btn.addEventListener('click', function(e){
+				// On small screens, allow click to toggle
+				if (g.classList.contains('open')) { g.classList.remove('open'); }
+				else { g.classList.add('open'); }
+			});
+		});
+	})();
+	</script>
 
 

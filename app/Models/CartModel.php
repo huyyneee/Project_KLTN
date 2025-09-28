@@ -3,7 +3,7 @@ namespace App\Models;
 
 use App\Core\Model;
 
-class Cart extends Model
+class CartModel extends Model
 {
     protected $table = 'carts';
     protected $primaryKey = 'id';

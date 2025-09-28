@@ -3,7 +3,7 @@ namespace App\Models;
 
 use App\Core\Model;
 
-class ProductImage extends Model
+class ProductImageModel extends Model
 {
     protected $table = 'product_images';
     protected $primaryKey = 'id';

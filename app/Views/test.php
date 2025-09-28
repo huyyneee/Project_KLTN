@@ -52,7 +52,7 @@
 
     <?php if (!empty($category)): ?>
         <hr>
-        <h2>Chi tiết category id=<?php echo htmlspecialchars($category['id'] ?? ''); ?></h2>
+        <h2>Chi tiết category</h2>
         <p><strong>Tên:</strong> <?php echo htmlspecialchars($category['name'] ?? ''); ?></p>
         <p><strong>Mô tả:</strong> <?php echo nl2br(htmlspecialchars($category['description'] ?? '')); ?></p>
 

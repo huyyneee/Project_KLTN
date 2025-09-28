@@ -1,14 +1,15 @@
 <?php
 namespace App\Controllers;
 
-use App\Models\User;
+use App\Models\UserModel;
 use App\Core\Controller;
 
 class UserController extends Controller
 {
     public function index()
     {
-        $users = (new User())->findAll();
+    $userModel = new UserModel();
+    $users = $userModel->findAll();
         $this->render('users/index', ['users' => $users]);
     }
 }

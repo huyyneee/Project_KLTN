@@ -3,7 +3,7 @@ namespace App\Models;
 
 use App\Core\Model;
 
-class Address extends Model
+class AddressModel extends Model
 {
     protected $table = 'addresses';
     protected $primaryKey = 'id';

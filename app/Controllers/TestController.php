@@ -2,33 +2,34 @@
 namespace App\Controllers;
 
 use App\Core\Controller;
-use App\Models\Category;
+use App\Models\CategoryModel;
+use App\Models\ProductModel;
 use App\Core\Database;
 
 class TestController extends Controller
 {
     public function index()
     {
-        $error = null;
-        $categories = [];
-        $category = null;
-        $categoryProducts = [];
+    $error = null;
+    $categories = [];
+    $category = null;
+    $categoryProducts = [];
+    // instantiate model once and reuse
+    $categoryModel = new CategoryModel();
         try {
             // Prefer fetching single category when requested via GET param 'lll' or 'id'
             $idParam = $_GET['lll'] ?? ($_GET['id'] ?? null);
             if ($idParam !== null) {
                 $id = (int)$idParam;
-                $category = (new Category())->find($id);
+                $category = $categoryModel->find($id);
                 if ($category) {
-                    // fetch products for this category
-                    $db = (new Database())->getConnection();
-                    $stmt = $db->prepare('SELECT id, code, name, price, description, category_id, created_at, updated_at FROM products WHERE category_id = :cid AND (deleted_at IS NULL) ORDER BY id ASC');
-                    $stmt->execute([':cid' => $id]);
-                    $categoryProducts = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+                    // fetch products for this category using ProductModel
+                    $productModel = new ProductModel();
+                    $categoryProducts = $productModel->findByCategory($id);
                 }
             } else {
                 // no id requested — return all categories
-                $categories = (new Category())->findAll();
+                $categories = $categoryModel->findAll();
             }
         } catch (\Exception $e) {
             $error = $e->getMessage();

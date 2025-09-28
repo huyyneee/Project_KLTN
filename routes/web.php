@@ -7,6 +7,7 @@ $routes = [
     '/about' => ['controller' => 'AboutController', 'method' => 'index'],
     // Thêm các route khác nếu cần
         '/test' => ['controller' => 'TestController', 'method' => 'index'],
+        '/danh-muc' => ['controller' => 'CategoryController', 'method' => 'show'],
 ];
 
 function route($uri, $routes)

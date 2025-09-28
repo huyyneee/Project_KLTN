@@ -3,7 +3,7 @@ namespace App\Models;
 
 use App\Core\Model;
 
-class Account extends Model
+class AccountModel extends Model
 {
     protected $table = 'accounts';
     protected $primaryKey = 'id';

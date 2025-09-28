@@ -3,7 +3,7 @@ namespace App\Models;
 
 use App\Core\Model;
 
-class Order extends Model
+class OrderModel extends Model
 {
     protected $table = 'orders';
     protected $primaryKey = 'id';
