@@ -7,10 +7,17 @@ use App\Core\Controller;
 
 class CategoryController extends Controller
 {
+    private $categoryModel;
+    private $productModel;
+
+    public function __construct()
+    {
+        $this->categoryModel = new CategoryModel();
+        $this->productModel = new ProductModel();
+    }
     public function index()
     {
-        $categoryModel = new CategoryModel();
-        $categories = $categoryModel->findAll();
+        $categories = $this->categoryModel->findAll();
         $this->render('categories/index', ['categories' => $categories]);
     }
 
@@ -19,8 +26,7 @@ class CategoryController extends Controller
      */
     public function show()
     {
-        $categoryModel = new CategoryModel();
-        $productModel = new ProductModel();
+        $categories = $this->categoryModel->findAll();
 
         $idParam = $_GET['id'] ?? null;
         $catParam = $_GET['cat'] ?? null;
@@ -29,20 +35,20 @@ class CategoryController extends Controller
         $products = [];
 
         // load all categories for the category nav
-        $categories = $categoryModel->getAllCategories();
+        $categories = $this->categoryModel->getAllCategories();
 
         if ($idParam !== null) {
-            $id = (int)$idParam;
-            $category = $categoryModel->getCategoryById($id);
+            $id = (int) $idParam;
+            $category = $this->categoryModel->getCategoryById($id);
             if ($category) {
-                $products = $productModel->getProductsByCategory($id);
+                $products = $this->productModel->getProductsByCategory($id);
             }
         } elseif ($catParam !== null) {
             // find category by name
             foreach ($categories as $c) {
                 if (isset($c['name']) && $c['name'] === $catParam) {
                     $category = $c;
-                    $products = $productModel->getProductsByCategory((int)$c['id']);
+                    $products = $this->productModel->getProductsByCategory((int) $c['id']);
                     break;
                 }
             }
