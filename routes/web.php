@@ -6,8 +6,11 @@ $routes = [
     '/contact' => ['controller' => 'ContactController', 'method' => 'index'],
     '/about' => ['controller' => 'AboutController', 'method' => 'index'],
     // Thêm các route khác nếu cần
-        '/test' => ['controller' => 'TestController', 'method' => 'index'],
-        '/danh-muc' => ['controller' => 'CategoryController', 'method' => 'show'],
+    '/test' => ['controller' => 'TestController', 'method' => 'index'],
+    '/danh-muc' => ['controller' => 'CategoryController', 'method' => 'show'],
+    '/login' => ['controller' => 'LoginController', 'method' => 'index'],
+    '/register' => ['controller' => 'RegisterController', 'method' => 'index'],
+    '/account/register' => ['controller' => 'RegisterController', 'method' => 'store'],
 ];
 
 function route($uri, $routes)

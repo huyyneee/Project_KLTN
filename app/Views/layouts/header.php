@@ -78,15 +78,16 @@
 			</div>
 			<!-- Right: Icons -->
 			<div class="flex items-center space-x-2 flex-shrink-0 min-w-max">
-				<a href="#" class="bg-white rounded w-10 h-10 flex items-center justify-center mr-2">
-					<svg class="w-7 h-7 text-black" fill="none" stroke="currentColor" stroke-width="2"
-						viewBox="0 0 24 24">
+				<!-- Cart (explicit href, not '#') -->
+				<a href="/cart" class="bg-white rounded w-10 h-10 flex items-center justify-center mr-2" title="Giỏ hàng" aria-label="Giỏ hàng">
+					<svg class="w-7 h-7 text-black" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
 						<path d="M3 3h2l.4 2M7 13h10l4-8H5.4" />
 						<circle cx="9" cy="21" r="1" />
 						<circle cx="20" cy="21" r="1" />
 					</svg>
 				</a>
-				<a href="#" class="bg-green-700 rounded-full w-10 h-10 flex items-center justify-center">
+				<!-- Login (person) -->
+				<a id="login-link" href="/login" style="position:relative; z-index:99999; pointer-events:auto;" class="bg-green-700 rounded-full w-10 h-10 flex items-center justify-center focus:outline-none" title="Đăng nhập" aria-label="Đăng nhập">
 					<svg class="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 24 24">
 						<circle cx="12" cy="8" r="4" />
 						<path d="M4 20c0-4 8-4 8-4s8 0 8 4" />
@@ -95,8 +96,7 @@
 			</div>
 		</div>
 	</header>
-	<div class="h-14"></div>
-
+	<!-- <div class="h-14"></div> -->
 
 
 	<?php
@@ -129,5 +129,12 @@
 		});
 	})();
 	</script>
+
+	<!-- No forced JS navigation: anchor uses href="/login" and should behave normally. If clicks are still blocked,
+	     check other scripts loaded on the page that may call stopPropagation()/preventDefault() on links. -->
+
+<!-- Debug helper removed -->
+
+
 
 
