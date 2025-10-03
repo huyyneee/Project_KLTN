@@ -1,7 +1,8 @@
 <?php
-// Route definitions
+// Định nghĩa các route
 $routes = [
     '/' => ['controller' => 'HomeController', 'method' => 'index'],
+    '/trang-chu' => ['controller' => 'HomeController', 'method' => 'index'],
     '/contact' => ['controller' => 'ContactController', 'method' => 'index'],
     '/login' => ['controller' => 'HomeController', 'method' => 'login'],
 
@@ -20,6 +21,9 @@ $routes = [
 
 function route($uri, $routes)
 {
+    // Loại bỏ /index.php nếu có trong URI
+    $uri = preg_replace('#^/index\\.php#', '', $uri);
+    $uri = $uri === '' ? '/' : $uri;
     $uri = parse_url($uri, PHP_URL_PATH);
     $queryString = parse_url($uri, PHP_URL_QUERY);
 
@@ -78,6 +82,9 @@ function route($uri, $routes)
     }
 }
 
-// Handle request
+    // Đã định nghĩa route /test ở mảng $routes phía trên, không cần $router->get
+
+// Xử lý request
 $requestUri = $_SERVER['REQUEST_URI'];
 route($requestUri, $routes);
+

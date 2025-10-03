@@ -1,13 +1,36 @@
 <?php
-require_once __DIR__ . '/../Core/Controller.php';
+namespace App\Controllers;
 
-class HomeController extends Controller {
-    public function index() {
-        $this->view('home', ['title' => 'Trang chủ']);
-    }
+use App\Core\Controller;
+use App\Models\CategoryModel;
 
-    public function login() {
-        $this->view('login', ['title' => 'Đăng nhập']);
-    }
+class HomeController extends Controller
+{
+	private $categoryModel;
+
+	public function __construct()
+	{
+		$this->categoryModel = new CategoryModel();
+	}
+
+	public function index()
+	{
+		$error = null;
+		$categories = [];
+		try {
+			$categories = $this->categoryModel->findAll();
+		} catch (\Exception $e) {
+			$error = $e->getMessage();
+		}
+
+		// render the home view with categories
+		if (isset($_GET['xhr']) && $_GET['xhr'] == '1') {
+			header('Content-Type: application/json');
+			echo json_encode(['categories' => $categories, 'error' => $error]);
+			return;
+		}
+
+		$this->render('home', ['categories' => $categories, 'error' => $error]);
+	}
 }
 
