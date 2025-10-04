@@ -50,3 +50,77 @@
     });
 })();
 </script>
+
+<script>
+// Enhance login form: AJAX submit and modelok handling
+(function(){
+    // small dialog helper (reuse showDialog from register form if present)
+    function showDialog(msg) {
+        var existing = document.getElementById('simple-dialog');
+        if (existing) existing.parentNode.removeChild(existing);
+        var d = document.createElement('div');
+        d.id = 'simple-dialog';
+        d.style.position = 'fixed'; d.style.left = '50%'; d.style.top = '18%'; d.style.transform = 'translateX(-50%)';
+        d.style.background = '#fff'; d.style.border = '1px solid #e5e7eb'; d.style.boxShadow = '0 6px 20px rgba(0,0,0,0.12)';
+        d.style.padding = '10px 12px'; d.style.zIndex = 9999; d.style.borderRadius = '6px'; d.style.minWidth = '260px';
+        d.innerHTML = '<div style="display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;background:#fff;border-radius:6px;display:flex;align-items:center;justify-content:center;border:2px solid #f59e0b;color:#f59e0b;font-weight:700">!</div><div style="font-size:13px;color:#111">'+msg+'</div></div>';
+        document.body.appendChild(d);
+        setTimeout(function(){ try{ d.parentNode.removeChild(d); }catch(e){} }, 4500);
+    }
+
+    // reuse modelok modal used in register_form if available, otherwise recreate locally
+    function showModelOk(message, onSignup, onCancel) {
+        var old = document.getElementById('modelok'); if (old) old.parentNode.removeChild(old);
+        var overlay = document.createElement('div'); overlay.id = 'modelok'; overlay.style.position = 'fixed'; overlay.style.left='0'; overlay.style.top='0'; overlay.style.width='100%'; overlay.style.height='100%'; overlay.style.background='rgba(0,0,0,0.4)'; overlay.style.display='flex'; overlay.style.alignItems='center'; overlay.style.justifyContent='center'; overlay.style.zIndex=10000;
+        var box = document.createElement('div'); box.style.background='#fff'; box.style.padding='18px'; box.style.borderRadius='8px'; box.style.boxShadow='0 8px 30px rgba(0,0,0,0.15)'; box.style.maxWidth='420px'; box.style.width='90%'; box.style.textAlign='center';
+        var icon = document.createElement('div'); icon.style.width='40px'; icon.style.height='40px'; icon.style.margin='0 auto 8px'; icon.style.borderRadius='8px'; icon.style.display='flex'; icon.style.alignItems='center'; icon.style.justifyContent='center'; icon.style.border='2px solid #f43f5e'; icon.style.color='#f43f5e'; icon.style.fontWeight='700'; icon.textContent='!';
+        var msg = document.createElement('div'); msg.style.fontSize='14px'; msg.style.color='#111'; msg.style.marginBottom='14px'; msg.textContent = message;
+        var actions = document.createElement('div'); actions.style.display='flex'; actions.style.justifyContent='center'; actions.style.gap='10px';
+        var signup = document.createElement('button'); signup.type='button'; signup.textContent='ĐĂNG KÝ'; signup.style.background='#10b981'; signup.style.color='#fff'; signup.style.border='none'; signup.style.padding='8px 12px'; signup.style.borderRadius='6px'; signup.style.cursor='pointer';
+        var cancel = document.createElement('button'); cancel.type='button'; cancel.textContent='THOÁT'; cancel.style.background='#fff'; cancel.style.color='#111'; cancel.style.border='1px solid #e5e7eb'; cancel.style.padding='8px 12px'; cancel.style.borderRadius='6px'; cancel.style.cursor='pointer';
+        actions.appendChild(signup); actions.appendChild(cancel);
+        box.appendChild(icon); box.appendChild(msg); box.appendChild(actions); overlay.appendChild(box); document.body.appendChild(overlay);
+        signup.addEventListener('click', function(){ try{ onSignup && onSignup(); } catch(e){} });
+        cancel.addEventListener('click', function(){ try{ onCancel && onCancel(); } catch(e){} });
+    }
+
+    var form = document.getElementById('login-form');
+    if (!form) return;
+    form.addEventListener('submit', function(e){
+        e.preventDefault();
+        var id = form.querySelector('input[name="identity"]').value.trim();
+        var pw = form.querySelector('input[name="password"]').value;
+        if (!id || !pw) { showDialog('Vui lòng nhập đầy đủ thông tin'); return; }
+
+        fetch('/account/login', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'identity=' + encodeURIComponent(id) + '&password=' + encodeURIComponent(pw) })
+        .then(function(r){ return r.json(); })
+        .then(function(js){
+            if (!js) { showDialog('Lỗi server'); return; }
+            if (js.ok) {
+                // redirect if provided
+                window.location.href = js.redirect || '/';
+                return;
+            }
+
+            // handle reasons
+            if (js.reason === 'not_found') {
+                showModelOk('TÀI KHOẢN KHÔNG TỒN TẠI, VUI LÒNG TẠO TÀI KHOẢN', function(){
+                    window.location.href = '/register';
+                }, function(){
+                    window.location.href = '/';
+                });
+                return;
+            }
+            if (js.reason === 'bad_password') {
+                showDialog('please check password'); return;
+            }
+            if (js.reason === 'status') {
+                var st = js.status || 'unknown';
+                showDialog('YOUR ACCOUNT HAS BEEN ' + st.toUpperCase()); return;
+            }
+
+            showDialog(js.message || 'Login failed');
+        }).catch(function(err){ showDialog('Lỗi mạng: ' + err.message); });
+    });
+})();
+</script>

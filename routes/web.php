@@ -12,6 +12,8 @@ $routes = [
     '/register' => ['controller' => 'RegisterController', 'method' => 'index'],
     '/account/register' => ['controller' => 'RegisterController', 'method' => 'store'],
     '/account/send-code' => ['controller' => 'RegisterController', 'method' => 'sendCode'],
+    '/account/check-email' => ['controller' => 'RegisterController', 'method' => 'checkEmail'],
+    '/account/login' => ['controller' => 'LoginController', 'method' => 'authenticate'],
     '/privacy' => ['controller' => 'PrivacyController', 'method' => 'index'],
     '/terms' => ['controller' => 'TermsController', 'method' => 'index'],
 ];

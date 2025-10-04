@@ -13,5 +13,8 @@ spl_autoload_register(function ($class) {
 	$file = $base_dir . str_replace('\\', '/', $relative_class) . '.php';
 	if (file_exists($file)) require_once $file;
 });
+// Load global helper functions (send_mail, generate_verification_code, ...)
+// so controllers and routes can call them without needing to require the file everywhere.
+@require_once __DIR__ . '/../app/Helpers.php';
 
 require_once __DIR__ . '/../routes/web.php';
