@@ -12,7 +12,8 @@ echo "MAIL_SMTP_USER=" . ($smtp['username'] ?? '<missing>') . "\n";
 echo "MAIL_SMTP_PASS=" . (isset($smtp['password']) && $smtp['password'] !== '' ? '[SET]' : '<empty>') . "\n";
 echo "MAIL_SMTP_HOST=" . ($smtp['host'] ?? '<missing>') . "\n";
 echo "MAIL_SMTP_PORT=" . ($smtp['port'] ?? '<missing>') . "\n";
-echo "APP_ENV=" . (getenv('APP_ENV') ?: '<not set>') . "\n";
+echo "APP_ENV=" . (env('APP_ENV') ?: '<not set>') . "\n";
 
-// show raw getenv too
+// show raw getenv and fallback via env() helper
 echo "\nRaw getenv MAIL_SMTP_PASS: " . (getenv('MAIL_SMTP_PASS') !== false ? '[SET]' : '<not set>') . "\n";
+echo "env() MAIL_SMTP_PASS: " . (env('MAIL_SMTP_PASS') ? '[SET]' : '<not set>') . "\n";

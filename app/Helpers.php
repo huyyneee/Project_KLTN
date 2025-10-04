@@ -29,7 +29,7 @@ function send_mail($to, $subject, $body)
 
 	$mail = new PHPMailer(true);
 	try {
-		$env = getenv('APP_ENV') ?: 'production';
+	$env = env('APP_ENV') ?: 'production';
 		$debugOutput = '';
 		if ($env === 'development') {
 			// capture debug output from PHPMailer

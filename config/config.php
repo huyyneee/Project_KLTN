@@ -16,25 +16,47 @@ if (file_exists($vendorAutoload)) {
     }
 }
 
+// helper to read environment which falls back to $_ENV and $_SERVER when getenv() is empty
+if (!function_exists('env')) {
+    function env(string $key, $default = null) {
+        $val = @getenv($key);
+        if ($val === false || $val === null || $val === '') {
+            if (isset($_ENV[$key]) && $_ENV[$key] !== '') {
+                $val = $_ENV[$key];
+            } elseif (isset($_SERVER[$key]) && $_SERVER[$key] !== '') {
+                $val = $_SERVER[$key];
+            } else {
+                $val = $default;
+            }
+        }
+        // normalize strings: remove CR, trim whitespace/newlines
+        if (is_string($val)) {
+            $val = str_replace("\r", "", $val);
+            $val = trim($val);
+        }
+        return $val;
+    }
+}
+
 return [
     'database' => [
-        'host' => getenv('DB_HOST') ?: '159.65.2.46',
-        'db_name' => getenv('DB_NAME') ?: 'hasaki',
-        'username' => getenv('DB_USER') ?: 'kaiser',
-        'password' => getenv('DB_PASS') ?: 'r!8R%OMm@=H{cVH6LZpqV]nye1G',
+        'host' => env('DB_HOST') ?: '159.65.2.46',
+        'db_name' => env('DB_NAME') ?: 'hasaki',
+        'username' => env('DB_USER') ?: 'kaiser',
+        'password' => env('DB_PASS') ?: 'r!8R%OMm@=H{cVH6LZpqV]nye1G',
     ],
     'mail' => [
         // cấu hình email cửa hàng: thay đổi theo môi trường của bạn
-        'from' => getenv('MAIL_FROM') ?: 'no-reply@xuanhiep.com',
-        'from_name' => getenv('MAIL_FROM_NAME') ?: 'Cửa Hàng Mỹ Phẩm Xuân Hiệp',
+        'from' => env('MAIL_FROM') ?: 'no-reply@xuanhiep.com',
+        'from_name' => env('MAIL_FROM_NAME') ?: 'Cửa Hàng Mỹ Phẩm Xuân Hiệp',
         // SMTP settings (can be provided via .env)
         'smtp' => [
-            'host' => getenv('MAIL_SMTP_HOST') ?: 'smtp.gmail.com',
-            'port' => (int) (getenv('MAIL_SMTP_PORT') ?: 587),
-            'username' => trim((string) (getenv('MAIL_SMTP_USER') ?: 'your.email@gmail.com')),
-            'password' => trim((string) (getenv('MAIL_SMTP_PASS') ?: '')),
-            'encryption' => getenv('MAIL_SMTP_ENCRYPTION') ?: 'tls',
-            'auth' => filter_var(getenv('MAIL_SMTP_AUTH') ?: '1', FILTER_VALIDATE_BOOLEAN),
+            'host' => env('MAIL_SMTP_HOST') ?: 'smtp.gmail.com',
+            'port' => (int) (env('MAIL_SMTP_PORT') ?: 587),
+            'username' => trim((string) (env('MAIL_SMTP_USER') ?: 'your.email@gmail.com')),
+            'password' => trim((string) (env('MAIL_SMTP_PASS') ?: '')),
+            'encryption' => env('MAIL_SMTP_ENCRYPTION') ?: 'tls',
+            'auth' => filter_var(env('MAIL_SMTP_AUTH') ?: '1', FILTER_VALIDATE_BOOLEAN),
         ]
     ],
 ];

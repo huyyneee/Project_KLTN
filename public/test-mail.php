@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $result = ['ok' => true, 'message' => 'Mail sent (true)'];
             } else {
                 $result = ['ok' => false, 'message' => 'Mail failed to send. Check logs and SMTP settings.'];
-                $env = getenv('APP_ENV') ?: 'production';
+                $env = env('APP_ENV') ?: 'production';
                 if ($env === 'development') {
                     $lastErr = $GLOBALS['LAST_MAIL_ERROR'] ?? null;
                     if ($lastErr) {
