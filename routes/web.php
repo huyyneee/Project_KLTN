@@ -11,6 +11,9 @@ $routes = [
     '/login' => ['controller' => 'LoginController', 'method' => 'index'],
     '/register' => ['controller' => 'RegisterController', 'method' => 'index'],
     '/account/register' => ['controller' => 'RegisterController', 'method' => 'store'],
+    '/account/send-code' => ['controller' => 'RegisterController', 'method' => 'sendCode'],
+    '/privacy' => ['controller' => 'PrivacyController', 'method' => 'index'],
+    '/terms' => ['controller' => 'TermsController', 'method' => 'index'],
 ];
 
 function route($uri, $routes)

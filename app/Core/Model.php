@@ -15,7 +15,7 @@ class Model {
     }
 
     public function findAll() {
-        $stmt = $this->db->query("SELECT * FROM {$this->table}");
+        $stmt = $this->db->query("SELECT * FROM {$this->table} WHERE deleted_at IS NULL");
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 

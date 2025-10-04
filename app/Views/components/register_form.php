@@ -5,7 +5,7 @@ $old = $old ?? [];
 ?>
 
 <div class="relative bg-white rounded-lg shadow-sm max-w-md mx-auto" style="padding:1px; border:1px solid #eef2f6; box-shadow:0 6px 18px rgba(0,0,0,0.04); overflow:visible;">
-    <button type="button" class="register-close bg-white border border-gray-200 rounded-full w-7 h-7 flex items-center justify-center shadow-sm focus:outline-none" aria-label="Đóng" style="position:absolute; right:12px; top:10px; z-index:999;">
+    <button type="button" class="register-close bg-white border border-gray-200 rounded-full w-7 h-7 flex items-center justify-center shadow-sm focus:outline-none" aria-label="Đóng" style="position:absolute; right:450px; top:10px; z-index:999;">
         <svg class="w-3 h-3 text-gray-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
     </button>
 
@@ -92,7 +92,7 @@ $old = $old ?? [];
             <!-- terms -->
             <div class="flex justify-center">
                 <div class="w-64 text-sm">
-                    <label class="flex items-start"><input type="checkbox" name="agree" value="1" class="form-checkbox mt-1"/> <span class="ml-2 text-xs">Tôi đã đọc và đồng ý với <a href="#" class="text-green-700 hover:underline">Điều khoản giao dịch chung</a> và <a href="#" class="text-green-700 hover:underline">Chính sách bảo mật</a></span></label>
+                                        <label class="flex items-start"><input type="checkbox" name="agree" value="1" class="form-checkbox mt-1"/> <span class="ml-2 text-xs">Tôi đã đọc và đồng ý với <a href="/terms" class="text-green-700 hover:underline">Điều khoản giao dịch chung</a> và <a href="/privacy" class="text-green-700 hover:underline">Chính sách bảo mật</a></span></label>
                 </div>
             </div>
 
@@ -144,20 +144,35 @@ $old = $old ?? [];
     var cooldown = 0; var cooldownTimer = null;
     if (sendBtn) sendBtn.addEventListener('click', function(){
         if (cooldown > 0) return;
-        var code = randomCode();
-        if (generatedCodeInput) generatedCodeInput.value = code;
-        // in real app you'd send code to phone/email; here we show brief alert
-        alert('Mã xác thực: ' + code);
-        cooldown = 60;
-        sendBtn.textContent = 'Gửi lại ('+cooldown+'s)';
-        cooldownTimer = setInterval(function(){
-            cooldown--;
-            if (cooldown <= 0) {
-                clearInterval(cooldownTimer); cooldownTimer = null; sendBtn.textContent = 'lấy mã';
-            } else {
+        var emailInput = document.querySelector('input[name="email"]');
+        if (!emailInput) return alert('Vui lòng nhập email trước khi lấy mã');
+        var emailVal = emailInput.value.trim();
+        var emailRe = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+        if (!emailRe.test(emailVal)) return alert('Email không hợp lệ');
+
+        // send request to server to send code
+        fetch('/account/send-code', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'email=' + encodeURIComponent(emailVal)
+        }).then(function(res){
+            return res.json();
+        }).then(function(json){
+            if (json.ok) {
+                cooldown = 60;
                 sendBtn.textContent = 'Gửi lại ('+cooldown+'s)';
+                cooldownTimer = setInterval(function(){
+                    cooldown--;
+                    if (cooldown <= 0) { clearInterval(cooldownTimer); cooldownTimer = null; sendBtn.textContent = 'lấy mã'; }
+                    else { sendBtn.textContent = 'Gửi lại ('+cooldown+'s)'; }
+                }, 1000);
+                alert('Mã xác thực đã được gửi tới email của bạn');
+            } else {
+                alert(json.message || 'Lỗi khi gửi mã');
             }
-        }, 1000);
+        }).catch(function(err){
+            alert('Lỗi mạng: ' + err.message);
+        });
     });
 
     // final client-side validation before submit

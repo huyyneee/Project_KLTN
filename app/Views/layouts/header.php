@@ -30,6 +30,19 @@
 			<div class="flex items-center flex-shrink-0 min-w-max space-x-2">
 				<img src="/assets/images/logo.png" alt="Logo"
 					class="h-12 w-12 object-contain bg-white rounded-full shadow" />
+				<?php
+				// Ensure $categories is available in the header. If the current controller
+				// didn't pass categories, try to load them here so the dropdown shows on all pages.
+				if (!isset($categories) || !is_array($categories) || empty($categories)) {
+					try {
+						$catModel = new \App\Models\CategoryModel();
+						$categories = $catModel->findAll();
+					} catch (\Throwable $e) {
+						// fail silently — header will render without categories
+						$categories = [];
+					}
+				}
+				?>
 				<div class="relative group">
 					<button class="flex items-center px-3 py-2 focus:outline-none">
 						<svg class="w-7 h-7 mr-2" fill="none" stroke="currentColor" stroke-width="2"

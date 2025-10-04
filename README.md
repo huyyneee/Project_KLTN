@@ -133,6 +133,45 @@ Nếu bạn muốn, tôi có thể:
 
 Ghi chú: báo cáo này được viết bằng tiếng Việt theo yêu cầu; nếu bạn muốn tiếng Anh hoặc một định dạng khác (ví dụ: changelog chuẩn Conventional Commits), nói tôi sẽ chuyển đổi.
 
+---
+
+## Thiết lập SMTP (PHPMailer + Gmail)
+
+Nếu bạn muốn gửi mail qua Gmail, làm theo các bước sau. Gmail thường chặn việc dùng username/password trực tiếp trừ khi bạn dùng App Password hoặc OAuth2; vì vậy khuyến nghị là tạo App Password và dùng nó ở đây.
+
+1) Cài PHPMailer bằng Composer (từ thư mục gốc project):
+
+```powershell
+composer require phpmailer/phpmailer
+```
+
+2) Cập nhật `config/config.php` SMTP block với địa chỉ Gmail và App Password. Ví dụ (đã có placeholder trong file config):
+
+```php
+'smtp' => [
+    'host' => 'smtp.gmail.com',
+    'port' => 587,
+    'username' => 'your.email@gmail.com',
+    'password' => 'YOUR_GMAIL_APP_PASSWORD_OR_OAUTH_TOKEN',
+    'encryption' => 'tls',
+    'auth' => true
+]
+```
+
+Hướng dẫn tạo App Password:
+- Bật 2-Step Verification trên Google Account của bạn.
+- Truy cập https://myaccount.google.com/apppasswords và tạo App Password cho "Mail" / "Other".
+- Sử dụng mật khẩu 16 ký tự được tạo làm `password` trong `config/config.php`.
+
+3) `app/Helpers.php` đã được cập nhật để sử dụng PHPMailer và sẽ đọc cấu hình từ `config/config.php`.
+
+4) Test gửi mail: mở `http://localhost:8000/test-mail.php` (đã tạo trong thư mục `public`). Điền email nhận và bấm Send. Trang sẽ trả về JSON nói rõ gửi thành công hay không. Nếu PHPMailer trả về true nhưng bạn không nhận được mail, kiểm tra hoạt động bảo mật (security activity) của tài khoản Google và thư mục spam.
+
+Lưu ý bảo mật:
+- Không commit credentials vào git.
+- Nên lưu secrets trong biến môi trường hoặc `.env` và đọc chúng trong `config/config.php`.
+- Với production, cân nhắc dùng nhà cung cấp email chuyên dụng (SendGrid, Mailgun) kèm cấu hình DNS (SPF/DKIM) để tránh mail bị đánh dấu spam.
+
 ## Báo cáo công việc ngày 02/10/2025
 
 Tóm tắt nhanh
