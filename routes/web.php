@@ -15,6 +15,7 @@ $routes = [
     '/admin/categories/delete' => ['controller' => 'AdminController', 'method' => 'deleteCategory'],
     '/admin/products' => ['controller' => 'AdminController', 'method' => 'products'],
     '/admin/products/create' => ['controller' => 'AdminController', 'method' => 'createProduct'],
+    '/admin/products/view' => ['controller' => 'AdminController', 'method' => 'viewProduct'],
     '/admin/products/edit' => ['controller' => 'AdminController', 'method' => 'editProduct'],
     '/admin/products/delete' => ['controller' => 'AdminController', 'method' => 'deleteProduct'],
 ];
@@ -36,10 +37,11 @@ function route($uri, $routes)
 
         if (file_exists($controllerFile)) {
             require_once $controllerFile;
-            $controller = new $controllerName();
+            $controllerClass = 'App\\Controllers\\' . $controllerName;
+            $controller = new $controllerClass();
 
             // Check if method needs parameters
-            if (isset($_GET['id']) && in_array($methodName, ['editCategory', 'deleteCategory', 'editProduct', 'deleteProduct'])) {
+            if (isset($_GET['id']) && in_array($methodName, ['editCategory', 'deleteCategory', 'viewProduct', 'editProduct', 'deleteProduct'])) {
                 $controller->$methodName($_GET['id']);
             } else {
                 $controller->$methodName();
@@ -52,19 +54,20 @@ function route($uri, $routes)
         // Handle parameterized routes
         $found = false;
         foreach ($routes as $routePattern => $route) {
-            // Simple pattern matching for edit/delete with IDs
-            if (preg_match('/^' . str_replace(['/edit', '/delete'], ['/edit.*', '/delete.*'], preg_quote($routePattern, '/')) . '$/', $uri)) {
+            // Simple pattern matching for view/edit/delete with IDs
+            if (preg_match('/^' . str_replace(['/view', '/edit', '/delete'], ['/view.*', '/edit.*', '/delete.*'], preg_quote($routePattern, '/')) . '$/', $uri)) {
                 $controllerName = $route['controller'];
                 $methodName = $route['method'];
                 $controllerFile = __DIR__ . '/../app/Controllers/' . $controllerName . '.php';
 
                 if (file_exists($controllerFile)) {
                     require_once $controllerFile;
-                    $controller = new $controllerName();
+                    $controllerClass = 'App\\Controllers\\' . $controllerName;
+                    $controller = new $controllerClass();
 
                     // Extract ID from URL or GET parameter
                     $id = $_GET['id'] ?? null;
-                    if ($id) {
+                    if ($id && in_array($methodName, ['viewProduct', 'editCategory', 'deleteCategory', 'editProduct', 'deleteProduct'])) {
                         $controller->$methodName($id);
                     } else {
                         $controller->$methodName();
@@ -82,7 +85,7 @@ function route($uri, $routes)
     }
 }
 
-    // Đã định nghĩa route /test ở mảng $routes phía trên, không cần $router->get
+// Đã định nghĩa route /test ở mảng $routes phía trên, không cần $router->get
 
 // Xử lý request
 $requestUri = $_SERVER['REQUEST_URI'];

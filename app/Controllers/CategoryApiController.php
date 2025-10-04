@@ -1,6 +1,10 @@
 <?php
+namespace App\Controllers;
+
 require_once __DIR__ . '/ApiController.php';
 require_once __DIR__ . '/../Models/Category.php';
+
+use App\Models\Category;
 
 class CategoryApiController extends ApiController
 {

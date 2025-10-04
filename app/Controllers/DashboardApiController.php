@@ -1,7 +1,12 @@
 <?php
+namespace App\Controllers;
+
 require_once __DIR__ . '/ApiController.php';
 require_once __DIR__ . '/../Models/Product.php';
 require_once __DIR__ . '/../Models/Category.php';
+
+use App\Models\Product;
+use App\Models\Category;
 
 class DashboardApiController extends ApiController
 {

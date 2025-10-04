@@ -1,5 +1,10 @@
 <?php
+namespace App\Models;
+
 require_once __DIR__ . '/../Core/Model.php';
+
+use App\Core\Model;
+use PDO;
 
 class Category extends Model
 {

@@ -1,5 +1,9 @@
 <?php
+namespace App\Core;
+
 require_once __DIR__ . '/Database.php';
+
+use PDO;
 
 class Model
 {
@@ -7,7 +11,7 @@ class Model
     protected $table;
     public function __construct()
     {
-        $this->db = (new Database())->getConnection();
+        $this->db = Database::getInstance()->getConnection();
     }
     public function findAll()
     {

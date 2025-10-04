@@ -3,6 +3,12 @@
 require_once __DIR__ . '/../app/Controllers/ProductApiController.php';
 require_once __DIR__ . '/../app/Controllers/CategoryApiController.php';
 require_once __DIR__ . '/../app/Controllers/DashboardApiController.php';
+require_once __DIR__ . '/../app/Controllers/ImageUploadController.php';
+
+use App\Controllers\ProductApiController;
+use App\Controllers\CategoryApiController;
+use App\Controllers\DashboardApiController;
+use App\Controllers\ImageUploadController;
 
 // Set CORS headers for all API requests
 header('Access-Control-Allow-Origin: *');
@@ -43,7 +49,7 @@ switch ($path) {
     // Dashboard routes
     case '/dashboard/stats':
         if ($method === 'GET') {
-            $controller = new DashboardApiController();
+            $controller = new \App\Controllers\DashboardApiController();
             $controller->getStats();
         } else {
             http_response_code(405);
@@ -53,7 +59,7 @@ switch ($path) {
 
     case '/dashboard/best-selling':
         if ($method === 'GET') {
-            $controller = new DashboardApiController();
+            $controller = new \App\Controllers\DashboardApiController();
             $controller->getBestSelling();
         } else {
             http_response_code(405);
@@ -63,7 +69,7 @@ switch ($path) {
 
     case '/dashboard/recent-activity':
         if ($method === 'GET') {
-            $controller = new DashboardApiController();
+            $controller = new \App\Controllers\DashboardApiController();
             $controller->getRecentActivity();
         } else {
             http_response_code(405);
@@ -73,7 +79,7 @@ switch ($path) {
 
     // Product routes
     case '/products':
-        $controller = new ProductApiController();
+        $controller = new \App\Controllers\ProductApiController();
         switch ($method) {
             case 'GET':
                 $controller->index();
@@ -88,7 +94,7 @@ switch ($path) {
         break;
 
     case (preg_match('/^\/products\/(\d+)$/', $path, $matches) ? true : false):
-        $controller = new ProductApiController();
+        $controller = new \App\Controllers\ProductApiController();
         $id = $matches[1];
         switch ($method) {
             case 'GET':
@@ -108,7 +114,7 @@ switch ($path) {
 
     case (preg_match('/^\/products\/category\/(\d+)$/', $path, $matches) ? true : false):
         if ($method === 'GET') {
-            $controller = new ProductApiController();
+            $controller = new \App\Controllers\ProductApiController();
             $categoryId = $matches[1];
             $controller->getByCategory($categoryId);
         } else {
@@ -119,7 +125,7 @@ switch ($path) {
 
     case '/products/deleted':
         if ($method === 'GET') {
-            $controller = new ProductApiController();
+            $controller = new \App\Controllers\ProductApiController();
             $controller->getDeleted();
         } else {
             http_response_code(405);
@@ -129,7 +135,7 @@ switch ($path) {
 
     case (preg_match('/^\/products\/(\d+)\/restore$/', $path, $matches) ? true : false):
         if ($method === 'POST') {
-            $controller = new ProductApiController();
+            $controller = new \App\Controllers\ProductApiController();
             $id = $matches[1];
             $controller->restore($id);
         } else {
@@ -140,7 +146,7 @@ switch ($path) {
 
     // Category routes
     case '/categories':
-        $controller = new CategoryApiController();
+        $controller = new \App\Controllers\CategoryApiController();
         switch ($method) {
             case 'GET':
                 $controller->index();
@@ -155,7 +161,7 @@ switch ($path) {
         break;
 
     case (preg_match('/^\/categories\/(\d+)$/', $path, $matches) ? true : false):
-        $controller = new CategoryApiController();
+        $controller = new \App\Controllers\CategoryApiController();
         $id = $matches[1];
         switch ($method) {
             case 'GET':
@@ -175,7 +181,7 @@ switch ($path) {
 
     case '/categories/deleted':
         if ($method === 'GET') {
-            $controller = new CategoryApiController();
+            $controller = new \App\Controllers\CategoryApiController();
             $controller->getDeleted();
         } else {
             http_response_code(405);
@@ -185,9 +191,41 @@ switch ($path) {
 
     case (preg_match('/^\/categories\/(\d+)\/restore$/', $path, $matches) ? true : false):
         if ($method === 'POST') {
-            $controller = new CategoryApiController();
+            $controller = new \App\Controllers\CategoryApiController();
             $id = $matches[1];
             $controller->restore($id);
+        } else {
+            http_response_code(405);
+            echo json_encode(['error' => 'Method not allowed']);
+        }
+        break;
+
+    // Image upload routes
+    case '/upload':
+        if ($method === 'POST') {
+            $controller = new \App\Controllers\ImageUploadController();
+            $controller->upload();
+        } else {
+            http_response_code(405);
+            echo json_encode(['error' => 'Method not allowed']);
+        }
+        break;
+
+    case '/upload/multiple':
+        if ($method === 'POST') {
+            $controller = new \App\Controllers\ImageUploadController();
+            $controller->uploadMultiple();
+        } else {
+            http_response_code(405);
+            echo json_encode(['error' => 'Method not allowed']);
+        }
+        break;
+
+    case (preg_match('/^\/upload\/(.+)$/', $path, $matches) ? true : false):
+        if ($method === 'DELETE') {
+            $controller = new \App\Controllers\ImageUploadController();
+            $filename = $matches[1];
+            $controller->delete($filename);
         } else {
             http_response_code(405);
             echo json_encode(['error' => 'Method not allowed']);

@@ -1,17 +1,27 @@
 <?php
+namespace App\Controllers;
+
 require_once __DIR__ . '/../Core/Controller.php';
 require_once __DIR__ . '/../Models/Category.php';
 require_once __DIR__ . '/../Models/Product.php';
+require_once __DIR__ . '/../Models/ProductImage.php';
+
+use App\Core\Controller;
+use App\Models\Category;
+use App\Models\Product;
+use App\Models\ProductImage;
 
 class AdminController extends Controller
 {
     private $categoryModel;
     private $productModel;
+    private $productImageModel;
 
     public function __construct()
     {
         $this->categoryModel = new Category();
         $this->productModel = new Product();
+        $this->productImageModel = new ProductImage();
     }
 
     // Dashboard
@@ -22,7 +32,7 @@ class AdminController extends Controller
             'categories_count' => count($this->categoryModel->findAll()),
             'products_count' => count($this->productModel->findAll())
         ];
-        $this->view('admin/dashboard', $data);
+        $this->render('admin/dashboard', $data);
     }
 
     // Category Management
@@ -33,7 +43,7 @@ class AdminController extends Controller
             'title' => 'Quản lý danh mục',
             'categories' => $categories
         ];
-        $this->view('admin/categories/index', $data);
+        $this->render('admin/categories/index', $data);
     }
 
     public function createCategory()
@@ -55,7 +65,7 @@ class AdminController extends Controller
         $data = [
             'title' => 'Thêm danh mục mới'
         ];
-        $this->view('admin/categories/create', $data);
+        $this->render('admin/categories/create', $data);
     }
 
     public function editCategory($id)
@@ -85,7 +95,7 @@ class AdminController extends Controller
             'title' => 'Sửa danh mục',
             'category' => $category
         ];
-        $this->view('admin/categories/edit', $data);
+        $this->render('admin/categories/edit', $data);
     }
 
     public function deleteCategory($id)
@@ -102,11 +112,28 @@ class AdminController extends Controller
     public function products()
     {
         $products = $this->productModel->findAllWithCategory();
+
+        // Load images for each product
+        foreach ($products as &$product) {
+            $images = $this->productImageModel->findByProductId($product['id']);
+            $product['images'] = $images;
+            $product['main_image'] = null;
+            $product['detail_images'] = [];
+
+            foreach ($images as $image) {
+                if ($image['is_main']) {
+                    $product['main_image'] = $image['url'];
+                } else {
+                    $product['detail_images'][] = $image['url'];
+                }
+            }
+        }
+
         $data = [
             'title' => 'Quản lý sản phẩm',
             'products' => $products
         ];
-        $this->view('admin/products/index', $data);
+        $this->render('admin/products/index', $data);
     }
 
     public function createProduct()
@@ -142,7 +169,7 @@ class AdminController extends Controller
             'title' => 'Thêm sản phẩm mới',
             'categories' => $categories
         ];
-        $this->view('admin/products/create', $data);
+        $this->render('admin/products/create', $data);
     }
 
     public function editProduct($id)
@@ -179,13 +206,57 @@ class AdminController extends Controller
             }
         }
 
+        // Load images for the product
+        $images = $this->productImageModel->findByProductId($id);
+        $product['images'] = $images;
+        $product['main_image'] = null;
+        $product['detail_images'] = [];
+
+        foreach ($images as $image) {
+            if ($image['is_main']) {
+                $product['main_image'] = $image['url'];
+            } else {
+                $product['detail_images'][] = $image['url'];
+            }
+        }
+
         $categories = $this->categoryModel->findAll();
         $data = [
             'title' => 'Sửa sản phẩm',
             'product' => $product,
             'categories' => $categories
         ];
-        $this->view('admin/products/edit', $data);
+        $this->render('admin/products/edit', $data);
+    }
+
+    public function viewProduct($id)
+    {
+        $product = $this->productModel->findWithCategory($id);
+
+        if (!$product) {
+            header('Location: /admin/products?error=notfound');
+            exit;
+        }
+
+        // Load images for the product
+        $images = $this->productImageModel->findByProductId($id);
+        $product['images'] = $images;
+        $product['main_image'] = null;
+        $product['detail_images'] = [];
+
+        foreach ($images as $image) {
+            if ($image['is_main']) {
+                $product['main_image'] = $image['url'];
+            } else {
+                $product['detail_images'][] = $image['url'];
+            }
+        }
+
+        $data = [
+            'title' => 'Chi tiết sản phẩm',
+            'product' => $product
+        ];
+        $this->render('admin/products/view', $data);
     }
 
     public function deleteProduct($id)

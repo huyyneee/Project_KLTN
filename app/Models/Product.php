@@ -1,5 +1,10 @@
 <?php
+namespace App\Models;
+
 require_once __DIR__ . '/../Core/Model.php';
+
+use App\Core\Model;
+use PDO;
 
 class Product extends Model
 {
@@ -7,10 +12,10 @@ class Product extends Model
 
     public function create($data)
     {
-        $sql = "INSERT INTO {$this->table} (code, name, price, description, specifications, usage, ingredients, category_id, main_image, detail_images) 
-                VALUES (:code, :name, :price, :description, :specifications, :usage, :ingredients, :category_id, :main_image, :detail_images)";
+        $sql = "INSERT INTO {$this->table} (code, name, price, description, specifications, `usage`, ingredients, category_id) 
+                VALUES (:code, :name, :price, :description, :specifications, :usage, :ingredients, :category_id)";
         $stmt = $this->db->prepare($sql);
-        return $stmt->execute([
+        $result = $stmt->execute([
             ':code' => $data['code'] ?? null,
             ':name' => $data['name'],
             ':price' => $data['price'],
@@ -18,10 +23,13 @@ class Product extends Model
             ':specifications' => $data['specifications'] ?? null,
             ':usage' => $data['usage'] ?? null,
             ':ingredients' => $data['ingredients'] ?? null,
-            ':category_id' => $data['category_id'],
-            ':main_image' => $data['main_image'] ?? null,
-            ':detail_images' => $data['detail_images'] ?? null
+            ':category_id' => $data['category_id']
         ]);
+
+        if ($result) {
+            return $this->db->lastInsertId();
+        }
+        return false;
     }
 
     public function update($id, $data)
@@ -31,11 +39,9 @@ class Product extends Model
                 price = :price, 
                 description = :description, 
                 specifications = :specifications, 
-                usage = :usage, 
+                `usage` = :usage, 
                 ingredients = :ingredients, 
                 category_id = :category_id,
-                main_image = :main_image,
-                detail_images = :detail_images,
                 updated_at = CURRENT_TIMESTAMP 
                 WHERE id = :id";
         $stmt = $this->db->prepare($sql);
@@ -47,9 +53,7 @@ class Product extends Model
             ':specifications' => $data['specifications'] ?? null,
             ':usage' => $data['usage'] ?? null,
             ':ingredients' => $data['ingredients'] ?? null,
-            ':category_id' => $data['category_id'] ?? null,
-            ':main_image' => $data['main_image'] ?? null,
-            ':detail_images' => $data['detail_images'] ?? null
+            ':category_id' => $data['category_id'] ?? null
         ]);
     }
 
@@ -87,6 +91,17 @@ class Product extends Model
                 ORDER BY p.created_at DESC";
         $stmt = $this->db->query($sql);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function findWithCategory($id)
+    {
+        $sql = "SELECT p.*, c.name as category_name 
+                FROM {$this->table} p 
+                LEFT JOIN categories c ON p.category_id = c.id 
+                WHERE p.id = :id";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([':id' => $id]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
     public function findByCategory($categoryId, $includeDeleted = false)
