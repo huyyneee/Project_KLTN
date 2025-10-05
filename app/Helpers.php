@@ -29,6 +29,22 @@ function send_mail($to, $subject, $body)
 
 	$mail = new PHPMailer(true);
 	try {
+		// ensure strings are UTF-8 to avoid garbled subjects / names in recipients (Gmail)
+		$ensure_utf8 = function($s) {
+			if ($s === null) return $s;
+			if (mb_detect_encoding($s, 'UTF-8', true) === false) {
+				// try to convert from common encodings
+				return mb_convert_encoding($s, 'UTF-8', 'auto');
+			}
+			return $s;
+		};
+		$subject = $ensure_utf8($subject);
+		$fromName = $ensure_utf8($fromName);
+		$body = $ensure_utf8($body);
+
+		// enforce UTF-8 charset and safe encoding
+		$mail->CharSet = 'UTF-8';
+		$mail->Encoding = 'base64';
 	$env = env('APP_ENV') ?: 'production';
 		$debugOutput = '';
 		if ($env === 'development') {

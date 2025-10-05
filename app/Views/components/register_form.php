@@ -44,16 +44,16 @@ $old = $old ?? [];
                         <input name="verification_code" id="verification_code" type="text" placeholder="Nhập mã xác thực" maxlength="6"
                             value="<?php echo htmlspecialchars($old['verification_code'] ?? ''); ?>"
                             class="w-full bg-white border border-gray-200 rounded px-3 text-sm placeholder-gray-400 focus:outline-none focus:ring-0" style="height:32px; padding-right:90px; box-sizing:border-box;" />
-                        <?php if (!empty($message) && !empty($require_verification)): ?>
-                            <div class="text-xs text-red-600 mt-1" id="verify-hint">Vui lòng nhập mã xác thực đã gửi tới email.</div>
-                        <?php endif; ?>
+                                <?php if (!empty($message) && !empty($require_verification)): ?>
+                                    <!-- inline hint removed as requested; message will be shown via modal. -->
+                                <?php endif; ?>
                     <button type="button" id="send-code" class="bg-green-700 text-white rounded px-3 py-1 text-sm" style="position:absolute; right:6px; top:50%; transform:translateY(-50%); min-width:78px; text-align:center;">lấy mã</button>
                 </div>
             </div>
 
             <!-- password with hint -->
             <div class="flex justify-center">
-                <input name="password" type="password" placeholder="Nhập mật khẩu (ít nhất 8 ký tự, tối đa 32)" required
+                <input name="password" type="password" placeholder="Nhập mật khẩu (ít nhất 8 ký tự, tối đa 32)" required value="<?php echo htmlspecialchars($old['password'] ?? ''); ?>"
                     class="w-64 bg-white border border-gray-200 rounded px-3 text-sm placeholder-gray-400 focus:outline-none focus:ring-0" style="height:36px;" />
             </div>
 
@@ -415,6 +415,10 @@ $old = $old ?? [];
         showDialog('ĐĂNG KÝ THÀNH CÔNG');
         setTimeout(function(){ window.location.href = '/login'; }, 5000);
     } catch(e){}
+    <?php endif; ?>
+
+    <?php if (!empty($message) && !empty($require_verification)): ?>
+    try { showDialog(<?php echo json_encode($message); ?>); } catch(e){}
     <?php endif; ?>
 
     form.addEventListener('submit', function(e){

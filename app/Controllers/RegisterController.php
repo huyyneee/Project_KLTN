@@ -65,6 +65,7 @@ class RegisterController extends Controller
             $captcha = substr(str_shuffle('abcdefghijklmnopqrstuvwxyz0123456789'), 0, 4);
             $old = [
                 'email' => $email,
+                'password' => $password,
                 'full_name' => $full_name,
                 'gender' => $gender,
                 'birth_year' => $birth_year,
@@ -99,6 +100,7 @@ class RegisterController extends Controller
             $captcha = substr(str_shuffle('abcdefghijklmnopqrstuvwxyz0123456789'), 0, 4);
             $old = [
                 'email' => $email,
+                'password' => $password,
                 'full_name' => $full_name,
                 'gender' => $gender,
                 'birth_year' => $birth_year,
@@ -109,28 +111,64 @@ class RegisterController extends Controller
             return;
         }
 
-        // Verification handling: if verification code not provided or doesn't match session, send code and ask user to enter it
+        // Verification handling: codes expire after 5 minutes (300s)
         $verification = isset($_POST['verification_code']) ? trim($_POST['verification_code']) : '';
         $sessionCode = $_SESSION['verif_codes'][$email]['code'] ?? null;
         $sessionTs = $_SESSION['verif_codes'][$email]['ts'] ?? null;
+
         $codeValid = false;
-        if ($sessionCode && $sessionTs && (time() - $sessionTs) <= 600) {
+        $expiry = 300; // 5 minutes in seconds
+
+        if ($sessionCode && $sessionTs) {
+            $age = time() - $sessionTs;
+            if ($age > $expiry) {
+                // code expired: inform user to click "lấy mã" to request a new one
+                $captcha = substr(str_shuffle('abcdefghijklmnopqrstuvwxyz0123456789'), 0, 4);
+                $old = [
+                    'email' => $email,
+                    'password' => $password,
+                    'full_name' => $full_name,
+                    'gender' => $gender,
+                    'birth_year' => $birth_year,
+                    'birth_month' => $birth_month,
+                    'birth_day' => $birth_day
+                ];
+                $message = 'MÃ ĐÃ HẾT HẠN,VUI LÒNG LẤY MÃ MỚI';
+                $this->render('register', ['errors' => [], 'message' => $message, 'require_verification' => true, 'old' => $old, 'captcha' => $captcha]);
+                return;
+            }
+
+            // not expired: check provided verification (case-insensitive)
             if ($verification !== '' && strcasecmp($verification, $sessionCode) === 0) {
                 $codeValid = true;
+            } else {
+                // wrong code (but still valid time window): ask user to re-enter or request a fresh code
+                $captcha = substr(str_shuffle('abcdefghijklmnopqrstuvwxyz0123456789'), 0, 4);
+                $old = [
+                    'email' => $email,
+                    'password' => $password,
+                    'full_name' => $full_name,
+                    'gender' => $gender,
+                    'birth_year' => $birth_year,
+                    'birth_month' => $birth_month,
+                    'birth_day' => $birth_day
+                ];
+                $message = 'MÃ XÁC THỰC KHÔNG ĐÚNG,VUI LÒNG NHẬP LẠI';
+                $this->render('register', ['errors' => [], 'message' => $message, 'require_verification' => true, 'old' => $old, 'captcha' => $captcha]);
+                return;
             }
-        }
-
-        if (!$codeValid) {
-            // generate and send code, then re-render form requesting verification
+        } else {
+            // no session code found: generate and send code then ask user to enter it
             $code = \generate_verification_code();
             $_SESSION['verif_codes'][$email] = ['code' => $code, 'ts' => time()];
             $subject = 'Mã xác thực đăng ký - Cửa Hàng Mỹ Phẩm Xuân Hiệp';
-            $body = "Mã xác thực của bạn là: <strong>{$code}</strong>. Mã có hiệu lực 10 phút.";
+            $body = "Mã xác thực của bạn là: <strong>{$code}</strong>. Mã có hiệu lực 5 phút.";
             \send_mail($email, $subject, $body);
-            $message = 'Vui lòng nhập mã xác thực. Chúng tôi đã gửi mã tới email của bạn.';
+            $message = 'VUI LÒNG NHẬP MÃ XÁC THỰC ĐÃ ĐƯỢC GỬI TỚI EMAIL CỦA BẠN';
             $captcha = substr(str_shuffle('abcdefghijklmnopqrstuvwxyz0123456789'), 0, 4);
             $old = [
                 'email' => $email,
+                'password' => $password,
                 'full_name' => $full_name,
                 'gender' => $gender,
                 'birth_year' => $birth_year,
@@ -215,7 +253,7 @@ class RegisterController extends Controller
         $_SESSION['verif_codes'][$email] = ['code' => $code, 'ts' => time()];
 
         $subject = 'Mã xác thực đăng ký - Cửa Hàng Mỹ Phẩm Xuân Hiệp';
-        $body = "Mã xác thực của bạn là: <strong>{$code}</strong>. Mã có hiệu lực 10 phút.";
+        $body = "Mã xác thực của bạn là: <strong>{$code}</strong>. Mã có hiệu lực 5 phút.";
         $sent = \send_mail($email, $subject, $body);
         if ($sent) {
             echo json_encode(['ok' => true]);

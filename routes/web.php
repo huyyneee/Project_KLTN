@@ -8,6 +8,7 @@ $routes = [
     // Thêm các route khác nếu cần
     '/test' => ['controller' => 'TestController', 'method' => 'index'],
     '/danh-muc' => ['controller' => 'CategoryController', 'method' => 'show'],
+    '/san-pham' => ['controller' => 'ProductController', 'method' => 'show'],
     '/login' => ['controller' => 'LoginController', 'method' => 'index'],
     '/register' => ['controller' => 'RegisterController', 'method' => 'index'],
     '/account/register' => ['controller' => 'RegisterController', 'method' => 'store'],

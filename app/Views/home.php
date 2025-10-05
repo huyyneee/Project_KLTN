@@ -23,152 +23,29 @@
 <!-- Danh mục sản phẩm lướt ngang, mỗi danh mục 1 hàng, sản phẩm riêng từng mục -->
 <div class="max-w-7xl mx-auto mt-8">
 	<?php
-	// Dữ liệu sản phẩm từng danh mục, mỗi mục là 1 mảng con
-	$productsByCategory = [
-		'Chăm Sóc Da Mặt' => [
-			['img' => 'teatree.png', 'name' => 'Serum Trà'],
-			['img' => 'suaruamatcerave.png', 'name' => 'Sữa rửa mặt Cerave'],
-			['img' => 'serumsangda.png', 'name' => "Serum L'Oreal Sáng Da"],
-			['img' => 'matnanghe.png', 'name' => 'Mặt Nạ Nghệ'],
-			['img' => 'kemsangda.png', 'name' => 'Kem Dưỡng Vichy Sáng Da'],
-			['img' => 'gelruamat.png', 'name' => 'Gel Rửa Mặt La Roche-Posay'],
-			['img' => 'duongam.png', 'name' => 'Serum Torriden Dưỡng Ẩm Sâ'],
-			['img' => 'kemduong.png', 'name' => 'Kem Dưỡng Obagi Retinol'],
-			['img' => 'gelduong.png', 'name' => 'Gel Dưỡng Megaduo Plus Giảm Mụn'],
-			['img' => 'olay.png', 'name' => 'Kem Dưỡng Olay Ban Ngày Sáng Da'],
-			['img' => 'trangdiem2.png', 'name' => 'Phấn phủ 02'],
-			['img' => 'chamsocdadau.png', 'name' => 'Dầu gội 01'],
-			['img' => 'chamsoccothe.png', 'name' => 'Sữa tắm 01'],
-			['img' => 'chamsoccanhan.png', 'name' => 'Bàn chải đánh răng 01'],
-			['img' => 'nuochoa.png', 'name' => 'Nước hoa 01'],
-			['img' => 'thucphamchucnang.png', 'name' => 'Vitamin C 01'],
-			// ... Thêm sản phẩm mới tại đây
-		],
-		'Trang Điểm' => [
-			['img' => 'teatree.png', 'name' => 'Serum Trà'],
-			['img' => 'suaruamatcerave.png', 'name' => 'Sữa rửa mặt Cerave'],
-			['img' => 'serumsangda.png', 'name' => "Serum L'Oreal Sáng Da"],
-			['img' => 'matnanghe.png', 'name' => 'Mặt Nạ Nghệ'],
-			['img' => 'kemsangda.png', 'name' => 'Kem Dưỡng Vichy Sáng Da'],
-			['img' => 'gelruamat.png', 'name' => 'Gel Rửa Mặt La Roche-Posay'],
-			['img' => 'duongam.png', 'name' => 'Serum Torriden Dưỡng Ẩm Sâ'],
-			['img' => 'kemduong.png', 'name' => 'Kem Dưỡng Obagi Retinol'],
-			['img' => 'gelduong.png', 'name' => 'Gel Dưỡng Megaduo Plus Giảm Mụn'],
-			['img' => 'olay.png', 'name' => 'Kem Dưỡng Olay Ban Ngày Sáng Da'],
-			['img' => 'trangdiem2.png', 'name' => 'Phấn phủ 02'],
-			['img' => 'chamsocdadau.png', 'name' => 'Dầu gội 01'],
-			['img' => 'chamsoccothe.png', 'name' => 'Sữa tắm 01'],
-			['img' => 'chamsoccanhan.png', 'name' => 'Bàn chải đánh răng 01'],
-			['img' => 'nuochoa.png', 'name' => 'Nước hoa 01'],
-			['img' => 'thucphamchucnang.png', 'name' => 'Vitamin C 01'],
-			// ...
-		],
-		'Chăm Sóc Tóc Và Da Đầu' => [
-			['img' => 'teatree.png', 'name' => 'Serum Trà'],
-			['img' => 'suaruamatcerave.png', 'name' => 'Sữa rửa mặt Cerave'],
-			['img' => 'serumsangda.png', 'name' => "Serum L'Oreal Sáng Da"],
-			['img' => 'matnanghe.png', 'name' => 'Mặt Nạ Nghệ'],
-			['img' => 'kemsangda.png', 'name' => 'Kem Dưỡng Vichy Sáng Da'],
-			['img' => 'gelruamat.png', 'name' => 'Gel Rửa Mặt La Roche-Posay'],
-			['img' => 'duongam.png', 'name' => 'Serum Torriden Dưỡng Ẩm Sâ'],
-			['img' => 'kemduong.png', 'name' => 'Kem Dưỡng Obagi Retinol'],
-			['img' => 'gelduong.png', 'name' => 'Gel Dưỡng Megaduo Plus Giảm Mụn'],
-			['img' => 'olay.png', 'name' => 'Kem Dưỡng Olay Ban Ngày Sáng Da'],
-			['img' => 'trangdiem2.png', 'name' => 'Phấn phủ 02'],
-			['img' => 'chamsocdadau.png', 'name' => 'Dầu gội 01'],
-			['img' => 'chamsoccothe.png', 'name' => 'Sữa tắm 01'],
-			['img' => 'chamsoccanhan.png', 'name' => 'Bàn chải đánh răng 01'],
-			['img' => 'nuochoa.png', 'name' => 'Nước hoa 01'],
-			['img' => 'thucphamchucnang.png', 'name' => 'Vitamin C 01'],
-			// ...
-		],
-		'Chăm Sóc Cơ Thể' => [
-			['img' => 'teatree.png', 'name' => 'Serum Trà'],
-			['img' => 'suaruamatcerave.png', 'name' => 'Sữa rửa mặt Cerave'],
-			['img' => 'serumsangda.png', 'name' => "Serum L'Oreal Sáng Da"],
-			['img' => 'matnanghe.png', 'name' => 'Mặt Nạ Nghệ'],
-			['img' => 'kemsangda.png', 'name' => 'Kem Dưỡng Vichy Sáng Da'],
-			['img' => 'gelruamat.png', 'name' => 'Gel Rửa Mặt La Roche-Posay'],
-			['img' => 'duongam.png', 'name' => 'Serum Torriden Dưỡng Ẩm Sâ'],
-			['img' => 'kemduong.png', 'name' => 'Kem Dưỡng Obagi Retinol'],
-			['img' => 'gelduong.png', 'name' => 'Gel Dưỡng Megaduo Plus Giảm Mụn'],
-			['img' => 'olay.png', 'name' => 'Kem Dưỡng Olay Ban Ngày Sáng Da'],
-			['img' => 'trangdiem2.png', 'name' => 'Phấn phủ 02'],
-			['img' => 'chamsocdadau.png', 'name' => 'Dầu gội 01'],
-			['img' => 'chamsoccothe.png', 'name' => 'Sữa tắm 01'],
-			['img' => 'chamsoccanhan.png', 'name' => 'Bàn chải đánh răng 01'],
-			['img' => 'nuochoa.png', 'name' => 'Nước hoa 01'],
-			['img' => 'thucphamchucnang.png', 'name' => 'Vitamin C 01'],
-			// ...
-		],
-		'Chăm Sóc Cá Nhân' => [
-			['img' => 'teatree.png', 'name' => 'Serum Trà'],
-			['img' => 'suaruamatcerave.png', 'name' => 'Sữa rửa mặt Cerave'],
-			['img' => 'serumsangda.png', 'name' => "Serum L'Oreal Sáng Da"],
-			['img' => 'matnanghe.png', 'name' => 'Mặt Nạ Nghệ'],
-			['img' => 'kemsangda.png', 'name' => 'Kem Dưỡng Vichy Sáng Da'],
-			['img' => 'gelruamat.png', 'name' => 'Gel Rửa Mặt La Roche-Posay'],
-			['img' => 'duongam.png', 'name' => 'Serum Torriden Dưỡng Ẩm Sâ'],
-			['img' => 'kemduong.png', 'name' => 'Kem Dưỡng Obagi Retinol'],
-			['img' => 'gelduong.png', 'name' => 'Gel Dưỡng Megaduo Plus Giảm Mụn'],
-			['img' => 'olay.png', 'name' => 'Kem Dưỡng Olay Ban Ngày Sáng Da'],
-			['img' => 'trangdiem2.png', 'name' => 'Phấn phủ 02'],
-			['img' => 'chamsocdadau.png', 'name' => 'Dầu gội 01'],
-			['img' => 'chamsoccothe.png', 'name' => 'Sữa tắm 01'],
-			['img' => 'chamsoccanhan.png', 'name' => 'Bàn chải đánh răng 01'],
-			['img' => 'nuochoa.png', 'name' => 'Nước hoa 01'],
-			['img' => 'thucphamchucnang.png', 'name' => 'Vitamin C 01'],
-			// ...
-		],
-		'Nước Hoa' => [
-			['img' => 'teatree.png', 'name' => 'Serum Trà'],
-			['img' => 'suaruamatcerave.png', 'name' => 'Sữa rửa mặt Cerave'],
-			['img' => 'serumsangda.png', 'name' => "Serum L'Oreal Sáng Da"],
-			['img' => 'matnanghe.png', 'name' => 'Mặt Nạ Nghệ'],
-			['img' => 'kemsangda.png', 'name' => 'Kem Dưỡng Vichy Sáng Da'],
-			['img' => 'gelruamat.png', 'name' => 'Gel Rửa Mặt La Roche-Posay'],
-			['img' => 'duongam.png', 'name' => 'Serum Torriden Dưỡng Ẩm Sâ'],
-			['img' => 'kemduong.png', 'name' => 'Kem Dưỡng Obagi Retinol'],
-			['img' => 'gelduong.png', 'name' => 'Gel Dưỡng Megaduo Plus Giảm Mụn'],
-			['img' => 'olay.png', 'name' => 'Kem Dưỡng Olay Ban Ngày Sáng Da'],
-			['img' => 'trangdiem2.png', 'name' => 'Phấn phủ 02'],
-			['img' => 'chamsocdadau.png', 'name' => 'Dầu gội 01'],
-			['img' => 'chamsoccothe.png', 'name' => 'Sữa tắm 01'],
-			['img' => 'chamsoccanhan.png', 'name' => 'Bàn chải đánh răng 01'],
-			['img' => 'nuochoa.png', 'name' => 'Nước hoa 01'],
-			['img' => 'thucphamchucnang.png', 'name' => 'Vitamin C 01'],
-			// ...
-		],
-		'Thực Phẩm Chức Năng' => [
-			['img' => 'teatree.png', 'name' => 'Serum Trà'],
-			['img' => 'suaruamatcerave.png', 'name' => 'Sữa rửa mặt Cerave'],
-			['img' => 'serumsangda.png', 'name' => "Serum L'Oreal Sáng Da"],
-			['img' => 'matnanghe.png', 'name' => 'Mặt Nạ Nghệ'],
-			['img' => 'kemsangda.png', 'name' => 'Kem Dưỡng Vichy Sáng Da'],
-			['img' => 'gelruamat.png', 'name' => 'Gel Rửa Mặt La Roche-Posay'],
-			['img' => 'duongam.png', 'name' => 'Serum Torriden Dưỡng Ẩm Sâ'],
-			['img' => 'kemduong.png', 'name' => 'Kem Dưỡng Obagi Retinol'],
-			['img' => 'gelduong.png', 'name' => 'Gel Dưỡng Megaduo Plus Giảm Mụn'],
-			['img' => 'olay.png', 'name' => 'Kem Dưỡng Olay Ban Ngày Sáng Da'],
-			['img' => 'trangdiem2.png', 'name' => 'Phấn phủ 02'],
-			['img' => 'chamsocdadau.png', 'name' => 'Dầu gội 01'],
-			['img' => 'chamsoccothe.png', 'name' => 'Sữa tắm 01'],
-			['img' => 'chamsoccanhan.png', 'name' => 'Bàn chải đánh răng 01'],
-			['img' => 'nuochoa.png', 'name' => 'Nước hoa 01'],
-			['img' => 'thucphamchucnang.png', 'name' => 'Vitamin C 01'],
-			// ...
-		],
-	];
-	foreach ($productsByCategory as $catName => $products): ?>
+	// $categories and $productsByCategory are provided by HomeController
+	foreach ($categories as $cat):
+		$catId = $cat['id'] ?? 0;
+		$catName = $cat['name'] ?? 'Danh mục';
+		$products = $productsByCategory[$catId] ?? [];
+	?>
 		<div class="mb-8">
-			<div class="font-bold text-lg mb-2 text-green-800"><?= $catName ?></div>
+			<div class="flex items-center justify-between mb-2">
+				<div class="font-bold text-lg text-green-800"><?= htmlspecialchars($catName) ?></div>
+				<a href="/danh-muc?cat=<?= urlencode($catName) ?>" class="text-sm text-gray-600">Xem tất cả</a>
+			</div>
 			<div class="overflow-hidden relative group">
 				<div class="relative">
-					<div class="flex space-x-4 product-carousel" style="will-change: transform;" data-category="<?= htmlspecialchars($catName) ?>">
-						<?php foreach ($products as $sp): ?>
-						<a href="#" class="block min-w-[180px] max-w-[180px] bg-white rounded shadow hover:scale-105 transition">
-							<img src="/assets/images/<?= rawurlencode($catName) ?>/<?= htmlspecialchars($sp['img']) ?>" alt="<?= htmlspecialchars($sp['name']) ?>" class="w-full h-32 object-cover rounded-t">
-							<div class="p-2 text-center text-sm"><?= htmlspecialchars($sp['name']) ?></div>
+					<div class="flex space-x-4 product-carousel" style="will-change: transform;" data-category-id="<?= (int)$catId ?>">
+						<?php foreach ($products as $p): ?>
+						<?php
+								$imgSrc = null;
+								if (!empty($p['image_url'])) {
+									$imgSrc = $p['image_url'];
+								}
+							?>
+							<img src="<?= htmlspecialchars($imgSrc) ?>" alt="<?= htmlspecialchars($p['name'] ?? '') ?>" class="w-full h-32 object-cover rounded-t" onerror="this.onerror=null;this.src='/assets/images/no-image.png'">
+							<div class="p-2 text-center text-sm"><?= htmlspecialchars($p['name'] ?? '') ?></div>
 						</a>
 						<?php endforeach; ?>
 					</div>
