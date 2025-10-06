@@ -45,34 +45,50 @@ class ProductController extends Controller
             return;
         }
 
-        // load main image if present
+        // load all images for this product (include is_main = 0)
         $img = null;
+        $images = [];
         try {
             $db = (new \App\Core\Database())->getConnection();
-            $stmt = $db->prepare('SELECT url FROM product_images WHERE product_id = :pid AND is_main = 1 LIMIT 1');
+            $stmt = $db->prepare('SELECT id, url, is_main FROM product_images WHERE product_id = :pid ORDER BY is_main DESC, id ASC');
             $stmt->execute([':pid' => $id]);
-            $r = $stmt->fetch(\PDO::FETCH_ASSOC);
-            if ($r && !empty($r['url'])) {
-                $img = $r['url'];
-                // normalize relative -> absolute if needed (ProductModel already handles join for lists)
-                if (strpos($img, '/') === 0) {
-                    // try to build full URL using DB_HOST from config
-                    if (function_exists('env')) {
-                        $dbHost = env('DB_HOST');
-                    } else {
-                        $cfgPath = __DIR__ . '/../../config/config.php';
-                        $cfg = file_exists($cfgPath) ? require $cfgPath : [];
-                        $dbHost = $cfg['database']['host'] ?? null;
-                    }
-                    if ($dbHost) {
-                        $img = 'http://' . $dbHost . ':8000' . $img;
-                    }
-                }
+            $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            foreach ($rows as $r) {
+                if (!empty($r['url'])) $images[] = $r;
             }
         } catch (\Exception $e) {
-            // ignore image load errors
+            // ignore
         }
 
-            $this->render('products/show_product', ['product' => $product, 'image' => $img]);
+        // normalize image urls (relative -> absolute using DB_HOST if available)
+        $dbHost = null;
+        if (function_exists('env')) $dbHost = env('DB_HOST');
+        if (!$dbHost) {
+            $cfgPath = __DIR__ . '/../../config/config.php';
+            if (file_exists($cfgPath)) {
+                $cfg = require $cfgPath;
+                $dbHost = $cfg['database']['host'] ?? null;
+            }
+        }
+        foreach ($images as &$im) {
+            $u = trim($im['url']);
+            $u = str_replace('\\/', '/', $u);
+            $u = trim($u, "'\" \t\n\r\0\x0B");
+            if ($u !== '') {
+                if (preg_match('#^/#', $u) && $dbHost) {
+                    $im['url'] = 'http://' . $dbHost . ':8000' . $u;
+                } elseif (preg_match('#^https?://#i', $u)) {
+                    $im['url'] = $u;
+                } else {
+                    $im['url'] = $u;
+                }
+            } else {
+                $im['url'] = null;
+            }
+        }
+
+        if (!empty($images)) $img = $images[0]['url'];
+
+        $this->render('products/show_product', ['product' => $product, 'image' => $img, 'images' => $images]);
     }
 }

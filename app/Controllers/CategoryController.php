@@ -34,7 +34,7 @@ class CategoryController extends Controller
     $category = null;
     $products = [];
     $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
-    $perPage = 24; // 6 cols * 4 rows
+    $perPage = 16; // 4 cols * 4 rows
 
         // load all categories for the category nav
         $categories = $this->categoryModel->getAllCategories();
