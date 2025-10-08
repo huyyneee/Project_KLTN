@@ -1,11 +1,59 @@
-
 <?php
+namespace App\Core;
+
+use App\Core\Database;
+use PDO;
+
 class Model {
-    protected $db; protected $table;
-    public function __construct() { $this->db = (new Database())->getConnection(); }
-    public function findAll() { $stmt = $this->db->query("SELECT * FROM {$this->table}"); return $stmt->fetchAll(PDO::FETCH_ASSOC); }
-    public function find($id) { $stmt = $this->db->prepare("SELECT * FROM {$this->table} WHERE id=:id LIMIT 1"); $stmt->execute([':id'=>$id]); return $stmt->fetch(PDO::FETCH_ASSOC); }
-    public function create($data) { /* build INSERT ... */ }
-    public function update($id, $data) { /* build UPDATE ... */ }
-    public function delete($id) { /* build DELETE ... */ }
+    protected $db;
+    protected $table;
+    protected $primaryKey = 'id';
+    protected $fillable = [];
+
+    public function __construct() {
+        $this->db = (new Database())->getConnection();
+    }
+
+    public function findAll() {
+        $stmt = $this->db->query("SELECT * FROM {$this->table}");
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function find($id) {
+        $stmt = $this->db->prepare("SELECT * FROM {$this->table} WHERE {$this->primaryKey}=:id LIMIT 1");
+        $stmt->execute([':id'=>$id]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function create($data) {
+        $fields = array_intersect(array_keys($data), $this->fillable);
+        $columns = implode(',', $fields);
+        $placeholders = implode(',', array_map(fn($f) => ':' . $f, $fields));
+        $sql = "INSERT INTO {$this->table} ($columns) VALUES ($placeholders)";
+        $stmt = $this->db->prepare($sql);
+        $params = [];
+        foreach ($fields as $field) {
+            $params[':' . $field] = $data[$field];
+        }
+        $stmt->execute($params);
+        return $this->db->lastInsertId();
+    }
+
+    public function update($id, $data) {
+        $fields = array_intersect(array_keys($data), $this->fillable);
+        $set = implode(',', array_map(fn($f) => "$f=:$f", $fields));
+        $sql = "UPDATE {$this->table} SET $set WHERE {$this->primaryKey}=:id";
+        $stmt = $this->db->prepare($sql);
+        $params = [':id' => $id];
+        foreach ($fields as $field) {
+            $params[':' . $field] = $data[$field];
+        }
+        return $stmt->execute($params);
+    }
+
+    public function delete($id) {
+        $sql = "DELETE FROM {$this->table} WHERE {$this->primaryKey}=:id";
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute([':id' => $id]);
+    }
 }

@@ -1,5 +1,0 @@
--thiết kế giao diện trang chủ bảo gồm:
-+ banner: hiện các hình ảnh sản phẩm, 5 giây sẽ lướt qua tự động,khi click vào hình ảnh sẽ dẫn đến danh mục sản phẩm tương ứng mà tôi cung cấp.2 góc bên trái và bên phải có mũi tên để next qua hoặc trở lại
-+ phía dưới banner là các danh mục sản phẩm có trong phần "danh mục" ở trên header,các sản phẩm ở trong từng danh mục sẽ tự động lướt qua bên trái.Nếu đưa chuột vào sẽ đứng lại.các sản phẩm trong danh mục này sẽ lướt qua đồng nhất với nhau.
--gắn header và footer vào
--cung cấp cho tôi hướng dẫn để thêm hình ảnh vào các vị trí sản phẩm và banner

@@ -1,6 +1,10 @@
 <?php
-class AboutController {
+namespace App\Controllers;
+
+use App\Core\Controller;
+
+class AboutController extends Controller {
     public function index() {
-        include __DIR__ . '/../Views/about.php';
+        $this->render('about');
     }
 }

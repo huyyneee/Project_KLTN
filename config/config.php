@@ -1,9 +1,9 @@
 <?php
 return [
     'database' => [
-        'host' => '127.0.0.1',
-        'db_name' => 'your_db',
-        'username' => 'user',
-        'password' => 'pass',
+        'host' => '160.30.160.22',
+        'db_name' => 'hasaki',
+        'username' => 'root',
+        'password' => 'n3a85pGmBP,h',
     ],
 ];
