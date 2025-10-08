@@ -23,7 +23,9 @@ class RegisterController extends Controller
     public function store()
     {
         // basic server-side validation
-        session_start();
+        if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
+            session_start();
+        }
         $email = isset($_POST['email']) ? trim($_POST['email']) : '';
         $password = isset($_POST['password']) ? $_POST['password'] : '';
     $full_name = isset($_POST['full_name']) ? trim($_POST['full_name']) : '';
@@ -231,7 +233,9 @@ class RegisterController extends Controller
     // API endpoint: send verification code to email (AJAX)
     public function sendCode()
     {
-        session_start();
+        if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
+            session_start();
+        }
         $email = isset($_POST['email']) ? trim($_POST['email']) : '';
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
             http_response_code(400);

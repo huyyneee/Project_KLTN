@@ -92,7 +92,14 @@
         var pw = form.querySelector('input[name="password"]').value;
         if (!id || !pw) { showDialog('Vui lòng nhập đầy đủ thông tin'); return; }
 
-        fetch('/account/login', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'identity=' + encodeURIComponent(id) + '&password=' + encodeURIComponent(pw) })
+        // preserve return query param when present so server can redirect back
+        var search = '';
+        try {
+            var qp = new URLSearchParams(window.location.search);
+            if (qp.has('return')) search = '?return=' + encodeURIComponent(qp.get('return'));
+        } catch (e) { search = ''; }
+
+        fetch('/account/login' + search, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'identity=' + encodeURIComponent(id) + '&password=' + encodeURIComponent(pw) })
         .then(function(r){ return r.json(); })
         .then(function(js){
             if (!js) { showDialog('Lỗi server'); return; }

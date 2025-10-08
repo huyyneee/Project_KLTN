@@ -146,19 +146,7 @@
                     $specs = array_filter($specs, function($v){ return trim((string)$v) !== ''; });
                 ?>
 
-                <?php if (!empty($specs)): ?>
-                    <div id="section-specs" style="margin-top:18px; background:#fff; border-radius:12px; box-shadow:0 6px 20px rgba(16,24,40,0.06); padding:18px;">
-                        <h3 style="margin:0 0 12px; font-size:16px;">Thông số sản phẩm</h3>
-                        <table style="width:100%; border-collapse:collapse;">
-                            <?php foreach ($specs as $label => $value): ?>
-                                <tr style="border-top:1px solid #f0f0f0;">
-                                    <td style="padding:12px 16px; width:40%; background:#fafafa; vertical-align:top; font-size:14px; color:#333;"><strong><?= htmlspecialchars($label) ?></strong></td>
-                                    <td style="padding:12px 16px; vertical-align:top; font-size:14px; color:#555;"><?= htmlspecialchars($value) ?></td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </table>
-                    </div>
-                <?php endif; ?>
+                <!-- specs moved to full-width below -->
 
                 <?php
                     // try to find ingredients from common fields or specifications
@@ -197,24 +185,7 @@
                     }
                 ?>
 
-                <?php if (!empty($ingredients_raw)): ?>
-                    <div id="section-ingredients" style="margin-top:18px; background:#fff; border-radius:12px; box-shadow:0 6px 20px rgba(16,24,40,0.06); padding:18px;">
-                        <h3 style="margin:0 0 8px; font-size:16px;">Thành phần sản phẩm</h3>
-                        <div style="margin-top:8px; font-weight:600;">1. <?= htmlspecialchars($product['name'] ?? '') ?></div>
-
-                        <?php if (!empty($mainIngredients)): ?>
-                            <div style="margin-top:10px; font-weight:600;">Thành phần chính:</div>
-                            <ul style="margin:6px 0 12px 20px; color:#333;">
-                                <?php foreach ($mainIngredients as $mi): ?>
-                                    <li><?= htmlspecialchars($mi) ?></li>
-                                <?php endforeach; ?>
-                            </ul>
-                        <?php endif; ?>
-
-                        <div style="font-weight:600; margin-top:6px;">Thành phần đầy đủ:</div>
-                        <p style="margin-top:8px; color:#444; line-height:1.6;"><?= htmlspecialchars($fullIngredients) ?></p>
-                    </div>
-                <?php endif; ?>
+                <!-- ingredients moved to full-width below -->
 
             </div>
         </div>
@@ -274,6 +245,45 @@
                 <div style="color:#444; line-height:1.7;">
                     <?= $usage_raw ?>
                 </div>
+            </div>
+        </div>
+    <?php endif; ?>
+
+    <!-- full-width Thông số sản phẩm -->
+    <?php if (!empty($specs)): ?>
+        <div id="section-specs" style="max-width:1100px; margin:18px auto 24px;">
+            <div style="background:#fff; border-radius:12px; padding:18px; box-shadow:0 6px 20px rgba(16,24,40,0.06);">
+                <h3 style="margin:0 0 12px; font-size:16px;">Thông số sản phẩm</h3>
+                <table style="width:100%; border-collapse:collapse;">
+                    <?php foreach ($specs as $label => $value): ?>
+                        <tr style="border-top:1px solid #f0f0f0;">
+                            <td style="padding:12px 16px; width:40%; background:#fafafa; vertical-align:top; font-size:14px; color:#333;"><strong><?= htmlspecialchars($label) ?></strong></td>
+                            <td style="padding:12px 16px; vertical-align:top; font-size:14px; color:#555;"><?= htmlspecialchars($value) ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                </table>
+            </div>
+        </div>
+    <?php endif; ?>
+
+    <!-- full-width Thành phần sản phẩm -->
+    <?php if (!empty($ingredients_raw)): ?>
+        <div id="section-ingredients" style="max-width:1100px; margin:18px auto 36px;">
+            <div style="background:#fff; border-radius:12px; padding:18px; box-shadow:0 6px 20px rgba(16,24,40,0.06);">
+                <h3 style="margin:0 0 8px; font-size:16px;">Thành phần sản phẩm</h3>
+                <div style="margin-top:8px; font-weight:600;">1. <?= htmlspecialchars($product['name'] ?? '') ?></div>
+
+                <?php if (!empty($mainIngredients)): ?>
+                    <div style="margin-top:10px; font-weight:600;">Thành phần chính:</div>
+                    <ul style="margin:6px 0 12px 20px; color:#333;">
+                        <?php foreach ($mainIngredients as $mi): ?>
+                            <li><?= htmlspecialchars($mi) ?></li>
+                        <?php endforeach; ?>
+                    </ul>
+                <?php endif; ?>
+
+                <div style="font-weight:600; margin-top:6px;">Thành phần đầy đủ:</div>
+                <p style="margin-top:8px; color:#444; line-height:1.6;"><?= htmlspecialchars($fullIngredients) ?></p>
             </div>
         </div>
     <?php endif; ?>

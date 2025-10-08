@@ -22,7 +22,9 @@ class LoginController extends Controller
     // POST /account/login
     public function authenticate()
     {
-        session_start();
+        if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
+            session_start();
+        }
         $identity = isset($_POST['identity']) ? trim($_POST['identity']) : '';
         $password = isset($_POST['password']) ? $_POST['password'] : '';
 
@@ -59,16 +61,49 @@ class LoginController extends Controller
             return;
         }
 
-        // login success: set session and return OK
-        $_SESSION['account_id'] = $row['id'];
-        $_SESSION['account_email'] = $row['email'];
+    // login success: set session and return OK
+    $_SESSION['account_id'] = $row['id'];
+    $_SESSION['account_email'] = $row['email'];
+    // also set cookies so users stay logged in for 7 days
+    $expire = time() + 7 * 24 * 60 * 60; // 7 days
+    // store expiry as a separate cookie so server can validate even if client clock changed
+    setcookie('account_id', $row['id'], $expire, '/', '', false, true);
+    setcookie('account_email', $row['email'], $expire, '/', '', false, true);
+    setcookie('account_expires', (string)$expire, $expire, '/', '', false, true);
         // update last_login
         try {
             $u = $db->prepare('UPDATE accounts SET last_login = :ts WHERE id = :id');
             $u->execute([':ts' => date('Y-m-d H:i:s'), ':id' => $row['id']]);
         } catch (\Throwable $e) {}
 
-        echo json_encode(['ok' => true, 'redirect' => '/']);
+        // determine safe return target
+        $return = '/';
+        if (!empty($_GET['return'])) {
+            $r = $_GET['return'];
+            // only allow internal paths
+            if (is_string($r) && strlen($r) > 0 && strpos($r, '/') === 0) {
+                $return = $r;
+            }
+        }
+
+        echo json_encode(['ok' => true, 'redirect' => $return]);
+        return;
+    }
+
+    // GET /account/logout
+    public function logout()
+    {
+    // clear session and cookies, then redirect to home
+    if (session_status() === PHP_SESSION_NONE && !headers_sent()) session_start();
+    // unset session keys
+    unset($_SESSION['account_id']);
+    unset($_SESSION['account_email']);
+    // clear cookies by setting past expiry
+    setcookie('account_id', '', time() - 3600, '/', '', false, true);
+    setcookie('account_email', '', time() - 3600, '/', '', false, true);
+    setcookie('account_expires', '', time() - 3600, '/', '', false, true);
+        // redirect to home
+        header('Location: /');
         return;
     }
 }

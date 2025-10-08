@@ -15,6 +15,7 @@ class CartController extends Controller
 
     public function index()
     {
+        $this->requireAuth();
         $carts = $this->cartModel->findAll();
 
         if (isset($_GET['xhr']) && $_GET['xhr'] == '1') {

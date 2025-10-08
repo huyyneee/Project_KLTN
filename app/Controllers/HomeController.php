@@ -31,8 +31,8 @@ class HomeController extends Controller
 		foreach ($categories as $c) {
 			try {
 				$products = $this->productModel->getProductsByCategory((int)($c['id'] ?? 0));
-				// limit
-				$productsByCategory[$c['id']] = array_slice($products, 0, 12);
+				// load all products for the category (carousel will show 6 at a time)
+				$productsByCategory[$c['id']] = $products;
 			} catch (\Exception $e) {
 				$productsByCategory[$c['id']] = [];
 			}

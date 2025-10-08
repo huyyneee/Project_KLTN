@@ -39,14 +39,15 @@
 					<div class="flex space-x-4 product-carousel" style="will-change: transform;" data-category-id="<?= (int)$catId ?>">
 						<?php foreach ($products as $p): ?>
 						<?php
-								$imgSrc = null;
-								if (!empty($p['image_url'])) {
-									$imgSrc = $p['image_url'];
-								}
+							$imgSrc = null;
+							if (!empty($p['image_url'])) {
+								$imgSrc = $p['image_url'];
+							}
 							?>
-							<img src="<?= htmlspecialchars($imgSrc) ?>" alt="<?= htmlspecialchars($p['name'] ?? '') ?>" class="w-full h-32 object-cover rounded-t" onerror="this.onerror=null;this.src='/assets/images/no-image.png'">
-							<div class="p-2 text-center text-sm"><?= htmlspecialchars($p['name'] ?? '') ?></div>
-						</a>
+							<a href="/san-pham?product=<?= (int)$p['id'] ?>" class="block product-item w-36 flex-shrink-0 bg-white rounded overflow-hidden">
+								<img src="<?= htmlspecialchars($imgSrc) ?>" alt="<?= htmlspecialchars($p['name'] ?? '') ?>" class="w-full h-28 object-cover rounded-t" onerror="this.onerror=null;this.src='/assets/images/no-image.png'">
+								<div class="p-2 text-center text-xs truncate"><?= htmlspecialchars($p['name'] ?? '') ?></div>
+							</a>
 						<?php endforeach; ?>
 					</div>
 					<button class="product-prev absolute left-0 top-1/2 -translate-y-1/2 bg-white/70 hover:bg-white rounded-full p-2 z-10"><svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7"/></svg></button>
@@ -97,25 +98,57 @@ document.addEventListener('DOMContentLoaded', function() {
 
 	// Product carousels (giống banner)
 		document.querySelectorAll('.product-carousel').forEach(function(carousel) {
-			const items = carousel.querySelectorAll('a');
-			let idx = 0;
-			let interval = null;
-			const visibleCount = Math.floor(carousel.parentElement.offsetWidth / (items[0]?.offsetWidth || 180));
-			const maxIdx = items.length - visibleCount >= 0 ? items.length - visibleCount : 0;
-			const show = (i) => {
-				const itemWidth = items[0]?.offsetWidth || 180;
-				carousel.style.transform = `translateX(-${i * (itemWidth + 16)}px)`;
-			};
-			function next() {
-				idx = (idx + 1);
-				if (idx > maxIdx) idx = 0;
-				show(idx);
-			}
-			function prev() {
-				idx = (idx - 1);
-				if (idx < 0) idx = maxIdx;
-				show(idx);
-			}
+						const items = carousel.querySelectorAll('a');
+						let idx = 0;
+						let interval = null;
+						// we want to show exactly 6 items per view
+						const visibleCount = 6;
+						const GAP = 16; // space-x-4 => 16px
+						function computeItemWidth() {
+							const containerWidth = carousel.parentElement.offsetWidth;
+							// subtract gaps between items (visibleCount - 1 gaps)
+							const totalGaps = (visibleCount - 1) * GAP;
+							const w = Math.floor((containerWidth - totalGaps) / visibleCount);
+							return Math.max(80, w); // minimum width fallback
+						}
+
+						function applyItemWidth(w) {
+							items.forEach(function(it){
+								it.style.width = w + 'px';
+								it.style.flex = '0 0 ' + w + 'px';
+								const img = it.querySelector('img');
+								if (img) {
+									img.style.height = Math.round(w * 0.78) + 'px';
+									img.style.objectFit = 'cover';
+								}
+							});
+						}
+
+						function show(i) {
+							const itemWidth = items[0]?.offsetWidth || computeItemWidth();
+							carousel.style.transform = `translateX(-${i * (itemWidth + GAP)}px)`;
+						}
+
+						function recalc() {
+							const w = computeItemWidth();
+							applyItemWidth(w);
+							// ensure idx within bounds
+							const maxIdx = Math.max(items.length - visibleCount, 0);
+							if (idx > maxIdx) idx = maxIdx;
+							show(idx);
+						}
+						function next() {
+							idx = (idx + 1);
+							const maxIdx = Math.max(items.length - visibleCount, 0);
+							if (idx > maxIdx) idx = 0;
+							show(idx);
+						}
+						function prev() {
+							idx = (idx - 1);
+							const maxIdx = Math.max(items.length - visibleCount, 0);
+							if (idx < 0) idx = maxIdx;
+							show(idx);
+						}
 			function startAuto() {
 				if (interval) clearInterval(interval);
 				interval = setInterval(next, 5000);
@@ -127,9 +160,12 @@ document.addEventListener('DOMContentLoaded', function() {
 			carousel.parentElement.querySelector('.product-prev').onclick = prev;
 			carousel.addEventListener('mouseenter', stopAuto);
 			carousel.addEventListener('mouseleave', startAuto);
-			startAuto();
-			// Responsive: reset idx if window resize
-			window.addEventListener('resize', () => show(idx));
+						recalc();
+						startAuto();
+						// Responsive: recompute sizes on resize
+						window.addEventListener('resize', function(){
+							recalc();
+						});
 		});
 });
 </script>

@@ -18,12 +18,14 @@ class ProductModel extends Model
      */
     public function findByCategory(int $categoryId, ?int $limit = null, int $offset = 0): array
     {
-        // include main image (if exists) from product_images where is_main = 1
-        $sql = 'SELECT p.id, p.code, p.name, p.price, p.description, p.category_id, p.created_at, p.updated_at, pi.url AS image_url'
-             . ' FROM ' . $this->table . ' p'
-             . ' LEFT JOIN product_images pi ON pi.product_id = p.id AND pi.is_main = 1'
-             . ' WHERE p.category_id = :cid AND (p.deleted_at IS NULL)'
-             . ' ORDER BY p.id ASC';
+       // include main image (is_main = 1) and also try to grab one non-main image (is_main = 0) preferring the non-main if available
+       $sql = 'SELECT p.id, p.code, p.name, p.price, p.description, p.category_id, p.created_at, p.updated_at, '
+           . 'pi.url AS image_url, '
+           . '(SELECT url FROM product_images pi2 WHERE pi2.product_id = p.id AND pi2.is_main = 0 LIMIT 1) AS alt_image_url '
+           . ' FROM ' . $this->table . ' p'
+           . ' LEFT JOIN product_images pi ON pi.product_id = p.id AND pi.is_main = 1'
+           . ' WHERE p.category_id = :cid AND (p.deleted_at IS NULL)'
+           . ' ORDER BY p.id ASC';
 
         if ($limit !== null) {
             $sql .= ' LIMIT :limit OFFSET :offset';
@@ -52,7 +54,8 @@ class ProductModel extends Model
         }
 
         foreach ($rows as &$r) {
-            $img = trim($r['image_url'] ?? '');
+            // prefer alt_image_url (any non-main image) if present, otherwise fall back to image_url (main image)
+            $img = trim($r['alt_image_url'] ?? $r['image_url'] ?? '');
             $img = str_replace('\\/', '/', $img);
             $img = trim($img, "'\" \t\n\r\0\x0B");
             if ($img !== '') {

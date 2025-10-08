@@ -12,9 +12,11 @@ $routes = [
     '/login' => ['controller' => 'LoginController', 'method' => 'index'],
     '/register' => ['controller' => 'RegisterController', 'method' => 'index'],
     '/account/register' => ['controller' => 'RegisterController', 'method' => 'store'],
+    '/account' => ['controller' => 'AccountController', 'method' => 'index'],
     '/account/send-code' => ['controller' => 'RegisterController', 'method' => 'sendCode'],
     '/account/check-email' => ['controller' => 'RegisterController', 'method' => 'checkEmail'],
     '/account/login' => ['controller' => 'LoginController', 'method' => 'authenticate'],
+    '/account/logout' => ['controller' => 'LoginController', 'method' => 'logout'],
     '/privacy' => ['controller' => 'PrivacyController', 'method' => 'index'],
     '/terms' => ['controller' => 'TermsController', 'method' => 'index'],
 ];
@@ -52,6 +54,90 @@ function route($uri, $routes)
     // Đã định nghĩa route /test ở mảng $routes phía trên, không cần $router->get
 
 // Xử lý request
-$requestUri = $_SERVER['REQUEST_URI'];
+$requestUri = $_SERVER['REQUEST_URI'] ?? '/';
+
+// --- Centralized auth protection --------------------------------------------------
+// Protect these prefixes: if an unauthenticated user requests a protected URL,
+// redirect them to /login with a return=... parameter.
+$protectedPrefixes = ['/cart', '/checkout', '/orders', '/account'];
+
+// Paths to exclude from protection to avoid redirect loops (login/register endpoints)
+$unprotectedPaths = [
+    '/login',
+    '/register',
+    '/account/login',
+    '/account/register',
+    '/account/send-code',
+    '/account/check-email',
+    '/account/logout'
+];
+
+// Helper: attempt to restore session from remember-me cookies (same validation used elsewhere)
+function _restore_session_from_cookies_if_needed()
+{
+    if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
+        session_start();
+    }
+
+    if (empty($_SESSION['account_id']) && !empty($_COOKIE['account_id']) && !empty($_COOKIE['account_email'])) {
+        $expiresOk = false;
+        if (!empty($_COOKIE['account_expires']) && ctype_digit($_COOKIE['account_expires'])) {
+            $expiresTs = (int) $_COOKIE['account_expires'];
+            if ($expiresTs > time()) $expiresOk = true;
+        }
+
+        if ($expiresOk) {
+            try {
+                $db = (new \App\Core\Database())->getConnection();
+                $stmt = $db->prepare('SELECT id, email, status FROM accounts WHERE id = :id LIMIT 1');
+                $stmt->execute([':id' => $_COOKIE['account_id']]);
+                $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+                if ($row && ($row['email'] === $_COOKIE['account_email']) && ($row['status'] ?? 'active') === 'active') {
+                    $_SESSION['account_id'] = $row['id'];
+                    $_SESSION['account_email'] = $row['email'];
+                }
+            } catch (\Throwable $e) {
+                // ignore errors and leave session empty
+            }
+        } else {
+            // clear expired cookies
+            setcookie('account_id', '', time() - 3600, '/', '', false, true);
+            setcookie('account_email', '', time() - 3600, '/', '', false, true);
+            setcookie('account_expires', '', time() - 3600, '/', '', false, true);
+        }
+    }
+}
+
+// Normalize path
+$path = preg_replace('#^/index\\.php#', '', $requestUri);
+$path = $path === '' ? '/' : $path;
+$path = parse_url($path, PHP_URL_PATH);
+
+// Try to restore session once from cookies
+_restore_session_from_cookies_if_needed();
+
+foreach ($protectedPrefixes as $prefix) {
+    if ($path === $prefix || strpos($path, $prefix . '/') === 0) {
+        // allow explicit unprotected paths
+        if (in_array($path, $unprotectedPaths, true)) {
+            break;
+        }
+
+        if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
+            session_start();
+        }
+
+        if (empty($_SESSION['account_id'])) {
+            $return = $requestUri;
+            if ($return === '' || strpos($return, '/') !== 0) {
+                $return = '/';
+            }
+            header('Location: /login?return=' . urlencode($return));
+            exit();
+        }
+        break;
+    }
+}
+
 route($requestUri, $routes);
 

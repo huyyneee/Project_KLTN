@@ -15,6 +15,7 @@ class OrderController extends Controller
 
     public function index()
     {
+        $this->requireAuth();
         $orders = $this->orderModel->findAll();
 
         if (isset($_GET['xhr']) && $_GET['xhr'] == '1') {
