@@ -17,16 +17,20 @@ class AccountController extends Controller
 
     public function index()
     {
-        // protect this page
         $this->requireAuth();
 
         $accountId = $_SESSION['account_id'] ?? null;
         $account = null;
         $user = null;
+        $addresses = [];
         if ($accountId) {
             $account = $this->accountModel->find($accountId);
             $userModel = new UserModel();
             $user = $userModel->findByAccountId($accountId);
+            if ($user && !empty($user['id'])) {
+                $addrModel = new AddressModel();
+                $addresses = $addrModel->findByUserId((int)$user['id']);
+            }
         }
 
         if (isset($_GET['xhr']) && $_GET['xhr'] == '1') {
@@ -35,7 +39,12 @@ class AccountController extends Controller
             return;
         }
 
-        $this->render('account/index', ['account' => $account, 'user' => $user]);
+        $this->render('account/index', [
+            'account' => $account,
+            'user' => $user,
+            'addresses' => $addresses,
+            'hasAddresses' => !empty($addresses)
+        ]);
     }
 
     // Hiển thị form chỉnh sửa thông tin tài khoản
@@ -53,9 +62,6 @@ class AccountController extends Controller
         $this->render('account/edit', ['account' => $account, 'user' => $user]);
     }
 
-    // moved address-related actions to AddressController
-
-
     // Xử lý cập nhật thông tin tài khoản
     public function update()
     {
@@ -68,7 +74,7 @@ class AccountController extends Controller
             exit;
         }
 
-        // Validate input
+        // Kiểm tra dữ liệu đầu vào
         $fullName = trim($_POST['full_name'] ?? '');
         $gender = $_POST['gender'] ?? 'other';
         $birthDay = $_POST['birth_day'] ?? '';
@@ -85,7 +91,6 @@ class AccountController extends Controller
             $errors[] = 'Giới tính không hợp lệ';
         }
 
-        // Process birthday if all components are provided
         $birthday = null;
         if (!empty($birthDay) && !empty($birthMonth) && !empty($birthYear)) {
             if (checkdate((int)$birthMonth, (int)$birthDay, (int)$birthYear)) {
@@ -101,7 +106,7 @@ class AccountController extends Controller
             exit;
         }
 
-        // Update user information
+        // Cập nhật thông tin người dùng
         $userModel = new UserModel();
         $userData = [
             'full_name' => $fullName,

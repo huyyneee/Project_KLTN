@@ -22,8 +22,16 @@ $editingAddress = $editing ?? null;
     <!-- Nội dung chính -->
     <main class="md:col-span-9 bg-white rounded-lg shadow-sm p-4 md:p-6">
       <div class="max-w-3xl mx-auto">
-        <h1 class="text-2xl font-semibold text-gray-800 mb-6">Sổ địa chỉ</h1>
+        <div class="flex items-center justify-between">
+          <h1 class="text-2xl font-semibold text-gray-800 mb-6">Sổ địa chỉ</h1>
+          <div class="flex justify-end mb-4">
+            <?php if (empty($editingAddress)): ?>
+            <button id="addAddressBtn" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors">+ Thêm địa chỉ mới</button>
+            <?php endif; ?>
+          </div>
+        </div>
 
+        <!-- Hiển thị thông báo lỗi -->
         <?php if (isset($_SESSION['errors'])): ?>
         <div class="mb-4 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded">
           <?php foreach ($_SESSION['errors'] as $e): ?>
@@ -48,18 +56,10 @@ $editingAddress = $editing ?? null;
             </svg>
           </div>
           <p class="text-gray-600 mb-6">Bạn chưa có địa chỉ nhận hàng nào</p>
-          <button id="addAddressBtn" class="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 transition-colors">
-            + Thêm địa chỉ mới
-          </button>
         </div>
         <?php endif; ?>
 
         <?php if ($hasAddresses): ?>
-        <div class="flex justify-end mb-4">
-          <?php if (empty($editingAddress)): ?>
-          <button id="addAddressBtn" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors">+ Thêm địa chỉ mới</button>
-          <?php endif; ?>
-        </div>
         <!-- Danh sách địa chỉ -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <?php foreach ($addresses as $addr): ?>
@@ -94,7 +94,8 @@ $editingAddress = $editing ?? null;
 
         <!-- Form thêm/cập nhật địa chỉ -->
         <?php
-          $formVisible = $editingAddress ? true : !$hasAddresses;
+          // Chỉ hiển thị form khi đang chỉnh sửa; thêm mới thì bấm nút mới hiện ra
+          $formVisible = $editingAddress ? true : false;
           $action = $editingAddress ? '/account/address/update' : '/account/address/add';
           $btnText = $editingAddress ? 'Lưu thay đổi' : 'Cập nhật';
         ?>

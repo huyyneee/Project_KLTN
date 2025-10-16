@@ -36,7 +36,7 @@ class AddressController extends Controller
         $this->render('account/address', ['account' => $account, 'user' => $user, 'addresses' => $addresses]);
     }
 
-    // POST /account/address/add
+    // POST address
     public function addAddress()
     {
         $this->requireAuth();
@@ -60,6 +60,7 @@ class AddressController extends Controller
         $ward         = trim($_POST['ward'] ?? '');
         $street       = trim($_POST['address'] ?? '');
 
+        // Kiểm tra dữ liệu đầu vào
         $errors = [];
         if ($receiverName === '') $errors[] = 'Vui lòng nhập tên người nhận';
         if ($phone === '' || !preg_match('/^0[0-9]{8,10}$/', $phone)) $errors[] = 'Số điện thoại không hợp lệ';
@@ -74,9 +75,11 @@ class AddressController extends Controller
             exit;
         }
 
+        // Kiểm tra địa chỉ mặc định
         $existing = $this->addressModel->findByUserId((int)$user['id']);
         $isDefault = empty($existing) ? 1 : 0;
 
+        // Thêm địa chỉ mới
         $now = date('Y-m-d H:i:s');
         $this->addressModel->create([
             'user_id'      => (int)$user['id'],
@@ -98,7 +101,7 @@ class AddressController extends Controller
         exit;
     }
 
-    // GET /account/address/edit?id=123
+    // Hiển thị form chỉnh sửa địa chỉ
     public function editAddress()
     {
         $this->requireAuth();
@@ -132,7 +135,7 @@ class AddressController extends Controller
         ]);
     }
 
-    // POST /account/address/update
+    // Xử lý cập nhật địa chỉ
     public function updateAddress()
     {
         $this->requireAuth();
@@ -177,6 +180,7 @@ class AddressController extends Controller
             exit;
         }
 
+        // Cập nhật địa chỉ
         $now = date('Y-m-d H:i:s');
         $this->addressModel->update($id, [
             'receiver_name' => $receiverName,
@@ -193,7 +197,7 @@ class AddressController extends Controller
         exit;
     }
 
-    // POST /account/address/delete
+    // Xử lý xóa địa chỉ
     public function deleteAddress()
     {
         $this->requireAuth();
@@ -217,6 +221,7 @@ class AddressController extends Controller
             exit;
         }
 
+        // Xóa địa chỉ
         $this->addressModel->delete($id);
         $_SESSION['success'] = 'Đã xóa địa chỉ';
         header('Location: /account/address');

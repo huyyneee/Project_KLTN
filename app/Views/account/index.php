@@ -34,9 +34,39 @@ $userName = $user['full_name'] ?? $account['full_name'] ?? '';
       <section>
         <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-3 space-y-2 sm:space-y-0">
           <h2 class="text-base md:text-lg font-semibold text-gray-800">Số địa chỉ</h2>
-          <a href="/addresses" class="text-xs md:text-sm text-gray-600 hover:underline hover:text-green-800 transition-colors">Quản lý sổ địa chỉ</a>
+          <a href="/account/address" class="text-xs md:text-sm text-gray-600 hover:underline hover:text-green-800 transition-colors">Quản lý sổ địa chỉ</a>
         </div>
-        <p class="text-sm text-gray-600">Bạn chưa có địa chỉ nào được lưu.</p>
+        <p class="text-sm text-gray-600">
+          <?php if ($hasAddresses): ?>
+        <!-- Danh sách địa chỉ -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <?php foreach ($addresses as $addr): ?>
+            <?php
+              $maskedPhone = $addr['phone'] ?? '';
+              if ($maskedPhone !== '' && strlen($maskedPhone) >= 7) {
+                  $maskedPhone = substr($maskedPhone, 0, 3) . '*****' . substr($maskedPhone, -3);
+              }
+              $fullAddress = trim(($addr['street'] ?? '') . ', ' . ($addr['ward'] ?? '') . ', ' . ($addr['district'] ?? '') . ', ' . (($addr['city'] ?? '') ?: ($addr['province'] ?? '')));
+            ?>
+            <div class="border rounded-md p-4 <?php echo ($addr['is_default'] ?? 0) ? 'border-green-500' : 'border-gray-200'; ?>">
+              <div class="flex items-center justify-between mb-2">
+                <div class="font-semibold text-green-800">
+                  <?php echo htmlspecialchars($addr['receiver_name'] ?? ''); ?> - <?php echo htmlspecialchars($maskedPhone); ?>
+                  <?php if (!empty($addr['is_default'])): ?>
+                    <span class="ml-2 text-xs px-2 py-0.5 bg-green-100 text-green-700 rounded">Mặc định</span>
+                  <?php endif; ?>
+                </div>
+                <div class="flex items-center space-x-3">
+                </div>
+              </div>
+              <div class="text-sm text-gray-700"><?php echo htmlspecialchars($fullAddress); ?></div>
+            </div>
+          <?php endforeach; ?>
+        </div>
+        <?php else: ?>
+          <p class="text-sm text-gray-600">Bạn chưa có địa chỉ nào được lưu.</p>
+        <?php endif; ?>
+        </p>
       </section>
     </main>
   </div>
