@@ -13,12 +13,20 @@ $routes = [
     '/register' => ['controller' => 'RegisterController', 'method' => 'index'],
     '/account/register' => ['controller' => 'RegisterController', 'method' => 'store'],
     '/account' => ['controller' => 'AccountController', 'method' => 'index'],
+    '/account/edit' => ['controller' => 'AccountController', 'method' => 'edit'],
     '/account/send-code' => ['controller' => 'RegisterController', 'method' => 'sendCode'],
     '/account/check-email' => ['controller' => 'RegisterController', 'method' => 'checkEmail'],
     '/account/login' => ['controller' => 'LoginController', 'method' => 'authenticate'],
     '/account/logout' => ['controller' => 'LoginController', 'method' => 'logout'],
+    '/account/address' => ['controller' => 'AddressController', 'method' => 'address'],
+    '/account/address/add' => ['controller' => 'AddressController', 'method' => 'addAddress'],
+    '/account/address/edit' => ['controller' => 'AddressController', 'method' => 'editAddress'],
+    '/account/address/update' => ['controller' => 'AddressController', 'method' => 'updateAddress'],
+    '/account/address/delete' => ['controller' => 'AddressController', 'method' => 'deleteAddress'],
+    '/account/update' => ['controller' => 'AccountController', 'method' => 'update'],
     '/privacy' => ['controller' => 'PrivacyController', 'method' => 'index'],
     '/terms' => ['controller' => 'TermsController', 'method' => 'index'],
+    '/addresses' => ['controller' => 'AccountController', 'method' => 'address'],
 ];
 
 function route($uri, $routes)
@@ -66,10 +74,12 @@ $unprotectedPaths = [
     '/login',
     '/register',
     '/account/login',
+    '/account/edit',
     '/account/register',
     '/account/send-code',
     '/account/check-email',
-    '/account/logout'
+    '/account/logout',
+    '/account/address'
 ];
 
 // Helper: attempt to restore session from remember-me cookies (same validation used elsewhere)
