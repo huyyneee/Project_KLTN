@@ -80,3 +80,7 @@ composer.phar
 # Configuration files with sensitive data
 config/database.php
 config/config.local.php
+
+# Upload files - ignore all uploads
+public/uploads/*
+!public/uploads/.gitkeep
