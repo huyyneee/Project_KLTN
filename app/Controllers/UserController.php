@@ -15,6 +15,7 @@ class UserController extends Controller
 
     public function index()
     {
+        $this->requireAuth();
         $users = $this->userModel->findAll();
 
         if (isset($_GET['xhr']) && $_GET['xhr'] == '1') {

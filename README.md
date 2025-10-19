@@ -133,3 +133,87 @@ Nếu bạn muốn, tôi có thể:
 
 Ghi chú: báo cáo này được viết bằng tiếng Việt theo yêu cầu; nếu bạn muốn tiếng Anh hoặc một định dạng khác (ví dụ: changelog chuẩn Conventional Commits), nói tôi sẽ chuyển đổi.
 
+---
+
+## Thiết lập SMTP (PHPMailer + Gmail)
+
+Nếu bạn muốn gửi mail qua Gmail, làm theo các bước sau. Gmail thường chặn việc dùng username/password trực tiếp trừ khi bạn dùng App Password hoặc OAuth2; vì vậy khuyến nghị là tạo App Password và dùng nó ở đây.
+
+1) Cài PHPMailer bằng Composer (từ thư mục gốc project):
+
+```powershell
+composer require phpmailer/phpmailer
+```
+
+2) Cập nhật `config/config.php` SMTP block với địa chỉ Gmail và App Password. Ví dụ (đã có placeholder trong file config):
+
+```php
+'smtp' => [
+    'host' => 'smtp.gmail.com',
+    'port' => 587,
+    'username' => 'your.email@gmail.com',
+    'password' => 'YOUR_GMAIL_APP_PASSWORD_OR_OAUTH_TOKEN',
+    'encryption' => 'tls',
+    'auth' => true
+]
+```
+
+Hướng dẫn tạo App Password:
+- Bật 2-Step Verification trên Google Account của bạn.
+- Truy cập https://myaccount.google.com/apppasswords và tạo App Password cho "Mail" / "Other".
+- Sử dụng mật khẩu 16 ký tự được tạo làm `password` trong `config/config.php`.
+
+3) `app/Helpers.php` đã được cập nhật để sử dụng PHPMailer và sẽ đọc cấu hình từ `config/config.php`.
+
+4) Test gửi mail: mở `http://localhost:8000/test-mail.php` (đã tạo trong thư mục `public`). Điền email nhận và bấm Send. Trang sẽ trả về JSON nói rõ gửi thành công hay không. Nếu PHPMailer trả về true nhưng bạn không nhận được mail, kiểm tra hoạt động bảo mật (security activity) của tài khoản Google và thư mục spam.
+
+Lưu ý bảo mật:
+- Không commit credentials vào git.
+- Nên lưu secrets trong biến môi trường hoặc `.env` và đọc chúng trong `config/config.php`.
+- Với production, cân nhắc dùng nhà cung cấp email chuyên dụng (SendGrid, Mailgun) kèm cấu hình DNS (SPF/DKIM) để tránh mail bị đánh dấu spam.
+
+## Báo cáo công việc ngày 02/10/2025
+
+Tóm tắt nhanh
+- Triển khai trang Đăng Ký tài khoản (frontend + backend) và các chỉnh sửa giao diện liên quan để đồng bộ với form Đăng nhập.
+- Thêm xác thực client và server cơ bản (email, password policy, checkbox đồng ý), captcha hiển thị/đổi ngẫu nhiên, mã xác thực 6 chữ số (demo client-side) và cơ chế hiển thị/đổi mã không làm vỡ layout.
+
+Những việc đã làm (chi tiết)
+- Thêm route `/register` (GET) và `/account/register` (POST) để hiển thị form và xử lý POST.
+- Tạo controller `RegisterController` với `index()` (render form) và `store()` (validate + tạo account).
+- Tạo view `app/Views/register.php` và component `app/Views/components/register_form.php` (giao diện giống form đăng nhập, các trường: email, captcha, verification code, password, full_name, gender, birthday, agree checkbox).
+- Client-side: JS tạo captcha ngẫu nhiên, nút "lấy mã" tạo mã 6 số và cooldown, validate trước submit.
+- Server-side: validate email, password (ít nhất 8 ký tự, chữ hoa/thường/số/ký tự đặc biệt, tối đa 32 ký tự), kiểm tra duplicate email, yêu cầu checkbox đồng ý; password được lưu bằng md5 (theo yêu cầu hiện tại).
+- UI/CSS: thu nhỏ card để nằm sát header, điều chỉnh vị trí nút đóng (X), style captcha nền xanh, sửa layout ô mã xác thực để nhãn nút thay đổi không làm đẩy input.
+
+File đã thêm / sửa (mục tiêu chính)
+- Thêm: `app/Controllers/RegisterController.php` — xử lý render + store đăng ký.
+- Thêm: `app/Views/register.php` — wrapper page (header/footer + component).
+- Thêm: `app/Views/components/register_form.php` — form đăng ký, client JS, captcha, mã xác thực.
+- Sửa: `routes/web.php` — thêm route `/register` và `/account/register`.
+- Sửa: `app/Views/components/login_form.php` — link đăng ký trỏ về `/register`, điều chỉnh vị trí nút đóng.
+- Sửa: `app/Views/register.php` — giảm padding-top để kéo card sát header.
+
+Kiểm tra nhanh (local)
+1. Khởi động dev server (từ thư mục project):
+```powershell
+php -S localhost:8000 -t public public/router.php
+```
+2. Mở: http://localhost:8000/register
+3. Thử các kịch bản:
+ - Refresh trang: captcha phải đổi.
+ - Click "lấy mã": nút chuyển thành countdown và mã hiển thị (alert) — input không bị lệch.
+ - Gửi form với dữ liệu không hợp lệ: client validation ngăn submit và captcha sẽ random lại; server sẽ re-render với captcha mới nếu có lỗi server-side.
+ - Gửi form hợp lệ: account được tạo trong bảng `accounts` (mật khẩu md5), redirect về `/login`.
+
+Ghi chú bảo mật & khuyến nghị
+- Hiện mật khẩu được lưu bằng md5 theo yêu cầu ban đầu — không an toàn cho production. Khuyến nghị dùng `password_hash()` / `password_verify()` để tăng bảo mật.
+- Captcha và verification-code hiện là cơ chế demo (client-side + server chỉ sinh mới khi render). Để an toàn, nên lưu captcha/mã trên server (session hoặc DB) khi gửi và kiểm tra trên server trong `store()`.
+
+Các bước tiếp theo đề xuất
+- Thay md5 bằng `password_hash()` và cập nhật luồng đăng nhập để dùng `password_verify()`.
+- Triển khai gửi mã xác thực thật (email/SMS) và lưu mã kèm expiry trên server để verify.
+- Tinh chỉnh giao diện responsive cho mobile (đổi fixed widths sang % hoặc breakpoints Tailwind).
+
+Nếu bạn muốn, tôi sẽ tiếp tục với một trong các mục trên ngay: chuyển sang `password_hash`, hoặc triển khai verify-code server-side (session + gửi email placeholder). Chọn 1 để mình bắt tay ngay.
+
