@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>CORS Test</title>
+  </head>
+  <body>
+    <h1>CORS Test</h1>
+    <button onclick="testGet()">Test GET</button>
+    <button onclick="testPost()">Test POST</button>
+    <div id="result"></div>
+
+    <script>
+      const API_BASE = "http://localhost:8000/api";
+
+      async function testGet() {
+        try {
+          const response = await fetch(`${API_BASE}/categories`);
+          const data = await response.json();
+          document.getElementById("result").innerHTML =
+            "<h3>GET Result:</h3><pre>" +
+            JSON.stringify(data, null, 2) +
+            "</pre>";
+        } catch (error) {
+          document.getElementById("result").innerHTML =
+            "<h3>GET Error:</h3><pre>" + error.message + "</pre>";
+        }
+      }
+
+      async function testPost() {
+        try {
+          const response = await fetch(`${API_BASE}/categories`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              name: "Test Category from Browser",
+              description: "Test Description from Browser",
+            }),
+          });
+          const data = await response.json();
+          document.getElementById("result").innerHTML =
+            "<h3>POST Result:</h3><pre>" +
+            JSON.stringify(data, null, 2) +
+            "</pre>";
+        } catch (error) {
+          document.getElementById("result").innerHTML =
+            "<h3>POST Error:</h3><pre>" + error.message + "</pre>";
+        }
+      }
+    </script>
+  </body>
+</html>
