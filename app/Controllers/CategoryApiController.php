@@ -5,6 +5,7 @@ require_once __DIR__ . '/ApiController.php';
 require_once __DIR__ . '/../Models/Category.php';
 
 use App\Models\Category;
+use Exception;
 
 class CategoryApiController extends ApiController
 {

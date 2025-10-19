@@ -3,21 +3,21 @@
 require_once __DIR__ . '/app/Core/Database.php';
 
 try {
-    $database = new Database();
-    $conn = $database->getConnection();
+  $database = new Database();
+  $conn = $database->getConnection();
 
-    if (!$conn) {
-        throw new Exception('Failed to connect to database');
-    }
+  if (!$conn) {
+    throw new Exception('Failed to connect to database');
+  }
 
-    echo "Connected to database successfully!\n";
+  echo "Connected to database successfully!\n";
 
-    // Read and execute the SQL schema
-    $sqlFile = __DIR__ . '/hasaki-2.sql';
+  // Read and execute the SQL schema
+  $sqlFile = __DIR__ . '/hasaki-2.sql';
 
-    if (!file_exists($sqlFile)) {
-        // Create the SQL content directly
-        $sqlContent = "
+  if (!file_exists($sqlFile)) {
+    // Create the SQL content directly
+    $sqlContent = "
 CREATE TABLE IF NOT EXISTS `accounts` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
   `email` VARCHAR(100) UNIQUE NOT NULL,
@@ -153,24 +153,24 @@ INSERT IGNORE INTO `categories` (`name`, `description`) VALUES
 ('Sản phẩm khác', 'Các sản phẩm chăm sóc da khác');
         ";
 
-        // Split SQL into individual statements
-        $statements = array_filter(array_map('trim', explode(';', $sqlContent)));
+    // Split SQL into individual statements
+    $statements = array_filter(array_map('trim', explode(';', $sqlContent)));
 
-        foreach ($statements as $statement) {
-            if (!empty($statement)) {
-                try {
-                    $conn->exec($statement);
-                    echo "Executed: " . substr($statement, 0, 50) . "...\n";
-                } catch (PDOException $e) {
-                    echo "Error executing statement: " . $e->getMessage() . "\n";
-                }
-            }
+    foreach ($statements as $statement) {
+      if (!empty($statement)) {
+        try {
+          $conn->exec($statement);
+          echo "Executed: " . substr($statement, 0, 50) . "...\n";
+        } catch (PDOException $e) {
+          echo "Error executing statement: " . $e->getMessage() . "\n";
         }
+      }
     }
+  }
 
-    echo "\nDatabase setup completed successfully!\n";
+  echo "\nDatabase setup completed successfully!\n";
 
 } catch (Exception $e) {
-    echo "Error: " . $e->getMessage() . "\n";
+  echo "Error: " . $e->getMessage() . "\n";
 }
 ?>

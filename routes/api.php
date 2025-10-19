@@ -4,11 +4,7 @@ require_once __DIR__ . '/../app/Controllers/ProductApiController.php';
 require_once __DIR__ . '/../app/Controllers/CategoryApiController.php';
 require_once __DIR__ . '/../app/Controllers/DashboardApiController.php';
 require_once __DIR__ . '/../app/Controllers/ImageUploadController.php';
-
-use App\Controllers\ProductApiController;
-use App\Controllers\CategoryApiController;
-use App\Controllers\DashboardApiController;
-use App\Controllers\ImageUploadController;
+require_once __DIR__ . '/../app/Controllers/UserApiController.php';
 
 // Set CORS headers for all API requests
 header('Access-Control-Allow-Origin: *');
@@ -226,6 +222,52 @@ switch ($path) {
             $controller = new \App\Controllers\ImageUploadController();
             $filename = $matches[1];
             $controller->delete($filename);
+        } else {
+            http_response_code(405);
+            echo json_encode(['error' => 'Method not allowed']);
+        }
+        break;
+
+    // User routes
+    case '/users':
+        $controller = new \App\Controllers\UserApiController();
+        switch ($method) {
+            case 'GET':
+                $controller->index();
+                break;
+            default:
+                http_response_code(405);
+                echo json_encode(['error' => 'Method not allowed']);
+        }
+        break;
+
+    case (preg_match('/^\/users\/(\d+)$/', $path, $matches) ? true : false):
+        $controller = new \App\Controllers\UserApiController();
+        $id = $matches[1];
+        switch ($method) {
+            case 'GET':
+                $controller->show($id);
+                break;
+            default:
+                http_response_code(405);
+                echo json_encode(['error' => 'Method not allowed']);
+        }
+        break;
+
+    case '/users/search':
+        if ($method === 'GET') {
+            $controller = new \App\Controllers\UserApiController();
+            $controller->search();
+        } else {
+            http_response_code(405);
+            echo json_encode(['error' => 'Method not allowed']);
+        }
+        break;
+
+    case '/users/paginated':
+        if ($method === 'GET') {
+            $controller = new \App\Controllers\UserApiController();
+            $controller->paginated();
         } else {
             http_response_code(405);
             echo json_encode(['error' => 'Method not allowed']);

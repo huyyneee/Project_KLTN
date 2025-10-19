@@ -4,7 +4,7 @@ namespace App\Controllers;
 require_once __DIR__ . '/../Core/Controller.php';
 
 use App\Core\Controller;
-
+use Exception;
 class ApiController extends Controller
 {
     protected function setCorsHeaders()

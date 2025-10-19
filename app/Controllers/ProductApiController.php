@@ -9,7 +9,7 @@ require_once __DIR__ . '/../Models/ProductImage.php';
 use App\Models\Product;
 use App\Models\Category;
 use App\Models\ProductImage;
-
+use Exception;
 class ProductApiController extends ApiController
 {
 
