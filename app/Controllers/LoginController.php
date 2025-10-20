@@ -1,8 +1,11 @@
 <?php
+
 namespace App\Controllers;
 
 use App\Core\Controller;
 use App\Models\UserModel;
+use App\Models\CartModel;
+use App\Models\CartItemModel;
 
 class LoginController extends Controller
 {
@@ -25,6 +28,7 @@ class LoginController extends Controller
         if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
             session_start();
         }
+
         $identity = isset($_POST['identity']) ? trim($_POST['identity']) : '';
         $password = isset($_POST['password']) ? $_POST['password'] : '';
 
@@ -36,13 +40,13 @@ class LoginController extends Controller
             return;
         }
 
-        // find account by email or phone (we only have email in accounts table)
+        // find account by email
         $db = (new \App\Core\Database())->getConnection();
         $stmt = $db->prepare('SELECT * FROM accounts WHERE email = :id LIMIT 1');
         $stmt->execute([':id' => $identity]);
         $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+
         if (!$row) {
-            // account not found -> client should show modelok with ĐĂNG KÝ / THOÁT
             echo json_encode(['ok' => false, 'reason' => 'not_found', 'message' => 'ACCOUNT_NOT_FOUND']);
             return;
         }
@@ -54,33 +58,58 @@ class LoginController extends Controller
             return;
         }
 
-        // password check (accounts stored using md5 in register flow)
+        // password check
         $hashed = md5($password);
         if (!hash_equals($row['password'], $hashed)) {
             echo json_encode(['ok' => false, 'reason' => 'bad_password', 'message' => 'please check password']);
             return;
         }
 
-    // login success: set session and return OK
-    $_SESSION['account_id'] = $row['id'];
-    $_SESSION['account_email'] = $row['email'];
-    // also set cookies so users stay logged in for 7 days
-    $expire = time() + 7 * 24 * 60 * 60; // 7 days
-    // store expiry as a separate cookie so server can validate even if client clock changed
-    setcookie('account_id', $row['id'], $expire, '/', '', false, true);
-    setcookie('account_email', $row['email'], $expire, '/', '', false, true);
-    setcookie('account_expires', (string)$expire, $expire, '/', '', false, true);
+        // login success: set session and cookies
+        $_SESSION['account_id'] = $row['id'];
+        $_SESSION['account_email'] = $row['email'];
+        $expire = time() + 7 * 24 * 60 * 60;
+        setcookie('account_id', $row['id'], $expire, '/', '', false, true);
+        setcookie('account_email', $row['email'], $expire, '/', '', false, true);
+        setcookie('account_expires', (string)$expire, $expire, '/', '', false, true);
+
         // update last_login
         try {
             $u = $db->prepare('UPDATE accounts SET last_login = :ts WHERE id = :id');
             $u->execute([':ts' => date('Y-m-d H:i:s'), ':id' => $row['id']]);
-        } catch (\Throwable $e) {}
+        } catch (\Throwable $e) {
+        }
 
-        // determine safe return target
+        // === HANDLE PENDING CART ITEM ===
         $return = '/';
-        if (!empty($_GET['return'])) {
+        if (!empty($_SESSION['cart_pending'])) {
+            $pending = $_SESSION['cart_pending'];
+            unset($_SESSION['cart_pending']);
+
+            $cartModel = new CartModel();
+            $cartItemModel = new CartItemModel();
+
+            // Lấy giỏ hàng hiện tại hoặc tạo mới
+            $cart = $cartModel->getCartByUser($row['id']);
+            $cartId = $cart ? $cart['id'] : $cartModel->createCart($row['id']);
+
+            // Thêm sản phẩm pending vào giỏ
+            $existingItem = $cartItemModel->getItemByCartAndProduct($cartId, $pending['product_id']);
+            if ($existingItem) {
+                $newQuantity = $existingItem['quantity'] + $pending['quantity'];
+                $cartItemModel->updateQuantity($existingItem['id'], $newQuantity);
+            } else {
+                $cartItemModel->addItem(
+                    $cartId,
+                    $pending['product_id'],
+                    $pending['quantity'],
+                    $pending['price']
+                );
+            }
+
+            $return = '/cart';
+        } else if (!empty($_GET['return'])) {
             $r = $_GET['return'];
-            // only allow internal paths
             if (is_string($r) && strlen($r) > 0 && strpos($r, '/') === 0) {
                 $return = $r;
             }
@@ -93,16 +122,12 @@ class LoginController extends Controller
     // GET /account/logout
     public function logout()
     {
-    // clear session and cookies, then redirect to home
-    if (session_status() === PHP_SESSION_NONE && !headers_sent()) session_start();
-    // unset session keys
-    unset($_SESSION['account_id']);
-    unset($_SESSION['account_email']);
-    // clear cookies by setting past expiry
-    setcookie('account_id', '', time() - 3600, '/', '', false, true);
-    setcookie('account_email', '', time() - 3600, '/', '', false, true);
-    setcookie('account_expires', '', time() - 3600, '/', '', false, true);
-        // redirect to home
+        if (session_status() === PHP_SESSION_NONE && !headers_sent()) session_start();
+        unset($_SESSION['account_id']);
+        unset($_SESSION['account_email']);
+        setcookie('account_id', '', time() - 3600, '/', '', false, true);
+        setcookie('account_email', '', time() - 3600, '/', '', false, true);
+        setcookie('account_expires', '', time() - 3600, '/', '', false, true);
         header('Location: /');
         return;
     }

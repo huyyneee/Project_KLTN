@@ -36,8 +36,6 @@ class CartController extends Controller
     // Thêm sản phẩm vào giỏ
     public function add()
     {
-        $this->requireAuthAjax();
-
         $userId    = $_SESSION['account_id'] ?? null;
         $productId = $_POST['product_id'] ?? null;
         $quantity  = isset($_POST['quantity']) ? (int)$_POST['quantity'] : 1;
@@ -46,6 +44,23 @@ class CartController extends Controller
         if (!$productId || $quantity <= 0) {
             http_response_code(400);
             $this->json(['error' => 'Dữ liệu không hợp lệ']);
+            return;
+        }
+
+        // Nếu chưa login, lưu tạm vào session và yêu cầu login
+        if (!$userId) {
+            if (session_status() === PHP_SESSION_NONE) session_start();
+            $_SESSION['cart_pending'] = [
+                'product_id' => $productId,
+                'quantity'   => $quantity,
+                'price'      => $price
+            ];
+
+            $this->json([
+                'login_required' => true,
+                'redirect' => '/login?return=/cart'
+            ]);
+            return;
         }
 
         // Lấy giỏ hàng hiện tại của user hoặc tạo mới
@@ -64,6 +79,7 @@ class CartController extends Controller
 
         $this->json(['success' => true]);
     }
+
 
     // Xoá sản phẩm trong giỏ
     public function remove()
