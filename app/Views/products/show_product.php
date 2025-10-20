@@ -4,11 +4,11 @@
 <?php require_once __DIR__ . '/../layouts/header.php'; ?>
 
 <?php
-    $imagesList = $images ?? [];
-    if (empty($imagesList)) {
-        $imagesList[] = ['id' => 0, 'url' => '/imgs/product/placeholder.svg', 'is_main' => 0];
-    }
-    $mainUrl = $image ?? ($imagesList[0]['url'] ?? '/imgs/product/placeholder.svg');
+$imagesList = $images ?? [];
+if (empty($imagesList)) {
+    $imagesList[] = ['id' => 0, 'url' => '/imgs/product/placeholder.svg', 'is_main' => 0];
+}
+$mainUrl = $image ?? ($imagesList[0]['url'] ?? '/imgs/product/placeholder.svg');
 ?>
 
 <div class="max-w-6xl mx-auto p-6">
@@ -17,7 +17,7 @@
             <!-- thumbnails column -->
             <div style="overflow:auto; max-height:520px; padding-top:1px;">
                 <?php foreach ($imagesList as $i => $thumb): ?>
-                    <img data-full="<?= htmlspecialchars($thumb['url']) ?>" class="thumb-img" src="<?= htmlspecialchars($thumb['url']) ?>" alt="thumb" width="72" height="72" style="display:block; margin-bottom:14px; border:2px solid #fff; border-radius:6px; box-shadow:0 1px 3px rgba(0,0,0,0.08); cursor:pointer; <?= $i===0 ? 'border-color:#326E51; box-shadow:0 0 0 3px rgba(50,110,81,0.08);' : '' ?>">
+                    <img data-full="<?= htmlspecialchars($thumb['url']) ?>" class="thumb-img" src="<?= htmlspecialchars($thumb['url']) ?>" alt="thumb" width="72" height="72" style="display:block; margin-bottom:14px; border:2px solid #fff; border-radius:6px; box-shadow:0 1px 3px rgba(0,0,0,0.08); cursor:pointer; <?= $i === 0 ? 'border-color:#326E51; box-shadow:0 0 0 3px rgba(50,110,81,0.08);' : '' ?>">
                 <?php endforeach; ?>
             </div>
 
@@ -25,7 +25,7 @@
             <div style="display:flex; align-items:center; justify-content:center;">
                 <div style="position:relative; width:450px; height:450px;">
                     <!-- small badges over image (NowFree + brand) -->
-                    
+
                     <img id="main-image" src="<?= htmlspecialchars($mainUrl) ?>" alt="<?= htmlspecialchars($product['name']) ?>" style="width:480px; height:480px; object-fit:contain; border-radius:8px; background:#fff;">
                     <div id="zoomed" style="display:none; position:absolute; top:0; right:-500px; width:480px; height:480px; border:3px solid #999; background-size:1600px 1600px; border-radius:8px; z-index:200; background-repeat:no-repeat;"></div>
                 </div>
@@ -40,11 +40,13 @@
                 <h1 style="font-size:20px; margin:4px 0 8px; color:#111; line-height:1.2;"><?= htmlspecialchars($product['name'] ?? '') ?></h1>
 
                 <div style="font-weight:bold; color:#ff6600; font-size:20px; margin-bottom:6px;"><?= isset($product['price']) ? number_format($product['price']) . ' ₫' : '' ?></div>
-                <div style="color:#777; font-size:13px; margin-bottom:20px;"><h2>(Đã bao gồm VAT)</h2></div>
+                <div style="color:#777; font-size:13px; margin-bottom:20px;">
+                    <h2>(Đã bao gồm VAT)</h2>
+                </div>
 
                 <!-- quantity (compact) -->
                 <div style="margin-bottom:35px;">
-                    
+
                     <div style="display:flex; align-items:center; gap:14px;">
                         <a style="font-size:13px; color:#444; margin-bottom:6px;">Số lượng:</a>
                         <div style="display:flex; align-items:center; gap:8px;">
@@ -59,17 +61,20 @@
                     <img src="/assets/images/logonowfree.png" alt="NowFree" style="height:18px; margin-top:2px;">
                 </div>
                 <div style="font-size:15px; color:#444;margin-bottom:20px">
-                        <div style="color:#ff7a00; font-weight:600;">Giao Nhanh Miễn Phí 2H</div>
-                        <div style="color:#777;">Bạn muốn nhận hàng trước <strong>10h</strong> ngày mai. Đặt hàng trước <strong>24h</strong></div>
+                    <div style="color:#ff7a00; font-weight:600;">Giao Nhanh Miễn Phí 2H</div>
+                    <div style="color:#777;">Bạn muốn nhận hàng trước <strong>10h</strong> ngày mai. Đặt hàng trước <strong>24h</strong></div>
                 </div>
 
                 <div style="margin-bottom:12px;">
                     <div style="display:flex; gap:12px;">
-                        <button id="add-to-cart" type="button" style="display:inline-flex; align-items:center; gap:8px; background:#ff7a00;color:#fff;border:none;padding:10px 18px;border-radius:6px;cursor:pointer; box-shadow:0 2px 0 rgba(0,0,0,0.04);">
+                        <button id="add-to-cart" type="button"
+                            data-product-id="<?= $product['id'] ?>"
+                            data-product-price="<?= $product['price'] ?>"
+                            style="display:inline-flex; align-items:center; gap:8px; background:#ff7a00;color:#fff;border:none;padding:10px 18px;border-radius:6px;cursor:pointer; box-shadow:0 2px 0 rgba(0,0,0,0.04);">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                                <path d="M7 4h-2l-1 2" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-                                <path d="M10 20a1 1 0 100-2 1 1 0 000 2zM18 20a1 1 0 100-2 1 1 0 000 2z" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-                                <path d="M3 6h2l1.5 9h11l1.5-6.5H8" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M7 4h-2l-1 2" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+                                <path d="M10 20a1 1 0 100-2 1 1 0 000 2zM18 20a1 1 0 100-2 1 1 0 000 2z" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+                                <path d="M3 6h2l1.5 9h11l1.5-6.5H8" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
                             </svg>
                             GIỎ HÀNG
                         </button>
@@ -81,108 +86,115 @@
 
                 <!-- product specifications -->
                 <?php
-                    // build a specs array from common fields and optional `specifications` blob
-                    $specs = [];
-                    $specs['Barcode'] = $product['barcode'] ?? $product['code'] ?? '';
-                    $specs['Thương Hiệu'] = $product['brand'] ?? $product['manufacturer'] ?? $product['brand_name'] ?? '';
-                    $specs['Xuất xứ thương hiệu'] = $product['brand_origin'] ?? $product['origin'] ?? '';
-                    $specs['Nơi sản xuất'] = $product['made_in'] ?? $product['place_manufacture'] ?? '';
-                    $specs['Loại da'] = $product['skin_type'] ?? '';
-                    $specs['Dung Tích'] = $product['volume'] ?? $product['size'] ?? $product['capacity'] ?? '';
+                // build a specs array from common fields and optional `specifications` blob
+                $specs = [];
+                $specs['Barcode'] = $product['barcode'] ?? $product['code'] ?? '';
+                $specs['Thương Hiệu'] = $product['brand'] ?? $product['manufacturer'] ?? $product['brand_name'] ?? '';
+                $specs['Xuất xứ thương hiệu'] = $product['brand_origin'] ?? $product['origin'] ?? '';
+                $specs['Nơi sản xuất'] = $product['made_in'] ?? $product['place_manufacture'] ?? '';
+                $specs['Loại da'] = $product['skin_type'] ?? '';
+                $specs['Dung Tích'] = $product['volume'] ?? $product['size'] ?? $product['capacity'] ?? '';
 
-                    // try to merge structured specifications if present
-                    if (!empty($product['specifications'])) {
-                        $raw = trim($product['specifications']);
-                        // helper to map common keys to Vietnamese labels
-                        $mapKey = function($k){
-                            $k = trim((string)$k);
-                            $m = [
-                                'brand' => 'Thương Hiệu',
-                                'manufacturer' => 'Thương Hiệu',
-                                'brand_name' => 'Thương Hiệu',
-                                'origin' => 'Xuất xứ thương hiệu',
-                                'brand_origin' => 'Xuất xứ thương hiệu',
-                                'made_in' => 'Nơi sản xuất',
-                                'place_manufacture' => 'Nơi sản xuất',
-                                'volume' => 'Dung Tích',
-                                'size' => 'Dung Tích',
-                                'capacity' => 'Dung Tích',
-                                'skin_type' => 'Loại da',
-                                'barcode' => 'Barcode',
-                            ];
-                            $lk = strtolower($k);
-                            if (isset($m[$lk])) return $m[$lk];
-                            // fallback: replace _ and - with space and uppercase words
-                            $label = str_replace(['_', '-'], ' ', $k);
-                            $label = trim($label);
-                            return mb_convert_case($label, MB_CASE_TITLE, 'UTF-8');
-                        };
+                // try to merge structured specifications if present
+                if (!empty($product['specifications'])) {
+                    $raw = trim($product['specifications']);
+                    // helper to map common keys to Vietnamese labels
+                    $mapKey = function ($k) {
+                        $k = trim((string)$k);
+                        $m = [
+                            'brand' => 'Thương Hiệu',
+                            'manufacturer' => 'Thương Hiệu',
+                            'brand_name' => 'Thương Hiệu',
+                            'origin' => 'Xuất xứ thương hiệu',
+                            'brand_origin' => 'Xuất xứ thương hiệu',
+                            'made_in' => 'Nơi sản xuất',
+                            'place_manufacture' => 'Nơi sản xuất',
+                            'volume' => 'Dung Tích',
+                            'size' => 'Dung Tích',
+                            'capacity' => 'Dung Tích',
+                            'skin_type' => 'Loại da',
+                            'barcode' => 'Barcode',
+                        ];
+                        $lk = strtolower($k);
+                        if (isset($m[$lk])) return $m[$lk];
+                        // fallback: replace _ and - with space and uppercase words
+                        $label = str_replace(['_', '-'], ' ', $k);
+                        $label = trim($label);
+                        return mb_convert_case($label, MB_CASE_TITLE, 'UTF-8');
+                    };
 
-                        $decoded = @json_decode($raw, true);
-                        if (is_array($decoded)) {
-                            // merge decoded values (override defaults)
-                            foreach ($decoded as $k => $v) {
-                                // skip numeric-indexed arrays
-                                if (is_int($k)) continue;
-                                $label = $mapKey($k);
-                                $specs[$label] = is_array($v) ? implode(', ', $v) : (string)$v;
-                            }
-                        } else {
-                            // try parse lines like "Key: value"
-                            $lines = preg_split('/\r?\n/', $raw);
-                            foreach ($lines as $line) {
-                                if (strpos($line, ':') !== false) {
-                                    list($k, $v) = array_map('trim', explode(':', $line, 2));
-                                    if ($k !== '') {
-                                        $label = $mapKey($k);
-                                        $specs[$label] = $v;
-                                    }
+                    $decoded = @json_decode($raw, true);
+                    if (is_array($decoded)) {
+                        // merge decoded values (override defaults)
+                        foreach ($decoded as $k => $v) {
+                            // skip numeric-indexed arrays
+                            if (is_int($k)) continue;
+                            $label = $mapKey($k);
+                            $specs[$label] = is_array($v) ? implode(', ', $v) : (string)$v;
+                        }
+                    } else {
+                        // try parse lines like "Key: value"
+                        $lines = preg_split('/\r?\n/', $raw);
+                        foreach ($lines as $line) {
+                            if (strpos($line, ':') !== false) {
+                                list($k, $v) = array_map('trim', explode(':', $line, 2));
+                                if ($k !== '') {
+                                    $label = $mapKey($k);
+                                    $specs[$label] = $v;
                                 }
                             }
                         }
                     }
+                }
 
-                    // filter out empty values
-                    $specs = array_filter($specs, function($v){ return trim((string)$v) !== ''; });
+                // filter out empty values
+                $specs = array_filter($specs, function ($v) {
+                    return trim((string)$v) !== '';
+                });
                 ?>
 
                 <!-- specs moved to full-width below -->
 
                 <?php
-                    // try to find ingredients from common fields or specifications
-                    $ingredients_raw = null;
-                    if (!empty($product['ingredients'])) $ingredients_raw = $product['ingredients'];
-                    elseif (!empty($product['composition'])) $ingredients_raw = $product['composition'];
-                    elseif (!empty($product['ingredients_text'])) $ingredients_raw = $product['ingredients_text'];
-                    else {
-                        // check decoded specifications for an ingredients key
-                        if (!empty($product['specifications'])) {
-                            $try = @json_decode($product['specifications'], true);
-                            if (is_array($try)) {
-                                foreach (['ingredients','ingredient','thanh_phan','thành_phần','thànhphần'] as $k) {
-                                    if (!empty($try[$k])) { $ingredients_raw = $try[$k]; break; }
+                // try to find ingredients from common fields or specifications
+                $ingredients_raw = null;
+                if (!empty($product['ingredients'])) $ingredients_raw = $product['ingredients'];
+                elseif (!empty($product['composition'])) $ingredients_raw = $product['composition'];
+                elseif (!empty($product['ingredients_text'])) $ingredients_raw = $product['ingredients_text'];
+                else {
+                    // check decoded specifications for an ingredients key
+                    if (!empty($product['specifications'])) {
+                        $try = @json_decode($product['specifications'], true);
+                        if (is_array($try)) {
+                            foreach (['ingredients', 'ingredient', 'thanh_phan', 'thành_phần', 'thànhphần'] as $k) {
+                                if (!empty($try[$k])) {
+                                    $ingredients_raw = $try[$k];
+                                    break;
                                 }
                             }
                         }
                     }
+                }
 
-                    // normalize and split into items
-                    $mainIngredients = [];
-                    $fullIngredients = '';
-                    if ($ingredients_raw) {
-                        // remove HTML tags
-                        $txt = strip_tags($ingredients_raw);
-                        // normalize separators: replace bullets and ; with comma
-                        $txt = str_replace(["•", "-", ";", "\r\n", "\n"], [",", ",", ",", ",", ","], $txt);
-                        // collapse multiple commas
-                        $txt = preg_replace('/,+/', ',', $txt);
-                        // split by comma
-                        $parts = array_map('trim', explode(',', $txt));
-                        $parts = array_filter($parts, function($p){ return $p !== ''; });
-                        // first 3 as main ingredients
-                        $mainIngredients = array_slice($parts, 0, 3);
-                        $fullIngredients = implode(', ', $parts);
-                    }
+                // normalize and split into items
+                $mainIngredients = [];
+                $fullIngredients = '';
+                if ($ingredients_raw) {
+                    // remove HTML tags
+                    $txt = strip_tags($ingredients_raw);
+                    // normalize separators: replace bullets and ; with comma
+                    $txt = str_replace(["•", "-", ";", "\r\n", "\n"], [",", ",", ",", ",", ","], $txt);
+                    // collapse multiple commas
+                    $txt = preg_replace('/,+/', ',', $txt);
+                    // split by comma
+                    $parts = array_map('trim', explode(',', $txt));
+                    $parts = array_filter($parts, function ($p) {
+                        return $p !== '';
+                    });
+                    // first 3 as main ingredients
+                    $mainIngredients = array_slice($parts, 0, 3);
+                    $fullIngredients = implode(', ', $parts);
+                }
                 ?>
 
                 <!-- ingredients moved to full-width below -->
@@ -215,27 +227,30 @@
     </div>
 
     <?php
-        // find usage instructions from product fields or specifications
-        $usage_raw = '';
-        if (!empty($product['usage'])) $usage_raw = $product['usage'];
-        elseif (!empty($product['how_to_use'])) $usage_raw = $product['how_to_use'];
-        elseif (!empty($product['usage_instructions'])) $usage_raw = $product['usage_instructions'];
-        else {
-            if (!empty($product['specifications'])) {
-                $sdec = @json_decode($product['specifications'], true);
-                if (is_array($sdec)) {
-                    foreach (['usage','how_to_use','usage_instructions','huong_dan_su_dung','hướng_dẫn'] as $k) {
-                        if (!empty($sdec[$k])) { $usage_raw = $sdec[$k]; break; }
+    // find usage instructions from product fields or specifications
+    $usage_raw = '';
+    if (!empty($product['usage'])) $usage_raw = $product['usage'];
+    elseif (!empty($product['how_to_use'])) $usage_raw = $product['how_to_use'];
+    elseif (!empty($product['usage_instructions'])) $usage_raw = $product['usage_instructions'];
+    else {
+        if (!empty($product['specifications'])) {
+            $sdec = @json_decode($product['specifications'], true);
+            if (is_array($sdec)) {
+                foreach (['usage', 'how_to_use', 'usage_instructions', 'huong_dan_su_dung', 'hướng_dẫn'] as $k) {
+                    if (!empty($sdec[$k])) {
+                        $usage_raw = $sdec[$k];
+                        break;
                     }
-                } else {
-                    // try to parse lines that start with 'Hướng' or contain 'sử dụng'
-                    $txt = trim($product['specifications']);
-                    if (stripos($txt, 'Hướng dẫn') !== false || stripos($txt, 'sử dụng') !== false) {
-                        $usage_raw = $txt;
-                    }
+                }
+            } else {
+                // try to parse lines that start with 'Hướng' or contain 'sử dụng'
+                $txt = trim($product['specifications']);
+                if (stripos($txt, 'Hướng dẫn') !== false || stripos($txt, 'sử dụng') !== false) {
+                    $usage_raw = $txt;
                 }
             }
         }
+    }
     ?>
 
     <?php if (!empty(trim($usage_raw))): ?>
@@ -289,7 +304,7 @@
     <?php endif; ?>
 
     <script>
-        (function(){
+        (function() {
             const thumbs = document.querySelectorAll('.thumb-img');
             const main = document.getElementById('main-image');
             const zoomed = document.getElementById('zoomed');
@@ -301,17 +316,17 @@
             const btnDecr = document.getElementById('qty-decr');
             const btnIncr = document.getElementById('qty-incr');
 
-            function normalizeQty(v){
+            function normalizeQty(v) {
                 v = parseInt(v, 10);
                 if (isNaN(v) || v < 1) return 1;
                 return v;
             }
 
-            function updateQtyUI(v){
+            function updateQtyUI(v) {
                 const n = normalizeQty(v);
                 qtyInput.value = n;
-                if (n <= 1){
-                    btnDecr.setAttribute('disabled','disabled');
+                if (n <= 1) {
+                    btnDecr.setAttribute('disabled', 'disabled');
                     btnDecr.style.opacity = '0.6';
                     btnDecr.style.cursor = 'not-allowed';
                 } else {
@@ -321,39 +336,41 @@
                 }
             }
 
-            if (qtyInput){
+            if (qtyInput) {
                 // init
                 updateQtyUI(qtyInput.value || 1);
 
-                btnDecr.addEventListener('click', function(){
+                btnDecr.addEventListener('click', function() {
                     updateQtyUI(normalizeQty(qtyInput.value) - 1);
                 });
-                btnIncr.addEventListener('click', function(){
+                btnIncr.addEventListener('click', function() {
                     updateQtyUI(normalizeQty(qtyInput.value) + 1);
                 });
-                qtyInput.addEventListener('change', function(){
+                qtyInput.addEventListener('change', function() {
                     updateQtyUI(this.value);
                 });
-                qtyInput.addEventListener('input', function(){
+                qtyInput.addEventListener('input', function() {
                     // allow only digits while typing
                     this.value = this.value.replace(/[^0-9]/g, '');
                 });
             }
 
-            function setActiveThumb(el){
-                thumbs.forEach(function(x){ x.style.outline = 'none'; });
+            function setActiveThumb(el) {
+                thumbs.forEach(function(x) {
+                    x.style.outline = 'none';
+                });
                 if (el) el.style.outline = '2px solid #326E51';
             }
 
-            thumbs.forEach(function(t, idx){
-                t.addEventListener('click', function(){
+            thumbs.forEach(function(t, idx) {
+                t.addEventListener('click', function() {
                     const full = this.getAttribute('data-full');
                     if (full) {
                         main.src = full;
                         // update zoom background immediately
                         zoomed.style.backgroundImage = 'url(' + full + ')';
                         // once image loads, update background-size
-                        main.addEventListener('load', function _upd(){
+                        main.addEventListener('load', function _upd() {
                             updateBackgroundSize();
                             main.removeEventListener('load', _upd);
                         });
@@ -361,14 +378,14 @@
                     setActiveThumb(this);
                 });
                 // keep mouseover on thumbnail only to preview zoom image but don't show zoom area
-                t.addEventListener('mouseover', function(){
+                t.addEventListener('mouseover', function() {
                     const full = this.getAttribute('data-full');
                     if (full) zoomed.style.backgroundImage = 'url(' + full + ')';
                 });
             });
 
             // compute and set background-size based on the natural image size and zoom factor
-            function updateBackgroundSize(){
+            function updateBackgroundSize() {
                 const natW = main.naturalWidth || main.width;
                 const natH = main.naturalHeight || main.height;
                 // fallback to element size if natural not available
@@ -378,7 +395,7 @@
             }
 
             // show/position zoom on mousemove over the main image
-            function onMove(e){
+            function onMove(e) {
                 const rect = main.getBoundingClientRect();
                 const x = e.clientX - rect.left;
                 const y = e.clientY - rect.top;
@@ -392,16 +409,16 @@
             }
 
             // show/hide handlers
-            main.addEventListener('mouseenter', function(){
+            main.addEventListener('mouseenter', function() {
                 // ensure background is set
                 if (!zoomed.style.backgroundImage) zoomed.style.backgroundImage = 'url(' + main.src + ')';
                 updateBackgroundSize();
                 zoomed.style.display = 'block';
             });
-            main.addEventListener('mouseleave', function(){
+            main.addEventListener('mouseleave', function() {
                 zoomed.style.display = 'none';
             });
-            main.addEventListener('mousemove', function(e){
+            main.addEventListener('mousemove', function(e) {
                 onMove(e);
             });
 
@@ -417,32 +434,37 @@
             // Tabs: smooth scroll and active highlight
             const tabs = document.querySelectorAll('.product-tab');
             const sections = {};
-            tabs.forEach(function(tab){
+            tabs.forEach(function(tab) {
                 const t = tab.getAttribute('data-target');
                 if (!t) return;
                 const el = document.getElementById(t);
                 if (el) sections[t] = el;
-                tab.addEventListener('click', function(ev){
+                tab.addEventListener('click', function(ev) {
                     ev.preventDefault();
                     if (!el) return;
                     const top = el.getBoundingClientRect().top + window.scrollY - 20; // offset
-                    window.scrollTo({ top: top, behavior: 'smooth' });
+                    window.scrollTo({
+                        top: top,
+                        behavior: 'smooth'
+                    });
                 });
             });
 
-            function onScrollTabs(){
+            function onScrollTabs() {
                 const scrollY = window.scrollY + 80; // header offset
                 let active = null;
-                for (const id in sections){
+                for (const id in sections) {
                     const r = sections[id].getBoundingClientRect();
                     const top = sections[id].offsetTop;
                     if (scrollY >= top) active = id;
                 }
-                tabs.forEach(function(tab){
+                tabs.forEach(function(tab) {
                     if (tab.getAttribute('data-target') === active) {
-                        tab.style.background = '#111'; tab.style.color = '#fff';
+                        tab.style.background = '#111';
+                        tab.style.color = '#fff';
                     } else {
-                        tab.style.background = 'transparent'; tab.style.color = '#111';
+                        tab.style.background = 'transparent';
+                        tab.style.color = '#111';
                     }
                 });
             }
@@ -455,7 +477,7 @@
             const descToggle = document.getElementById('desc-toggle');
             if (descContent && descToggle) {
                 // compute full height after images/styles loaded
-                function setCollapsed(){
+                function setCollapsed() {
                     // allow content to size itself
                     descContent.style.maxHeight = 'none';
                     const fullH = descContent.scrollHeight;
@@ -478,9 +500,9 @@
                 setTimeout(setCollapsed, 300);
                 window.addEventListener('load', setCollapsed);
 
-                descToggle.addEventListener('click', function(){
+                descToggle.addEventListener('click', function() {
                     const full = parseInt(descContent.dataset.fullHeight || descContent.scrollHeight, 10);
-                    const col = parseInt(descContent.dataset.collapsedHeight || Math.round(full*0.3), 10);
+                    const col = parseInt(descContent.dataset.collapsedHeight || Math.round(full * 0.3), 10);
                     const expanded = descToggle.getAttribute('aria-expanded') === 'true';
                     if (expanded) {
                         // collapse
@@ -496,10 +518,40 @@
                 });
             }
         })();
+
+        // cart
+        const addToCartBtn = document.getElementById('add-to-cart');
+        if (addToCartBtn) {
+            addToCartBtn.addEventListener('click', function() {
+                const productId = this.getAttribute('data-product-id');
+                const quantity = parseInt(document.getElementById('qty').value) || 1;
+                const price = parseFloat(this.getAttribute('data-product-price'));
+
+                fetch('/cart/add', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: `product_id=${encodeURIComponent(productId)}&quantity=${encodeURIComponent(quantity)}&price=${encodeURIComponent(price)}`
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('Sản phẩm đã được thêm vào giỏ hàng!');
+                        } else if (data.redirect) {
+                            window.location.href = data.redirect;
+                        } else if (data.error) {
+                            alert('Lỗi: ' + data.error);
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        alert('Có lỗi xảy ra, thử lại sau.');
+                    });
+            });
+        }
     </script>
 </div>
 
 <?php require_once __DIR__ . '/../layouts/footer.php'; ?>
 </div>
-
-<?php require_once __DIR__ . '/../layouts/footer.php'; ?>

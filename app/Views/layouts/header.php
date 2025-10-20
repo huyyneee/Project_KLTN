@@ -160,67 +160,76 @@ if (empty($_SESSION['account_id']) && !empty($_COOKIE['account_id']) && !empty($
 					}
 				}
 				if ($loggedIn): ?>
-				<div class="relative group">
-					<button class="bg-green-700 rounded-full w-10 h-10 flex items-center justify-center focus:outline-none" aria-haspopup="true" aria-expanded="false" title="Tài khoản">
-						<svg class="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 24 24">
-							<circle cx="12" cy="8" r="4" />
-							<path d="M4 20c0-4 8-4 8-4s8 0 8 4" />
-						</svg>
-					</button>
-					<div class="absolute right-0 mt-2 w-64 bg-white text-green-900 rounded-lg shadow-lg ring-1 ring-green-100 group-hover:block hidden transition-all duration-200 overflow-hidden z-50">
-						<div class="px-4 py-3 bg-green-50">
-							<div class="font-semibold whitespace-nowrap truncate">Chào <?php echo htmlspecialchars($userDisplay); ?></div>
-							<div class="text-xs text-gray-500">Tài khoản</div>
-						</div>
-						<nav class="py-2 space-y-2">
-							<a href="/account" class="flex items-center px-4 py-3 text-sm text-green-900 hover:bg-green-50 min-w-0">
-								<span class="inline-block w-6 text-center mr-3">
-									<svg class="w-5 h-5 text-green-700" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14c-4 0-6 2-6 4v1h12v-1c0-2-2-4-6-4z"/></svg>
-								</span>
-								<span class="truncate">Tài khoản của bạn</span>
-							</a>
-							<a href="/orders" class="flex items-center px-4 py-3 text-sm text-green-900 hover:bg-green-50 min-w-0">
-								<span class="inline-block w-6 text-center mr-3">
-									<svg class="w-5 h-5 text-green-700" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h18v4H3zM3 11h18v10H3z"/></svg>
-								</span>
-								<span class="truncate">Đơn hàng của tôi</span>
-							</a>
-							<a href="/addresses" class="flex items-center px-4 py-3 text-sm text-green-900 hover:bg-green-50 min-w-0">
-								<span class="inline-block w-6 text-center mr-3">
-									<svg class="w-5 h-5 text-green-700" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 2C8 2 5 5 5 9c0 6 7 13 7 13s7-7 7-13c0-4-3-7-7-7z"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 11a2 2 0 100-4 2 2 0 000 4z"/></svg>
-								</span>
-								<span class="truncate">Số địa chỉ nhận hàng</span>
-							</a>
-							<a href="/account/logout" class="flex items-center px-4 py-3 text-sm text-red-600 hover:bg-red-50 min-w-0">
-								<span class="inline-block w-6 text-center mr-3">
-									<svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7"/></svg>
-								</span>
-								<span class="truncate">Thoát</span>
-							</a>
-						</nav>
-					</div>
-				</div>
-				<?php else: ?>
-				<div class="relative group">
-					<button class="flex items-center space-x-2 px-2 py-1 focus:outline-none" aria-haspopup="true" aria-expanded="false" title="Tài khoản">
-						<span class="bg-green-700 rounded-full w-10 h-10 flex items-center justify-center">
+					<div class="relative group">
+						<button class="bg-green-700 rounded-full w-10 h-10 flex items-center justify-center focus:outline-none" aria-haspopup="true" aria-expanded="false" title="Tài khoản">
 							<svg class="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 24 24">
 								<circle cx="12" cy="8" r="4" />
 								<path d="M4 20c0-4 8-4 8-4s8 0 8 4" />
 							</svg>
-						</span>
-						<span class="hidden sm:block text-sm font-semibold">Đăng nhập / Đăng ký</span>
-					</button>
-					<div class="absolute right-0 mt-2 w-56 bg-white text-green-900 rounded-lg shadow-xl ring-1 ring-green-100 group-hover:block hidden transition-all duration-200 overflow-hidden min-w-max z-50">
-						<div class="px-4 py-3 bg-green-50 flex items-center space-x-3">
-
-						</div>
-						<div class="p-4 space-y-3 bg-white" style="margin-top:10px;margin-bottom: 20px; font-weight:500;">
-							<a href="/login" style="margin-top:10px;margin-bottom: 20px; font-weight:600;" class="block w-full text-center bg-green-700 hover:bg-green-800 text-white py-3 rounded-full font-semibold shadow-md transition-colors duration-150">Đăng nhập</a>
-							<a href="/register" class="block w-full text-center bg-green-700 hover:bg-green-800 text-white py-3 rounded-full font-semibold shadow-sm transition-colors duration-150">Đăng ký</a>
+						</button>
+						<div class="absolute right-0 mt-2 w-64 bg-white text-green-900 rounded-lg shadow-lg ring-1 ring-green-100 group-hover:block hidden transition-all duration-200 overflow-hidden z-50">
+							<div class="px-4 py-3 bg-green-50">
+								<div class="font-semibold whitespace-nowrap truncate">Chào <?php echo htmlspecialchars($userDisplay); ?></div>
+								<div class="text-xs text-gray-500">Tài khoản</div>
+							</div>
+							<nav class="py-2 space-y-2">
+								<a href="/account" class="flex items-center px-4 py-3 text-sm text-green-900 hover:bg-green-50 min-w-0">
+									<span class="inline-block w-6 text-center mr-3">
+										<svg class="w-5 h-5 text-green-700" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+											<path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14c-4 0-6 2-6 4v1h12v-1c0-2-2-4-6-4z" />
+										</svg>
+									</span>
+									<span class="truncate">Tài khoản của bạn</span>
+								</a>
+								<a href="/orders" class="flex items-center px-4 py-3 text-sm text-green-900 hover:bg-green-50 min-w-0">
+									<span class="inline-block w-6 text-center mr-3">
+										<svg class="w-5 h-5 text-green-700" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+											<path stroke-linecap="round" stroke-linejoin="round" d="M3 3h18v4H3zM3 11h18v10H3z" />
+										</svg>
+									</span>
+									<span class="truncate">Đơn hàng của tôi</span>
+								</a>
+								<a href="/addresses" class="flex items-center px-4 py-3 text-sm text-green-900 hover:bg-green-50 min-w-0">
+									<span class="inline-block w-6 text-center mr-3">
+										<svg class="w-5 h-5 text-green-700" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+											<path stroke-linecap="round" stroke-linejoin="round" d="M12 2C8 2 5 5 5 9c0 6 7 13 7 13s7-7 7-13c0-4-3-7-7-7z" />
+											<path stroke-linecap="round" stroke-linejoin="round" d="M12 11a2 2 0 100-4 2 2 0 000 4z" />
+										</svg>
+									</span>
+									<span class="truncate">Số địa chỉ nhận hàng</span>
+								</a>
+								<a href="/account/logout" class="flex items-center px-4 py-3 text-sm text-red-600 hover:bg-red-50 min-w-0">
+									<span class="inline-block w-6 text-center mr-3">
+										<svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+											<path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7" />
+										</svg>
+									</span>
+									<span class="truncate">Thoát</span>
+								</a>
+							</nav>
 						</div>
 					</div>
-				</div>
+				<?php else: ?>
+					<div class="relative group">
+						<button class="flex items-center space-x-2 px-2 py-1 focus:outline-none" aria-haspopup="true" aria-expanded="false" title="Tài khoản">
+							<span class="bg-green-700 rounded-full w-10 h-10 flex items-center justify-center">
+								<svg class="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 24 24">
+									<circle cx="12" cy="8" r="4" />
+									<path d="M4 20c0-4 8-4 8-4s8 0 8 4" />
+								</svg>
+							</span>
+							<span class="hidden sm:block text-sm font-semibold">Đăng nhập / Đăng ký</span>
+						</button>
+						<div class="absolute right-0 mt-2 w-56 bg-white text-green-900 rounded-lg shadow-xl ring-1 ring-green-100 group-hover:block hidden transition-all duration-200 overflow-hidden min-w-max z-50">
+							<div class="px-4 py-3 bg-green-50 flex items-center space-x-3">
+
+							</div>
+							<div class="p-4 space-y-3 bg-white" style="margin-top:10px;margin-bottom: 20px; font-weight:500;">
+								<a href="/login" style="margin-top:10px;margin-bottom: 20px; font-weight:600;" class="block w-full text-center bg-green-700 hover:bg-green-800 text-white py-3 rounded-full font-semibold shadow-md transition-colors duration-150">Đăng nhập</a>
+								<a href="/register" class="block w-full text-center bg-green-700 hover:bg-green-800 text-white py-3 rounded-full font-semibold shadow-sm transition-colors duration-150">Đăng ký</a>
+							</div>
+						</div>
+					</div>
 				<?php endif; ?>
 			</div>
 		</div>
@@ -235,35 +244,35 @@ if (empty($_SESSION['account_id']) && !empty($_COOKIE['account_id']) && !empty($
 	// This script runs on pages that include header.php
 	?>
 	<script>
-	(function(){
-		if (typeof document === 'undefined') return;
-		var groups = document.querySelectorAll('.relative.group');
-		groups.forEach(function(g){
-			var timeout = null;
-			g.addEventListener('mouseenter', function(){
-				if (timeout) { clearTimeout(timeout); timeout = null; }
-				g.classList.add('open');
+		(function() {
+			if (typeof document === 'undefined') return;
+			var groups = document.querySelectorAll('.relative.group');
+			groups.forEach(function(g) {
+				var timeout = null;
+				g.addEventListener('mouseenter', function() {
+					if (timeout) {
+						clearTimeout(timeout);
+						timeout = null;
+					}
+					g.classList.add('open');
+				});
+				g.addEventListener('mouseleave', function() {
+					// delay closing so users can move mouse into the dropdown without it disappearing
+					timeout = setTimeout(function() {
+						g.classList.remove('open');
+						timeout = null;
+					}, 250);
+				});
+				// For accessibility / touch: toggle on click
+				var btn = g.querySelector('button');
+				if (btn) btn.addEventListener('click', function(e) {
+					// On small screens, allow click to toggle
+					if (g.classList.contains('open')) {
+						g.classList.remove('open');
+					} else {
+						g.classList.add('open');
+					}
+				});
 			});
-			g.addEventListener('mouseleave', function(){
-				// delay closing so users can move mouse into the dropdown without it disappearing
-				timeout = setTimeout(function(){ g.classList.remove('open'); timeout = null; }, 250);
-			});
-			// For accessibility / touch: toggle on click
-			var btn = g.querySelector('button');
-			if (btn) btn.addEventListener('click', function(e){
-				// On small screens, allow click to toggle
-				if (g.classList.contains('open')) { g.classList.remove('open'); }
-				else { g.classList.add('open'); }
-			});
-		});
-	})();
+		})();
 	</script>
-
-	<!-- No forced JS navigation: anchor uses href="/login" and should behave normally. If clicks are still blocked,
-	     check other scripts loaded on the page that may call stopPropagation()/preventDefault() on links. -->
-
-<!-- Debug helper removed -->
-
-
-
-
