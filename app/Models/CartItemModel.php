@@ -18,17 +18,55 @@ class CartItemModel extends Model
         'updated_at'
     ];
 
-    // Lấy danh sách sản phẩm trong giỏ
+    /**
+     * Lấy danh sách sản phẩm trong giỏ và xử lý đường dẫn ảnh
+     * ci: cart_items
+     * pi: product_images
+     */
     public function getItemsByCart($cartId)
     {
-        $sql = "SELECT ci.*, p.name as productname, p.price as product_price
+        $sql = "SELECT ci.*, p.name as productname, p.price as product_price, pi.url as image
             FROM cart_items ci
             JOIN products p ON ci.product_id = p.id
+            LEFT JOIN product_images pi ON pi.product_id = p.id AND pi.is_main = 1
             WHERE ci.cart_id = :cart_id";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute(['cart_id' => $cartId]);
-        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        $rows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+        // Xử lý đường dẫn ảnh để tạo URL đầy đủ
+        $dbHost = null;
+        if (function_exists('env')) {
+            $dbHost = env('DB_HOST');
+        }
+        if (!$dbHost) {
+            $cfgPath = __DIR__ . '/../../config/config.php';
+            if (file_exists($cfgPath)) {
+                $cfg = require $cfgPath;
+                $dbHost = $cfg['database']['host'] ?? null;
+            }
+
+        }
+
+        foreach ($rows as &$row) {
+            $img = trim($row['image'] ?? '');
+            $img = str_replace('\\/', '/', $img);
+            $img = trim($img, "'\" \t\n\r\0\x0B");
+            if ($img !== '') {
+                if (preg_match('#^/#', $img) && $dbHost) {
+                    $row['image'] = 'http://' . $dbHost . ':8000' . $img;
+                } elseif (preg_match('#^https?://#i', $img)) {
+                    $row['image'] = $img;
+                } else {
+                    $row['image'] = $img;
+                }
+            } else {
+                $row['image'] = null;
+            }
+        }
+
+        return $rows;
     }
 
     // Kiểm tra xem sản phẩm đã có trong giỏ chưa
@@ -87,3 +125,4 @@ class CartItemModel extends Model
         return $stmt->execute(['cartId' => $cartId]);
     }
 }
+
