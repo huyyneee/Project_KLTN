@@ -108,17 +108,19 @@ if (empty($_SESSION['account_id']) && !empty($_COOKIE['account_id']) && !empty($
 					</div>
 				</div>
 				<!-- Search box -->
-				<form action="#" method="get" class="ml-2 flex items-center bg-white rounded">
-					<input type="text" name="q" placeholder="Tìm sản phẩm..."
+				<form action="/" method="get" class="ml-2 flex items-center bg-white rounded">
+					<input type="text" name="search"
+						value="<?= htmlspecialchars($_GET['search'] ?? '') ?>"
+						placeholder="Tìm sản phẩm..."
 						class="px-3 py-1 rounded-l outline-none text-green-900 w-44 text-sm" />
 					<button type="submit" class="px-2">
-						<svg class="w-6 h-6 text-green-800" fill="none" stroke="currentColor" stroke-width="2"
-							viewBox="0 0 24 24">
+						<svg class="w-6 h-6 text-green-800" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
 							<circle cx="11" cy="11" r="8" />
 							<path d="M21 21l-4.35-4.35" />
 						</svg>
 					</button>
 				</form>
+
 			</div>
 			<!-- Center: Menu -->
 			<div class="flex-1 flex justify-center">
