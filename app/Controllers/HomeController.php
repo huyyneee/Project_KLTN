@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Controllers;
 
 use App\Core\Controller;
@@ -20,32 +21,36 @@ class HomeController extends Controller
 	{
 		$error = null;
 		$categories = [];
+		$productsByCategory = [];
+		$query = isset($_GET['search']) ? trim($_GET['search']) : '';
+
 		try {
 			$categories = $this->categoryModel->findAll();
+
+			foreach ($categories as $c) {
+				$catId = (int)($c['id'] ?? 0);
+
+				if ($query !== '') {
+					// Tìm theo tên sản phẩm trong từng danh mục
+					$products = $this->productModel->searchByNameAndCategory($query, $catId);
+				} else {
+					// Hiển thị toàn bộ nếu không có từ khóa
+					$products = $this->productModel->getProductsByCategory($catId);
+				}
+
+				if (!empty($products)) {
+					$productsByCategory[$catId] = $products;
+				}
+			}
 		} catch (\Exception $e) {
 			$error = $e->getMessage();
 		}
 
-		// build products per category (limit to 12 each)
-		$productsByCategory = [];
-		foreach ($categories as $c) {
-			try {
-				$products = $this->productModel->getProductsByCategory((int)($c['id'] ?? 0));
-				// load all products for the category (carousel will show 6 at a time)
-				$productsByCategory[$c['id']] = $products;
-			} catch (\Exception $e) {
-				$productsByCategory[$c['id']] = [];
-			}
-		}
-
-		// render the home view with categories and productsByCategory
-		if (isset($_GET['xhr']) && $_GET['xhr'] == '1') {
-			header('Content-Type: application/json');
-			echo json_encode(['categories' => $categories, 'productsByCategory' => $productsByCategory, 'error' => $error]);
-			return;
-		}
-
-		$this->render('home', ['categories' => $categories, 'productsByCategory' => $productsByCategory, 'error' => $error]);
+		$this->render('home', [
+			'categories' => $categories,
+			'productsByCategory' => $productsByCategory,
+			'query' => $query,
+			'error' => $error
+		]);
 	}
 }
-
