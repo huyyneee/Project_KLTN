@@ -53,6 +53,7 @@ $routes = [
 
     //Checkout
     '/checkout'             => ['controller' => 'OrderController', 'method' => 'index'],
+    '/checkout/placeOrder' => ['controller' => 'OrderController', 'method' => 'placeOrder'],
 
 
 ];
