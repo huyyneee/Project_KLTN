@@ -44,6 +44,13 @@ $routes = [
     '/admin/products/view'      => ['controller' => 'AdminController', 'method' => 'viewProduct'],
     '/admin/products/edit'      => ['controller' => 'AdminController', 'method' => 'editProduct'],
     '/admin/products/delete'    => ['controller' => 'AdminController', 'method' => 'deleteProduct'],
+
+    // Cart Routes
+    '/cart'                 => ['controller' => 'CartController', 'method' => 'index'],
+    '/cart/add'             => ['controller' => 'CartController', 'method' => 'add'],
+    '/cart/update'          => ['controller' => 'CartController', 'method' => 'updateQuantity'],
+    '/cart/remove'          => ['controller' => 'CartController', 'method' => 'remove'],
+
 ];
 
 
@@ -132,7 +139,10 @@ $unprotectedPaths = [
     '/account/send-code',
     '/account/check-email',
     '/account/logout',
-    '/account/address'
+    '/account/address',
+    '/cart/add',
+    '/cart/update',
+    '/cart/remove'
 ];
 
 // Helper: attempt to restore session from remember-me cookies (same validation used elsewhere)
@@ -203,4 +213,3 @@ foreach ($protectedPrefixes as $prefix) {
 }
 
 route($requestUri, $routes);
-

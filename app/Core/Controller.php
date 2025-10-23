@@ -1,8 +1,11 @@
 <?php
+
 namespace App\Core;
 
-class Controller {
-    protected function render($view, $data = []) {
+class Controller
+{
+    protected function render($view, $data = [])
+    {
         // Middleware-like: ensure categories are available to every view
         if (!isset($data['categories'])) {
             try {
@@ -22,8 +25,17 @@ class Controller {
             throw new \Exception("View {$view} not found");
         }
     }
-    protected function redirect($url) { header('Location: ' . $url); exit(); }
-    protected function json($data) { header('Content-Type: application/json'); echo json_encode($data); exit(); }
+    protected function redirect($url)
+    {
+        header('Location: ' . $url);
+        exit();
+    }
+    protected function json($data)
+    {
+        header('Content-Type: application/json');
+        echo json_encode($data);
+        exit();
+    }
 
     /**
      * Ensure PHP session is started and attempt to restore session from
@@ -88,6 +100,18 @@ class Controller {
             }
             $loc = $loginPath . '?return=' . urlencode($return);
             header('Location: ' . $loc);
+            exit();
+        }
+    }
+    protected function requireAuthAjax()
+    {
+        $this->ensureSession();
+        if (empty($_SESSION['account_id'])) {
+            http_response_code(401);
+            echo json_encode([
+                'error' => 'Chưa đăng nhập',
+                'redirect' => '/login?return=' . urlencode($_SERVER['REQUEST_URI'])
+            ]);
             exit();
         }
     }

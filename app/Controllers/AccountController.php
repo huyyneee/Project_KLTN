@@ -128,4 +128,28 @@ class AccountController extends Controller
         header('Location: /account/edit');
         exit;
     }
+
+    // Hiển thị sổ địa chỉ nhận hàng
+    public function address()
+    {
+        $this->requireAuth();
+        $accountId = $_SESSION['account_id'] ?? null;
+        $account = null;
+        $user = null;
+        $addresses = [];
+        if ($accountId) {
+            $account = $this->accountModel->find($accountId);
+            $userModel = new UserModel();
+            $user = $userModel->findByAccountId($accountId);
+            if ($user && !empty($user['id'])) {
+                $addrModel = new AddressModel();
+                $addresses = $addrModel->findByUserId((int)$user['id']);
+            }
+        }
+        $this->render('account/address', [
+            'account' => $account,
+            'user' => $user,
+            'addresses' => $addresses
+        ]);
+    }
 }
