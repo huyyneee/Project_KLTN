@@ -46,6 +46,7 @@ if (empty($_SESSION['account_id']) && !empty($_COOKIE['account_id']) && !empty($
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title><?= isset($title) ? $title : 'App' ?></title>
 	<link rel="stylesheet" href="/assets/css/output.css">
+
 	<style>
 		/* Dropdown hover for Tailwind JIT (fallback) */
 		.group:hover .group-hover\:block {

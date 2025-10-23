@@ -46,7 +46,6 @@ class CartItemModel extends Model
                 $cfg = require $cfgPath;
                 $dbHost = $cfg['database']['host'] ?? null;
             }
-
         }
 
         foreach ($rows as &$row) {
@@ -125,4 +124,3 @@ class CartItemModel extends Model
         return $stmt->execute(['cartId' => $cartId]);
     }
 }
-

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use App\Core\Model;
@@ -8,7 +9,18 @@ class AddressModel extends Model
     protected $table = 'addresses';
     protected $primaryKey = 'id';
     protected $fillable = [
-        'user_id', 'phone', 'receiver_name', 'street', 'ward', 'district', 'city', 'province', 'type', 'is_default', 'created_at', 'updated_at'
+        'user_id',
+        'phone',
+        'receiver_name',
+        'street',
+        'ward',
+        'district',
+        'city',
+        'province',
+        'type',
+        'is_default',
+        'created_at',
+        'updated_at'
     ];
 
     public function findByUserId($userId)
@@ -39,7 +51,9 @@ class AddressModel extends Model
         $stmt = $this->db->prepare("UPDATE {$this->table} SET is_default = 0 WHERE user_id = :uid");
         return $stmt->execute([':uid' => $userId]);
     }
-
+    //create
+    //update
+    //delete
     public function setDefault($id, $userId)
     {
         $this->clearDefaultForUser($userId);
