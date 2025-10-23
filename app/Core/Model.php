@@ -33,12 +33,42 @@ class Model
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
     public function create($data)
-    { /* build INSERT ... */
+    {
+        $columns = array_keys($data);
+        $placeholders = array_map(function($col) { return ':' . $col; }, $columns);
+        
+        $sql = "INSERT INTO {$this->table} (" . implode(', ', $columns) . ") VALUES (" . implode(', ', $placeholders) . ")";
+        $stmt = $this->db->prepare($sql);
+        
+        foreach ($data as $key => $value) {
+            $stmt->bindValue(':' . $key, $value);
+        }
+        
+        return $stmt->execute();
     }
+    
     public function update($id, $data)
-    { /* build UPDATE ... */
+    {
+        $columns = array_keys($data);
+        $setClause = array_map(function($col) { return $col . ' = :' . $col; }, $columns);
+        
+        $sql = "UPDATE {$this->table} SET " . implode(', ', $setClause) . " WHERE id = :id";
+        $stmt = $this->db->prepare($sql);
+        
+        foreach ($data as $key => $value) {
+            $stmt->bindValue(':' . $key, $value);
+        }
+        $stmt->bindValue(':id', $id);
+        
+        return $stmt->execute();
     }
+    
     public function delete($id)
-    { /* build DELETE ... */
+    {
+        $sql = "DELETE FROM {$this->table} WHERE id = :id";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':id', $id);
+        
+        return $stmt->execute();
     }
 }

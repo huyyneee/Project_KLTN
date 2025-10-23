@@ -48,7 +48,7 @@ class AddressController extends Controller
 
         $user = (new UserModel())->findByAccountId($accountId);
         if (!$user || empty($user['id'])) {
-            $_SESSION['error'] = 'Không tìm thấy người dùng';
+            $_SESSION['errors'] = ['Không tìm thấy người dùng'];
             header('Location: /account/address');
             exit;
         }
@@ -120,7 +120,7 @@ class AddressController extends Controller
 
         $address = $this->addressModel->findByIdAndUser($id, (int)$user['id']);
         if (!$address) {
-            $_SESSION['error'] = 'Địa chỉ không tồn tại';
+            $_SESSION['errors'] = ['Địa chỉ không tồn tại'];
             header('Location: /account/address');
             exit;
         }
@@ -154,7 +154,7 @@ class AddressController extends Controller
 
         $address = $this->addressModel->findByIdAndUser($id, (int)$user['id']);
         if (!$address) {
-            $_SESSION['error'] = 'Địa chỉ không tồn tại';
+            $_SESSION['errors'] = ['Địa chỉ không tồn tại'];
             header('Location: /account/address');
             exit;
         }
@@ -216,7 +216,7 @@ class AddressController extends Controller
 
         $address = $this->addressModel->findByIdAndUser($id, (int)$user['id']);
         if (!$address) {
-            $_SESSION['error'] = 'Địa chỉ không tồn tại';
+            $_SESSION['errors'] = ['Địa chỉ không tồn tại'];
             header('Location: /account/address');
             exit;
         }
