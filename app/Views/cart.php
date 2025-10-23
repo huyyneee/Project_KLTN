@@ -257,6 +257,20 @@
                             updateTotal();
                             updateCartCount();
                             showToast('Đã xóa sản phẩm');
+                            if (cartItems.querySelectorAll('tr').length === 0) {
+                                document.querySelector('.cart-page').innerHTML = `
+                                    <div class="flex flex-col items-center justify-center h-[60vh] text-center space-y-4">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-1.293 2.293A1 1 0 007 17h10m-4 0a1 1 0 100 2 1 1 0 000-2zm-6 0a1 1 0 100 2 1 1 0 000-2z" />
+                                        </svg>
+                                        <p class="text-gray-700 text-lg">Bạn chưa chọn sản phẩm.</p>
+                                        <a href="/trang-chu" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded font-semibold">
+                                            Tiếp tục mua sắm
+                                        </a>
+                                    </div>
+                                `;
+                            }
                         }
                     });
             }

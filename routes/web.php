@@ -51,6 +51,10 @@ $routes = [
     '/cart/update'          => ['controller' => 'CartController', 'method' => 'updateQuantity'],
     '/cart/remove'          => ['controller' => 'CartController', 'method' => 'remove'],
 
+    //Checkout
+    '/checkout'             => ['controller' => 'OrderController', 'method' => 'index'],
+
+
 ];
 
 
