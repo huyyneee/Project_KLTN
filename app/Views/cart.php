@@ -140,6 +140,12 @@
         pointer-events: auto;
     }
 </style>
+<?php if (!empty($_SESSION['success'])): ?>
+    <div class="alert alert-success">
+        <?= $_SESSION['success']; ?>
+    </div>
+    <?php unset($_SESSION['success']); ?>
+<?php endif; ?>
 
 <div class="cart-page">
     <h2>Giỏ hàng (<span id="cart-count"><?= count($items) ?></span> sản phẩm)</h2>

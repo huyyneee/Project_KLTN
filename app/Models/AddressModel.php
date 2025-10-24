@@ -22,7 +22,13 @@ class AddressModel extends Model
         'created_at',
         'updated_at'
     ];
-
+    public function findById($id)
+    {
+        $stmt = $this->db->prepare("SELECT * FROM {$this->table} WHERE id = :id LIMIT 1");
+        $stmt->execute([':id' => $id]);
+        $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+        return $row ?: null;
+    }
     public function findByUserId($userId)
     {
         $stmt = $this->db->prepare("SELECT * FROM {$this->table} WHERE user_id = :uid ORDER BY is_default DESC, id DESC");

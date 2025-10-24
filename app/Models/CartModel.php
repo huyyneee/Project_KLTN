@@ -37,4 +37,20 @@ class CartModel extends Model
         $stmt = $this->db->prepare("DELETE FROM {$this->table} WHERE id = :cartId");
         return $stmt->execute(['cartId' => $cartId]);
     }
+    public function clearCart($userId)
+    {
+        // Lấy giỏ hàng của user
+        $cart = $this->getCartByUser($userId);
+        if (!$cart) return false;
+
+        // Xóa tất cả sản phẩm trong giỏ
+        $stmt = $this->db->prepare("DELETE FROM cart_items WHERE cart_id = :cartId");
+        $stmt->execute(['cartId' => $cart['id']]);
+
+        // Xóa luôn giỏ hàng chính
+        $stmt = $this->db->prepare("DELETE FROM carts WHERE id = :cartId");
+        $stmt->execute(['cartId' => $cart['id']]);
+
+        return true;
+    }
 }
