@@ -29,4 +29,15 @@ class OrderItemModel extends Model
         $stmt->execute();
         return $this->db->lastInsertId();
     }
+    public function getItemsByOrder($orderId)
+    {
+        $sql = "SELECT i.*, p.name AS product_name
+                FROM {$this->table} i
+                JOIN products p ON i.product_id = p.id
+                WHERE i.order_id = :order_id";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':order_id', $orderId, \PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
 }

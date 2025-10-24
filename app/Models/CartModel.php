@@ -48,7 +48,7 @@ class CartModel extends Model
         $stmt->execute(['cartId' => $cart['id']]);
 
         // Xóa luôn giỏ hàng chính
-        $stmt = $this->db->prepare("DELETE FROM cart WHERE id = :cartId");
+        $stmt = $this->db->prepare("DELETE FROM carts WHERE id = :cartId");
         $stmt->execute(['cartId' => $cart['id']]);
 
         return true;

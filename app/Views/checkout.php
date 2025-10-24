@@ -161,7 +161,7 @@
                     </div>
                 </div>
 
-                <!-- ✅ Gửi tổng tiền -->
+                <!--Gửi tổng tiền -->
                 <input type="hidden" name="total_amount" value="<?= $subtotalTotal ?>">
 
                 <button type="submit" class="mt-6 w-full bg-green-700 hover:bg-green-800 text-white font-semibold py-2 rounded-md transition">
@@ -191,6 +191,13 @@
                 'Thu gọn' :
                 `Xem thêm ${limit} sản phẩm`;
         });
+    });
+    // Xác nhận trước khi đặt hàng
+    document.querySelector('form[action="/checkout/placeOrder"]').addEventListener('submit', function(e) {
+        const confirmOrder = confirm("Đơn hàng của bạn sẽ được xử lý ngay sau khi xác nhận. Tiếp tục?");
+        if (!confirmOrder) {
+            e.preventDefault(); // Dừng form nếu bấm Cancel
+        }
     });
 </script>
 

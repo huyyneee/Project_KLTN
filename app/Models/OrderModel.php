@@ -32,4 +32,12 @@ class OrderModel extends Model
         $stmt->execute();
         return $this->db->lastInsertId();
     }
+    public function findById($id)
+    {
+        $sql = "SELECT * FROM {$this->table} WHERE {$this->primaryKey} = :id LIMIT 1";
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':id', $id, \PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetch(\PDO::FETCH_ASSOC);
+    }
 }
