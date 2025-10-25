@@ -184,7 +184,7 @@ if (empty($_SESSION['account_id']) && !empty($_COOKIE['account_id']) && !empty($
 									</span>
 									<span class="truncate">Tài khoản của bạn</span>
 								</a>
-								<a href="/orders" class="flex items-center px-4 py-3 text-sm text-green-900 hover:bg-green-50 min-w-0">
+								<a href="/order" class="flex items-center px-4 py-3 text-sm text-green-900 hover:bg-green-50 min-w-0">
 									<span class="inline-block w-6 text-center mr-3">
 										<svg class="w-5 h-5 text-green-700" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
 											<path stroke-linecap="round" stroke-linejoin="round" d="M3 3h18v4H3zM3 11h18v10H3z" />

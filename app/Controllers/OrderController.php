@@ -212,8 +212,8 @@ class OrderController extends Controller
             $this->cartModel->clearCart($user['id']);
 
             // Chuyển hướng
-            $_SESSION['success'] = "Đặt hàng thành công! Bạn sẽ thanh toán khi nhận hàng.";
-            header("Location: /cart");
+            $_SESSION['last_order_id'] = $orderId;
+            header("Location: /receipt");
             exit;
         } else {
             $_SESSION['error'] = "Phương thức thanh toán không hợp lệ.";
@@ -290,7 +290,7 @@ class OrderController extends Controller
                 exit;
             } else {
                 // Thanh toán thất bại
-                $_SESSION['success'] = "Thanh toán thất bại!";
+                $_SESSION['error'] = "Thanh toán thất bại";
                 header("Location: /cart");
             }
         } else {

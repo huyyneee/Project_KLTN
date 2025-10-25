@@ -1,4 +1,5 @@
 <?php
+
 /** @var string|null $userName User's full name from the parent scope */
 ?>
 <!-- Mobile Navigation Toggle -->
@@ -13,7 +14,7 @@
       </div>
     </div>
     <svg id="nav-arrow" class="w-5 h-5 text-gray-500 transform transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
     </svg>
   </button>
 </div>
@@ -36,17 +37,17 @@
   <ul class="space-y-2 md:space-y-2 text-sm text-center md:text-left" id="account-nav">
     <li><a href="/account" class="nav-link block text-black-700 hover:text-orange-500 transition-colors py-2">Tài khoản của tôi</a></li>
     <li><a href="/account/edit" class="nav-link block text-black-700 hover:text-orange-500 transition-colors py-2">Thông tin tài khoản</a></li>
-    <li><a href="/orders" class="nav-link block text-black-700 hover:text-orange-500 transition-colors py-2">Đơn hàng của tôi</a></li>
+    <li><a href="/order" class="nav-link block text-black-700 hover:text-orange-500 transition-colors py-2">Đơn hàng của tôi</a></li>
     <li><a href="/account/address" class="nav-link block text-black-700 hover:text-orange-500 transition-colors py-2">Số địa chỉ nhận hàng</a></li>
   </ul>
 </div>
 
-<script>    
+<script>
   document.addEventListener('DOMContentLoaded', function() {
     // Active link highlighting
     const currentPath = window.location.pathname;
     const navLinks = document.querySelectorAll('#account-nav .nav-link');
-    
+
     navLinks.forEach(link => {
       if (link.getAttribute('href') === currentPath) {
         link.classList.add('text-orange-500', 'font-bold');
@@ -96,10 +97,10 @@
   document.addEventListener('DOMContentLoaded', function() {
     // Lấy đường dẫn hiện tại
     const currentPath = window.location.pathname;
-    
+
     // Tìm tất cả các link trong navigation
     const navLinks = document.querySelectorAll('#account-nav .nav-link');
-    
+
     // Kiểm tra từng link
     navLinks.forEach(link => {
       if (link.getAttribute('href') === currentPath) {

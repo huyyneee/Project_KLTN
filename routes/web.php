@@ -32,6 +32,7 @@ $routes = [
     '/account/address/delete'   => ['controller' => 'AddressController', 'method' => 'deleteAddress'],
     '/addresses'                => ['controller' => 'AccountController', 'method' => 'address'],
 
+
     // Admin Routes
     '/admin'                    => ['controller' => 'AdminController', 'method' => 'dashboard'],
     '/admin/dashboard'          => ['controller' => 'AdminController', 'method' => 'dashboard'],
@@ -57,6 +58,8 @@ $routes = [
     '/checkout/vnpayReturn' => ['controller' => 'OrderController', 'method' => 'vnpayReturn'],
     '/receipt' => ['controller' => 'OrderController', 'method' => 'receipt'],
 
+    //Order
+    '/order'                => ['controller' => 'AccountController', 'method' => 'order'],
 
 
 ];
