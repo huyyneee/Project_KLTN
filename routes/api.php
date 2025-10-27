@@ -6,6 +6,7 @@ require_once __DIR__ . '/../app/Controllers/DashboardApiController.php';
 require_once __DIR__ . '/../app/Controllers/ImageUploadController.php';
 require_once __DIR__ . '/../app/Controllers/UserApiController.php';
 require_once __DIR__ . '/../app/Controllers/OrderApiController.php';
+require_once __DIR__ . '/../app/Controllers/LoginApiController.php';
 
 // Set CORS headers for all API requests
 header('Access-Control-Allow-Origin: *');
@@ -269,6 +270,27 @@ switch ($path) {
         if ($method === 'GET') {
             $controller = new \App\Controllers\UserApiController();
             $controller->paginated();
+        } else {
+            http_response_code(405);
+            echo json_encode(['error' => 'Method not allowed']);
+        }
+        break;
+
+    // Auth routes
+    case '/login':
+        if ($method === 'POST') {
+            $controller = new \App\Controllers\LoginApiController();
+            $controller->login();
+        } else {
+            http_response_code(405);
+            echo json_encode(['error' => 'Method not allowed']);
+        }
+        break;
+
+    case '/logout':
+        if ($method === 'POST') {
+            $controller = new \App\Controllers\LoginApiController();
+            $controller->logout();
         } else {
             http_response_code(405);
             echo json_encode(['error' => 'Method not allowed']);
