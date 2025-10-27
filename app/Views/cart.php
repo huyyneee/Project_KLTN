@@ -1,8 +1,9 @@
 <?php
 
-/** @var array|null $cart */ ?>
-<?php /** @var array $items */ ?>
-<?php require_once __DIR__ . '/layouts/header.php'; ?>
+/** @var array|null $cart */
+/** @var array $items */
+require_once __DIR__ . '/layouts/header.php';
+?>
 
 <style>
     .cart-page {
@@ -122,44 +123,55 @@
         text-decoration: underline;
     }
 
+    /* Toast */
     .toast {
         position: fixed;
         top: 20px;
         right: 20px;
-        background: #333;
-        color: #fff;
         padding: 12px 20px;
         border-radius: 5px;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        gap: 10px;
         opacity: 0;
         pointer-events: none;
-        transition: opacity 0.3s;
+        transform: translateY(-20px);
+        transition: all 0.4s ease;
+        font-weight: 500;
     }
 
     .toast.show {
         opacity: 1;
         pointer-events: auto;
+        transform: translateY(0);
+    }
+
+    .toast.success {
+        background-color: #16a34a;
+    }
+
+    .toast.error {
+        background-color: #dc2626;
+    }
+
+    .toast svg {
+        width: 20px;
+        height: 20px;
     }
 </style>
-<?php if (!empty($_SESSION['success'])): ?>
-    <div class="alert alert-success">
-        <?= $_SESSION['success']; ?>
-    </div>
-    <?php unset($_SESSION['success']); ?>
-<?php endif; ?>
 
 <div class="cart-page">
     <h2>Giỏ hàng (<span id="cart-count"><?= count($items) ?></span> sản phẩm)</h2>
 
-    <?php if (empty($items)) : ?>
+    <?php if (empty($items)): ?>
         <div class="flex flex-col items-center justify-center h-[60vh] text-center space-y-4">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-1.293 2.293A1 1 0 007 17h10m-4 0a1 1 0 100 2 1 1 0 000-2zm-6 0a1 1 0 100 2 1 1 0 000-2z" />
             </svg>
             <p class="text-gray-700 text-lg">Bạn chưa chọn sản phẩm.</p>
-            <a href="/trang-chu" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded font-semibold">
-                Tiếp tục mua sắm
-            </a>
+            <a href="/trang-chu" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded font-semibold">Tiếp tục mua sắm</a>
         </div>
     <?php else: ?>
         <table class="cart-table">
@@ -173,8 +185,8 @@
                 </tr>
             </thead>
             <tbody id="cart-items">
-                <?php $total = 0; ?>
-                <?php foreach ($items as $item):
+                <?php $total = 0;
+                foreach ($items as $item):
                     $subtotal = $item['price'] * $item['quantity'];
                     $total += $subtotal;
                 ?>
@@ -212,35 +224,37 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        const cartItems = document.getElementById('cart-items');
         const toast = document.getElementById('toast');
 
-        const showToast = (msg) => {
-            toast.innerText = msg;
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 2000);
+        const showToast = (msg, type = 'info') => {
+            toast.innerHTML = `
+            ${type==='success' ? '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>' :
+            '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>'}
+            ${msg}
+        `;
+            toast.className = 'toast show ' + type;
+            setTimeout(() => toast.className = 'toast', 3000);
         };
 
-        const formatVND = (val) => new Intl.NumberFormat('vi-VN', {
-            style: 'currency',
-            currency: 'VND'
-        }).format(val);
+        const cartItems = document.getElementById('cart-items');
 
         const updateTotal = () => {
             let total = 0;
             cartItems.querySelectorAll('tr').forEach(row => {
-                const subtotalText = row.querySelector('.subtotal').innerText.replace(/\D/g, '');
-                total += parseInt(subtotalText) || 0;
+                const subtotal = parseInt(row.querySelector('.subtotal').innerText.replace(/\D/g, ''));
+                total += subtotal || 0;
             });
-            document.getElementById('cart-total').innerText = formatVND(total);
-        };
+            document.getElementById('cart-total').innerText = new Intl.NumberFormat('vi-VN', {
+                style: 'currency',
+                currency: 'VND'
+            }).format(total);
+        }
 
         const updateCartCount = () => {
-            const count = cartItems.querySelectorAll('tr').length;
-            document.getElementById('cart-count').innerText = count;
-        };
+            document.getElementById('cart-count').innerText = cartItems.querySelectorAll('tr').length;
+        }
 
-        cartItems.addEventListener('click', (e) => {
+        cartItems.addEventListener('click', e => {
             const row = e.target.closest('tr');
             if (!row) return;
             const itemId = row.dataset.itemId;
@@ -256,26 +270,21 @@
                         },
                         body: `item_id=${itemId}`
                     })
-                    .then(res => res.json())
-                    .then(data => {
+                    .then(res => res.json()).then(data => {
                         if (data.success) {
                             row.remove();
                             updateTotal();
                             updateCartCount();
-                            showToast('Đã xóa sản phẩm');
+                            showToast('Đã xóa sản phẩm', 'success');
                             if (cartItems.querySelectorAll('tr').length === 0) {
                                 document.querySelector('.cart-page').innerHTML = `
-                                    <div class="flex flex-col items-center justify-center h-[60vh] text-center space-y-4">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-1.293 2.293A1 1 0 007 17h10m-4 0a1 1 0 100 2 1 1 0 000-2zm-6 0a1 1 0 100 2 1 1 0 000-2z" />
-                                        </svg>
-                                        <p class="text-gray-700 text-lg">Bạn chưa chọn sản phẩm.</p>
-                                        <a href="/trang-chu" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded font-semibold">
-                                            Tiếp tục mua sắm
-                                        </a>
-                                    </div>
-                                `;
+                                <div class="flex flex-col items-center justify-center h-[60vh] text-center space-y-4">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-1.293 2.293A1 1 0 007 17h10m-4 0a1 1 0 100 2 1 1 0 000-2zm-6 0a1 1 0 100 2 1 1 0 000-2z"/>
+                                    </svg>
+                                    <p class="text-gray-700 text-lg">Bạn chưa chọn sản phẩm.</p>
+                                    <a href="/trang-chu" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded font-semibold">Tiếp tục mua sắm</a>
+                                </div>`;
                             }
                         }
                     });
@@ -292,17 +301,31 @@
                         },
                         body: `item_id=${itemId}&quantity=${qty}`
                     })
-                    .then(res => res.json())
-                    .then(data => {
+                    .then(res => res.json()).then(data => {
                         if (data.success) {
                             const price = parseInt(row.querySelector('.price').dataset.value);
-                            row.querySelector('.subtotal').innerText = formatVND(price * qty);
+                            row.querySelector('.subtotal').innerText = new Intl.NumberFormat('vi-VN', {
+                                style: 'currency',
+                                currency: 'VND'
+                            }).format(price * qty);
                             updateTotal();
-                            showToast('Cập nhật số lượng thành công');
+                            showToast('Cập nhật số lượng thành công', 'success');
                         }
                     });
             }
         });
+        const headerHeight = document.querySelector('header')?.offsetHeight || 0;
+        toast.style.top = (headerHeight + 20) + 'px';
+
+        // Hiển thị message từ session PHP
+        <?php if (!empty($_SESSION['success'])): ?>
+            showToast("<?= $_SESSION['success'] ?>", 'success');
+            <?php unset($_SESSION['success']); ?>
+        <?php endif; ?>
+        <?php if (!empty($_SESSION['error'])): ?>
+            showToast("<?= $_SESSION['error'] ?>", 'error');
+            <?php unset($_SESSION['error']); ?>
+        <?php endif; ?>
     });
 </script>
 

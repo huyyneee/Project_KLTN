@@ -78,7 +78,10 @@ $mainUrl = $image ?? ($imagesList[0]['url'] ?? '/imgs/product/placeholder.svg');
                             </svg>
                             GIỎ HÀNG
                         </button>
-                        <button id="buy-now" type="button" style="background:#ff7a00;color:#fff;border:none;padding:10px 18px;border-radius:6px;cursor:pointer; box-shadow:0 2px 0 rgba(0,0,0,0.04);">MUA NGAY NOWFREE 2H</button>
+                        <button id="buy-now" type="button" 
+                            data-product-id="<?= $product['id'] ?>"
+                            data-product-price="<?= $product['price'] ?>"
+                            style="background:#ff7a00;color:#fff;border:none;padding:10px 18px;border-radius:6px;cursor:pointer; box-shadow:0 2px 0 rgba(0,0,0,0.04);">MUA NGAY NOWFREE 2H</button>
                     </div>
                 </div>
 
@@ -538,6 +541,39 @@ $mainUrl = $image ?? ($imagesList[0]['url'] ?? '/imgs/product/placeholder.svg');
                     .then(data => {
                         if (data.success) {
                             alert('Sản phẩm đã được thêm vào giỏ hàng!');
+                        } else if (data.redirect) {
+                            window.location.href = data.redirect;
+                        } else if (data.error) {
+                            alert('Lỗi: ' + data.error);
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        alert('Có lỗi xảy ra, thử lại sau.');
+                    });
+            });
+        }
+
+        // buy now
+        const buyNowBtn = document.getElementById('buy-now');
+        if (buyNowBtn) {
+            buyNowBtn.addEventListener('click', function() {
+                const productId = this.getAttribute('data-product-id');
+                const quantity = parseInt(document.getElementById('qty').value) || 1;
+                const price = parseFloat(this.getAttribute('data-product-price'));
+
+                fetch('/cart/add', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: `product_id=${encodeURIComponent(productId)}&quantity=${encodeURIComponent(quantity)}&price=${encodeURIComponent(price)}`
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Thêm thành công, chuyển đến checkout
+                            window.location.href = '/checkout';
                         } else if (data.redirect) {
                             window.location.href = data.redirect;
                         } else if (data.error) {
