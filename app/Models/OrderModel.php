@@ -13,7 +13,10 @@ class OrderModel extends Model
         'order_code',
         'status',
         'total_amount',
+        'receiver_name',
+        'preceiver_phone',
         'shipping_address',
+        'payment_method',
         'created_at',
         'updated_at'
     ];

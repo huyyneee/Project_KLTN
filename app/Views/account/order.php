@@ -37,7 +37,7 @@ $userName = $user['full_name'] ?? $account['full_name'] ?? '';
                                     </p>
                                 </div>
 
-                                <a href="#"
+                                <a href="/account/order_detail?id=<?= $order['id'] ?>"
                                     class="flex items-center gap-1 text-blue-600 text-sm font-medium hover:text-blue-700 transition-colors">
                                     <span>Xem chi tiết</span>
                                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none"
@@ -47,19 +47,21 @@ $userName = $user['full_name'] ?? $account['full_name'] ?? '';
                                     </svg>
                                 </a>
                             </div>
-
                             <!-- Danh sách sản phẩm -->
                             <div class="divide-y">
-                                <?php foreach ($order['items'] as $item): ?>
+                                <?php
+                                $productCount = count($order['items']);
+                                $visibleItems = array_slice($order['items'], 0, 2);
+                                $hiddenItems = array_slice($order['items'], 2);
+                                ?>
+
+                                <?php foreach ($visibleItems as $item): ?>
                                     <div class="flex items-start gap-4 p-4">
-                                        <img
-                                            src="<?= htmlspecialchars($item['product_image']) ?>"
+                                        <img src="<?= htmlspecialchars($item['product_image']) ?>"
                                             alt="<?= htmlspecialchars($item['product_name']) ?>"
                                             class="w-20 h-20 object-cover rounded-md border" />
                                         <div class="flex-1">
-                                            <p class="text-gray-800 font-medium">
-                                                <?= htmlspecialchars($item['product_name']) ?>
-                                            </p>
+                                            <p class="text-gray-800 font-medium"><?= htmlspecialchars($item['product_name']) ?></p>
                                             <p class="text-gray-500 text-sm mt-1">
                                                 <?= $item['quantity'] ?> × <?= number_format($item['price']) ?> đ
                                             </p>
@@ -70,8 +72,37 @@ $userName = $user['full_name'] ?? $account['full_name'] ?? '';
                                             </p>
                                         </div>
                                     </div>
-
                                 <?php endforeach; ?>
+
+                                <?php if (!empty($hiddenItems)): ?>
+                                    <div class="hidden more-items">
+                                        <?php foreach ($hiddenItems as $item): ?>
+                                            <div class="flex items-start gap-4 p-4">
+                                                <img src="<?= htmlspecialchars($item['product_image']) ?>"
+                                                    alt="<?= htmlspecialchars($item['product_name']) ?>"
+                                                    class="w-20 h-20 object-cover rounded-md border" />
+                                                <div class="flex-1">
+                                                    <p class="text-gray-800 font-medium"><?= htmlspecialchars($item['product_name']) ?></p>
+                                                    <p class="text-gray-500 text-sm mt-1">
+                                                        <?= $item['quantity'] ?> × <?= number_format($item['price']) ?> đ
+                                                    </p>
+                                                </div>
+                                                <div class="text-right">
+                                                    <p class="text-gray-900 font-semibold">
+                                                        <?= number_format($item['quantity'] * $item['price']) ?> đ
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+
+                                    <div class="text-center py-3 bg-gray-50 border-t">
+                                        <button type="button"
+                                            class="toggle-more text-sm text-blue-600 hover:text-blue-700 font-medium">
+                                            Xem thêm (<?= $productCount - 2 ?> sản phẩm)
+                                        </button>
+                                    </div>
+                                <?php endif; ?>
                             </div>
 
                             <div class="flex justify-end items-center bg-gray-50 px-4 py-3 border-t">
@@ -105,5 +136,25 @@ $userName = $user['full_name'] ?? $account['full_name'] ?? '';
         </main>
     </div>
 </div>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.toggle-more').forEach(btn => {
+            const parent = btn.closest('.divide-y');
+            const hiddenSection = parent.querySelector('.more-items');
+
+            // Lưu text gốc một lần duy nhất
+            const originalText = btn.textContent;
+
+            btn.addEventListener('click', () => {
+                const isHidden = hiddenSection.classList.contains('hidden');
+                hiddenSection.classList.toggle('hidden');
+
+                // Đổi text khi mở/đóng
+                btn.textContent = isHidden ? 'Thu gọn' : originalText;
+            });
+        });
+    });
+</script>
+
 
 <?php include __DIR__ . '/../layouts/footer.php'; ?>

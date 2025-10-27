@@ -106,6 +106,8 @@ class OrderController extends Controller
         $address = $addressId ? $this->addressModel->findByIdAndUser($addressId, $user['id']) : null;
         $shippingAddress = '';
         if ($address) {
+            $receiverName = $address['receiver_name'];
+            $receiverPhone = $address['phone'];
             $shippingAddress = trim(($address['street'] ?? '') . ', ' .
                 ($address['ward'] ?? '') . ', ' .
                 ($address['district'] ?? '') . ', ' .
@@ -121,7 +123,7 @@ class OrderController extends Controller
         // Sinh mã đơn hàng duy nhất
         $orderCode = 'ORD' . strtoupper(dechex(time()) . substr(uniqid(), -3));
 
-        // ⚡ Xử lý tùy theo hình thức thanh toán
+        //Xử lý tùy theo hình thức thanh toán
         if ($paymentMethod === 'vnpay') {
             // Lưu đơn hàng tạm vào session
             $_SESSION['pending_order'] = [
@@ -130,6 +132,8 @@ class OrderController extends Controller
                 'total' => $total,
                 'cart_id' => $cart['id'],
                 'order_code' => $orderCode,
+                'receiver_name' => $receiverName,
+                'receiver_phone' => $receiverPhone,
                 'shipping_address' => $shippingAddress
             ];
 
@@ -186,18 +190,23 @@ class OrderController extends Controller
             exit;
             //  Thanh toán khi nhận hàng
         } elseif ($paymentMethod === 'cod') {
+            date_default_timezone_set('Asia/Ho_Chi_Minh');
             $orderId = $this->orderModel->insertOrder([
                 'user_id' => $user['id'],
                 'order_code' => $orderCode,
                 'status' => 'pending',
                 'total_amount' => $total,
+                'receiver_name' => $receiverName,
+                'receiver_phone' => $receiverPhone,
                 'shipping_address' => $shippingAddress,
+                'payment_method' => 'cod',
                 'created_at' => date('Y-m-d H:i:s'),
                 'updated_at' => date('Y-m-d H:i:s')
             ]);
 
             // Lưu chi tiết đơn hàng
             foreach ($cartItems as $item) {
+                date_default_timezone_set('Asia/Ho_Chi_Minh');
                 $this->orderItemModel->insert([
                     'order_id' => $orderId,
                     'product_id' => $item['product_id'],
@@ -254,12 +263,16 @@ class OrderController extends Controller
 
                 if ($pending) {
                     // Lưu đơn hàng
+                    date_default_timezone_set('Asia/Ho_Chi_Minh');
                     $orderId = $this->orderModel->insertOrder([
                         'user_id' => $pending['user_id'],
                         'order_code' => $pending['order_code'],
-                        'status' => 'paid',
+                        'status' => 'pending',
                         'total_amount' => $pending['total'],
+                        'receiver_name' => $pending['receiver_name'],
+                        'receiver_phone' => $pending['receiver_phone'],
                         'shipping_address' => $pending['shipping_address'],
+                        'payment_method' => 'vnpay',
                         'created_at' => date('Y-m-d H:i:s'),
                         'updated_at' => date('Y-m-d H:i:s')
                     ]);
@@ -267,6 +280,7 @@ class OrderController extends Controller
                     // Lưu chi tiết sản phẩm
                     $cartItems = $this->cartItemModel->getItemsByCart($pending['cart_id']);
                     foreach ($cartItems as $item) {
+                        date_default_timezone_set('Asia/Ho_Chi_Minh');
                         $this->orderItemModel->insert([
                             'order_id' => $orderId,
                             'product_id' => $item['product_id'],

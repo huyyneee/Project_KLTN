@@ -60,6 +60,7 @@ $routes = [
 
     //Order
     '/order'                => ['controller' => 'AccountController', 'method' => 'order'],
+    '/account/order_detail'         => ['controller' => 'AccountController', 'method' => 'orderDetail'],
 
 
 ];

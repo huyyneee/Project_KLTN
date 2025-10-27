@@ -6,17 +6,22 @@ use App\Models\AccountModel;
 use App\Models\UserModel;
 use App\Models\AddressModel;
 use App\Models\OrderModel;
+use App\Models\OrderItemModel;
 use App\Core\Controller;
 
 class AccountController extends Controller
 {
     private $accountModel;
     private $orderModel;
+    private $addressModel;
+    private $orderItemModel;
 
     public function __construct()
     {
         $this->accountModel = new AccountModel();
         $this->orderModel = new OrderModel();
+        $this->addressModel = new AddressModel();
+        $this->orderItemModel = new OrderItemModel();
     }
 
     public function index()
@@ -181,6 +186,60 @@ class AccountController extends Controller
 
         $this->render('account/order', [
             'orders' => $orders,
+            'user' => $user
+        ]);
+    }
+    // Hiển thị chi tiết 1 đơn hàng
+    public function orderDetail()
+    {
+        $this->requireAuth();
+
+        $orderId = $_GET['id'] ?? null;
+        if (!$orderId) {
+            $_SESSION['error'] = 'Thiếu mã đơn hàng.';
+            header('Location: /account/order');
+            exit;
+        }
+
+        $accountId = $_SESSION['account_id'] ?? null;
+        if (!$accountId) {
+            header('Location: /login');
+            exit;
+        }
+
+        $userModel = new UserModel();
+        $user = $userModel->findByAccountId($accountId);
+        if (!$user || empty($user['id'])) {
+            $_SESSION['error'] = 'Không tìm thấy người dùng.';
+            header('Location: /account/order');
+            exit;
+        }
+
+        // Lấy đơn hàng
+        $order = $this->orderModel->findById($orderId);
+        if (!$order || $order['user_id'] != $user['id']) {
+            $_SESSION['error'] = 'Đơn hàng không tồn tại hoặc không thuộc về bạn.';
+            header('Location: /account/order');
+            exit;
+        }
+
+        // Lấy chi tiết sản phẩm
+        $items = $this->orderItemModel->getItemsByOrder($orderId);
+
+        // Tính subtotal từ items
+        $subtotal = 0;
+        foreach ($items as $item) {
+            $subtotal += $item['price'] * $item['quantity'];
+        }
+        // Hình thức thanh toán
+        $paymentMethod = $order['payment_method'];
+
+        // Gửi dữ liệu sang view
+        $this->render('account/order_detail', [
+            'order' => $order,
+            'items' => $items,
+            'subtotal' => $subtotal,
+            'paymentMethod' => $paymentMethod,
             'user' => $user
         ]);
     }
