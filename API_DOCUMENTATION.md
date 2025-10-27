@@ -472,3 +472,172 @@ php test_user_api.php
   - GET /users/{id} - Lấy thông tin chi tiết
   - GET /users/search - Tìm kiếm khách hàng
   - GET /users/paginated - Phân trang danh sách
+
+---
+
+## 🧾 Orders (Admin)
+
+Các endpoint cho quản trị viên nhằm quản lý đơn hàng. Những endpoint này được thiết kế cho giao diện quản trị (admin panel). Hiện tại authentication dùng session-based (phải đăng nhập và `accounts.role` = `admin`).
+
+Base path: `/api`
+
+Endpoints:
+
+### 1. GET /orders
+
+- Mô tả: Lấy danh sách đơn hàng (admin). Hỗ trợ phân trang và lọc theo `status`.
+- Request:
+
+```http
+GET /api/orders?page=1&limit=20&status=pending
+```
+
+- Query parameters:
+  - `page` (integer, optional) - trang hiện tại (mặc định 1)
+  - `limit` (integer, optional) - số bản ghi/trang (mặc định 20, tối đa 200)
+  - `status` (string, optional) - filter theo trạng thái (`pending`, `paid`, `shipped`, `completed`, `cancelled`)
+
+- Response success (200):
+
+```json
+{
+  "success": true,
+  "message": "Orders retrieved",
+  "data": {
+    "orders": [
+      {
+        "id": 123,
+        "user_id": 45,
+        "order_code": "ORD5FA3C...",
+        "status": "pending",
+        "total_amount": "150000.00",
+        "shipping_address": "123 Đường ...",
+        "created_at": "2025-10-20 12:00:00",
+        "updated_at": "2025-10-20 12:00:00",
+        "items": [
+          {
+            "id": 1,
+            "order_id": 123,
+            "product_id": 10,
+            "quantity": 2,
+            "price": "50000.00",
+            "product_name": "Sản phẩm A",
+            "image_url": "http://localhost:8000/uploads/....jpg"
+          }
+        ]
+      }
+    ],
+    "pagination": {
+      "current_page": 1,
+      "total_pages": 5,
+      "total_records": 100,
+      "limit": 20
+    }
+  }
+}
+```
+
+### 2. GET /orders/{id}
+
+- Mô tả: Lấy chi tiết một đơn hàng theo ID (admin).
+- Request:
+
+```http
+GET /api/orders/123
+```
+
+- Response success (200):
+
+```json
+{
+  "success": true,
+  "message": "Order retrieved",
+  "data": {
+    "id": 123,
+    "user_id": 45,
+    "order_code": "ORD5FA3C...",
+    "status": "pending",
+    "total_amount": "150000.00",
+    "shipping_address": "123 Đường ...",
+    "created_at": "2025-10-20 12:00:00",
+    "updated_at": "2025-10-20 12:00:00",
+    "items": [ /* như trên */ ]
+  }
+}
+```
+
+### 3. POST /orders/{id}/approve
+
+- Mô tả: Duyệt/approve một đơn hàng (admin). Hiện tại hành động này sẽ cập nhật `status` của đơn sang `paid`.
+- Request:
+
+```http
+POST /api/orders/123/approve
+Content-Type: application/json
+```
+
+- Response success (200):
+
+```json
+{
+  "success": true,
+  "message": "Order approved",
+  "data": { /* order object after update */ }
+}
+```
+
+#### Lưu ý important
+
+- Authentication: endpoints admin yêu cầu session-based auth. Bạn cần đăng nhập tới trang admin để có `$_SESSION['account_id']` và `accounts.role` phải là `admin`. Nếu không, API sẽ trả 401 hoặc 403 JSON.
+- Giả định: "approve" = set `status` => `paid`. Nếu bạn muốn đổi thành `shipped` hoặc thêm các trạng thái khác (ví dụ `cancel`), tôi có thể mở rộng API.
+- Các endpoint trả về danh sách `items` cho mỗi order, mỗi item có thông tin sản phẩm và đường dẫn ảnh đầy đủ khi có.
+
+## ✅ Ví dụ sử dụng (Admin)
+
+Giả sử bạn đã đăng nhập trong trình duyệt (session cookie). Dưới đây là ví dụ request dùng curl (sử dụng cookie từ trình duyệt).
+
+### cURL (sử dụng cookie file)
+
+```bash
+# Lưu cookie khi đăng nhập (ví dụ):
+# curl -c cookies.txt -d "email=admin@example.com&password=..." http://localhost/login
+
+# Lấy danh sách đơn hàng (admin)
+curl -b cookies.txt "http://localhost/api/orders?page=1&limit=20"
+
+# Lấy chi tiết 1 đơn
+curl -b cookies.txt "http://localhost/api/orders/123"
+
+# Duyệt đơn
+curl -X POST -b cookies.txt "http://localhost/api/orders/123/approve"
+```
+
+### JavaScript (fetch) - khi client chạy cùng domain và share session cookie
+
+```javascript
+fetch('/api/orders?page=1&limit=20', { credentials: 'same-origin' })
+  .then(r => r.json())
+  .then(console.log);
+
+fetch('/api/orders/123', { credentials: 'same-origin' })
+  .then(r => r.json())
+  .then(console.log);
+
+fetch('/api/orders/123/approve', { method: 'POST', credentials: 'same-origin' })
+  .then(r => r.json())
+  .then(console.log);
+```
+
+### PHP (test script)
+
+Bạn có thể reuse mẫu `test_user_api.php` để gọi các endpoint trên (sử dụng curl với cookie) — lưu ý cần đăng nhập admin trước và lưu cookie vào file `cookies.txt`.
+
+---
+
+## 🔄 Cập nhật
+
+- **v1.1** - Thêm admin orders API
+  - GET /orders - danh sách đơn hàng (admin)
+  - GET /orders/{id} - chi tiết đơn hàng (admin)
+  - POST /orders/{id}/approve - duyệt đơn (admin)
+

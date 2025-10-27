@@ -5,6 +5,7 @@ require_once __DIR__ . '/../app/Controllers/CategoryApiController.php';
 require_once __DIR__ . '/../app/Controllers/DashboardApiController.php';
 require_once __DIR__ . '/../app/Controllers/ImageUploadController.php';
 require_once __DIR__ . '/../app/Controllers/UserApiController.php';
+require_once __DIR__ . '/../app/Controllers/OrderApiController.php';
 
 // Set CORS headers for all API requests
 header('Access-Control-Allow-Origin: *');
@@ -268,6 +269,43 @@ switch ($path) {
         if ($method === 'GET') {
             $controller = new \App\Controllers\UserApiController();
             $controller->paginated();
+        } else {
+            http_response_code(405);
+            echo json_encode(['error' => 'Method not allowed']);
+        }
+        break;
+
+    // Order (admin) routes
+    case '/orders':
+        $controller = new \App\Controllers\OrderApiController();
+        switch ($method) {
+            case 'GET':
+                $controller->index();
+                break;
+            default:
+                http_response_code(405);
+                echo json_encode(['error' => 'Method not allowed']);
+        }
+        break;
+
+    case (preg_match('/^\/orders\/(\d+)$/', $path, $matches) ? true : false):
+        $controller = new \App\Controllers\OrderApiController();
+        $id = $matches[1];
+        switch ($method) {
+            case 'GET':
+                $controller->show($id);
+                break;
+            default:
+                http_response_code(405);
+                echo json_encode(['error' => 'Method not allowed']);
+        }
+        break;
+
+    case (preg_match('/^\/orders\/(\d+)\/approve$/', $path, $matches) ? true : false):
+        if ($method === 'POST') {
+            $controller = new \App\Controllers\OrderApiController();
+            $id = $matches[1];
+            $controller->approve($id);
         } else {
             http_response_code(405);
             echo json_encode(['error' => 'Method not allowed']);
