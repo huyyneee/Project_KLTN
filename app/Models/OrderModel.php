@@ -46,62 +46,66 @@ class OrderModel extends Model
         return $stmt->fetch(\PDO::FETCH_ASSOC);
     }
 
-    /**
-     * Lấy tất cả đơn hàng của user, loại trừ status = 'paid'
-     */
-    public function getOrdersByUserId($userId)
+    public function getOrdersWithItems($userId, $status = null)
     {
-        $sql = "SELECT * FROM {$this->table} 
-            WHERE user_id = :user_id AND status != 'paid'
-            ORDER BY created_at DESC";
+        //Truy vấn danh sách đơn hàng (có thể lọc theo trạng thái)
+        $sql = "SELECT * FROM {$this->table} WHERE user_id = :user_id";
+        if ($status !== null) {
+            $sql .= " AND status = :status";
+        }
+        $sql .= " ORDER BY 
+            CASE 
+                WHEN status = 'pending' THEN 1
+                WHEN status = 'paid' THEN 2
+                WHEN status = 'shipped' THEN 3
+                WHEN status = 'completed' THEN 4
+                WHEN status = 'cancelled' THEN 5
+                ELSE 6
+            END,
+            created_at DESC";
         $stmt = $this->db->prepare($sql);
         $stmt->bindValue(':user_id', $userId, \PDO::PARAM_INT);
+        if ($status !== null) {
+            $stmt->bindValue(':status', $status, \PDO::PARAM_STR);
+        }
         $stmt->execute();
-        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
-    }
+        $orders = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
-    /**
-     * Lấy đơn hàng kèm chi tiết (items), loại trừ paid, có ảnh sản phẩm
-     */
-    public function getOrdersWithItems($userId)
-    {
-        $orders = $this->getOrdersByUserId($userId); // đã loại trừ paid
-
+        //Chuẩn bị truy vấn chi tiết sản phẩm
         $stmtItem = $this->db->prepare("
-            SELECT i.*, 
-                   p.name AS product_name,
-                   p.price AS product_price,
-                   pi.url AS product_image
-            FROM order_items i
-            JOIN products p ON i.product_id = p.id
-            LEFT JOIN product_images pi ON pi.product_id = p.id AND pi.is_main = 1
-            WHERE i.order_id = :order_id
-        ");
+        SELECT i.*, 
+               p.name AS product_name,
+               p.price AS product_price,
+               pi.url AS product_image
+        FROM order_items i
+        JOIN products p ON i.product_id = p.id
+        LEFT JOIN product_images pi ON pi.product_id = p.id AND pi.is_main = 1
+        WHERE i.order_id = :order_id
+    ");
 
+        //Lấy host để xử lý link ảnh (nếu có)
         $dbHost = null;
-        // Lấy host từ config nếu có
         $cfgPath = __DIR__ . '/../../config/config.php';
         if (file_exists($cfgPath)) {
             $cfg = require $cfgPath;
             $dbHost = $cfg['database']['host'] ?? null;
         }
 
+        //Gắn chi tiết sản phẩm vào từng đơn
         foreach ($orders as &$order) {
             $stmtItem->bindValue(':order_id', $order['id'], \PDO::PARAM_INT);
             $stmtItem->execute();
             $items = $stmtItem->fetchAll(\PDO::FETCH_ASSOC);
 
-            // Xử lý ảnh giống CartItemModel
             foreach ($items as &$item) {
                 $img = trim($item['product_image'] ?? '');
                 $img = str_replace('\\/', '/', $img);
                 $img = trim($img, "'\" \t\n\r\0\x0B");
+
                 if ($img !== '') {
                     if (preg_match('#^/#', $img) && $dbHost) {
                         $item['product_image'] = 'http://' . $dbHost . ':8000' . $img;
                     } elseif (preg_match('#^https?://#i', $img)) {
-                        $item['product_image'] = $img;
-                    } else {
                         $item['product_image'] = $img;
                     }
                 } else {
@@ -113,5 +117,16 @@ class OrderModel extends Model
         }
 
         return $orders;
+    }
+    public function cancelOrder($orderId, $userId)
+    {
+        $sql = "UPDATE {$this->table} 
+                SET status = 'cancelled', updated_at = NOW() 
+                WHERE id = :id AND user_id = :user_id";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':id', $orderId, \PDO::PARAM_INT);
+        $stmt->bindValue(':user_id', $userId, \PDO::PARAM_INT);
+        return $stmt->execute();
     }
 }

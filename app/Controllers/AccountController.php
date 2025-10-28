@@ -231,10 +231,7 @@ class AccountController extends Controller
         foreach ($items as $item) {
             $subtotal += $item['price'] * $item['quantity'];
         }
-        // Hình thức thanh toán
         $paymentMethod = $order['payment_method'];
-
-        // Gửi dữ liệu sang view
         $this->render('account/order_detail', [
             'order' => $order,
             'items' => $items,
@@ -242,5 +239,37 @@ class AccountController extends Controller
             'paymentMethod' => $paymentMethod,
             'user' => $user
         ]);
+    }
+    // Hủy đơn hàng
+    public function cancelOrder()
+    {
+        $this->requireAuth();
+        $userId = $_SESSION['account_id'] ?? null;
+        $orderId = $_POST['order_id'] ?? null;
+
+        header('Content-Type: application/json');
+
+        if (!$userId || !$orderId) {
+            http_response_code(400);
+            echo json_encode([
+                'success' => false,
+                'message' => 'Thiếu thông tin hủy đơn hàng.'
+            ]);
+            return;
+        }
+
+        $result = $this->orderModel->cancelOrder($orderId, $userId);
+
+        if ($result) {
+            echo json_encode([
+                'success' => true,
+                'message' => 'Đơn hàng đã được hủy thành công.'
+            ]);
+        } else {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Không thể hủy đơn hàng. Vui lòng thử lại.'
+            ]);
+        }
     }
 }

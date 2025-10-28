@@ -88,9 +88,24 @@ $userName = $user['full_name'] ?? $account['full_name'] ?? '';
                         <div class="flex items-center gap-2">
                             <?php if ($order['status'] === 'pending'): ?>
                                 <span class="text-blue-600 text-sm border border-blue-400 bg-blue-50 px-2.5 py-1 rounded font-semibold">
-                                    Chưa giải quyết
+                                    Chờ xác nhận
                                 </span>
-
+                            <?php elseif ($order['status'] === 'paid'): ?>
+                                <span class="text-purple-600 text-sm border border-purple-400 bg-purple-50 px-2.5 py-1 rounded font-semibold">
+                                    Đã xác nhận
+                                </span>
+                            <?php elseif ($order['status'] === 'shipped'): ?>
+                                <span class="text-yellow-400 text-sm border border-yellow-400 bg-yellow-50 px-2.5 py-1 rounded font-semibold">
+                                    Đang giao hàng
+                                </span>
+                            <?php elseif ($order['status'] === 'completed'): ?>
+                                <span class="text-green-500 text-sm border border-green-400 bg-green-50 px-2.5 py-1 rounded font-semibold">
+                                    Hoàn tất
+                                </span>
+                            <?php elseif ($order['status'] === 'cancelled'): ?>
+                                <span class="text-red-600 text-sm border border-red-400 bg-red-50 px-2.5 py-1 rounded font-semibold">
+                                    Đã hủy
+                                </span>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -140,13 +155,17 @@ $userName = $user['full_name'] ?? $account['full_name'] ?? '';
                     <?php if ($order['status'] === 'pending'): ?>
                         <div class="flex justify-end p-4 border-t bg-gray-50">
                             <button
-                                class="px-5 py-2 text-sl font-medium text-red-600 border border-red-500 rounded-lg 
+                                class="cancel-order-btn px-5 py-2 text-sm font-medium text-red-600 border border-red-500 rounded-lg 
                             hover:bg-red-50 hover:border-red-600 hover:text-red-700 
-                            transition-colors duration-200 ease-in-out">
+                            transition-colors duration-200 ease-in-out"
+                                data-id="<?= $order['id'] ?>">
                                 Hủy đơn hàng
                             </button>
                         </div>
                     <?php endif; ?>
+
+
+
                 </div>
             </div>
         </main>
@@ -166,6 +185,28 @@ $userName = $user['full_name'] ?? $account['full_name'] ?? '';
             });
 
             btn.textContent = isHidden ? "Thu gọn" : "Xem thêm (<?= $totalItems - $visibleLimit ?>)";
+        });
+    });
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('.cancel-order-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const orderId = this.dataset.id;
+                if (!confirm('Bạn có chắc muốn hủy đơn hàng này không?')) return;
+
+                fetch('/account/cancel-order', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: 'order_id=' + encodeURIComponent(orderId)
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        alert(data.message);
+                        if (data.success) location.reload();
+                    })
+                    .catch(() => alert('Lỗi hệ thống, vui lòng thử lại sau.'));
+            });
         });
     });
 </script>
