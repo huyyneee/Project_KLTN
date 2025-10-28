@@ -5,7 +5,7 @@ require_once __DIR__ . '/app/Core/Database.php';
 echo "Testing database connection...\n\n";
 
 try {
-    $database = new Database();
+    $database = new App\Core\Database();
     $conn = $database->getConnection();
 
     if ($conn) {
