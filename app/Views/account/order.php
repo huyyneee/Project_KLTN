@@ -31,12 +31,37 @@ $userName = $user['full_name'] ?? $account['full_name'] ?? '';
                                     </h2>
                                     <p class="text-sm text-gray-500 mt-1">
                                         Trạng thái:
-                                        <span class="font-medium text-blue-600">
-                                            <?= ($order['status'] === 'pending') ? 'Chưa giải quyết' : htmlspecialchars($order['status']) ?>
-                                        </span>
+                                        <?php
+                                        switch ($order['status']) {
+                                            case 'pending':
+                                                $label = 'Chờ xác nhận';
+                                                $color = 'text-blue-600';
+                                                break;
+                                            case 'paid':
+                                                $label = 'Đã xác nhận';
+                                                $color = 'text-purple-600';
+                                                break;
+                                            case 'shipped':
+                                                $label = 'Đang giao hàng';
+                                                $color = 'text-yellow-600';
+                                                break;
+                                            case 'completed':
+                                                $label = 'Hoàn thành';
+                                                $color = 'text-green-600';
+                                                break;
+                                            case 'cancelled':
+                                                $label = 'Đã hủy';
+                                                $color = 'text-red-600';
+                                                break;
+                                            default:
+                                                $label = ucfirst($order['status']);
+                                                $color = 'text-gray-600';
+                                                break;
+                                        }
+                                        ?>
+                                        <span class="font-medium <?= $color ?>"><?= htmlspecialchars($label) ?></span>
                                     </p>
                                 </div>
-
                                 <a href="/account/order_detail?id=<?= $order['id'] ?>"
                                     class="flex items-center gap-1 text-blue-600 text-sm font-medium hover:text-blue-700 transition-colors">
                                     <span>Xem chi tiết</span>
