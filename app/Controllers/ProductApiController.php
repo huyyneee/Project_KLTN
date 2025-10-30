@@ -64,7 +64,28 @@ class ProductApiController extends ApiController
     public function index()
     {
         try {
-            $products = $this->productModel->findAllWithCategory();
+            // Get pagination parameters
+            $page = isset($_GET['page']) ? (int) $_GET['page'] : 1;
+            $limit = isset($_GET['limit']) ? (int) $_GET['limit'] : 10;
+            $search = isset($_GET['search']) ? trim($_GET['search']) : '';
+            $category_id = isset($_GET['category_id']) ? (int) $_GET['category_id'] : null;
+            $sort_by = isset($_GET['sort_by']) ? $_GET['sort_by'] : 'created_at';
+            $sort_order = isset($_GET['sort_order']) ? $_GET['sort_order'] : 'DESC';
+
+            // Validate pagination parameters
+            $page = max(1, $page);
+            $limit = max(1, min(100, $limit)); // Limit between 1 and 100
+            $offset = ($page - 1) * $limit;
+
+            // Get products with pagination
+            $result = $this->productModel->findAllWithCategoryPaginated(
+                $limit,
+                $offset,
+                $search,
+                $category_id,
+                $sort_by,
+                $sort_order
+            );
 
             // Format dữ liệu để frontend dễ sử dụng
             $formattedProducts = array_map(function ($product) {
@@ -107,9 +128,22 @@ class ProductApiController extends ApiController
                     'created_at' => $product['created_at'],
                     'updated_at' => $product['updated_at']
                 ];
-            }, $products);
+            }, $result['data']);
 
-            $this->sendResponse($formattedProducts, 'Products retrieved successfully');
+            // Return paginated response
+            $response = [
+                'data' => $formattedProducts,
+                'pagination' => [
+                    'current_page' => $result['current_page'],
+                    'total_pages' => $result['total_pages'],
+                    'total_items' => $result['total_items'],
+                    'per_page' => $result['per_page'],
+                    'has_next' => $result['has_next'],
+                    'has_prev' => $result['has_prev']
+                ]
+            ];
+
+            $this->sendResponse($response, 'Products retrieved successfully');
         } catch (Exception $e) {
             $this->sendError('Failed to retrieve products: ' . $e->getMessage(), 500);
         }
