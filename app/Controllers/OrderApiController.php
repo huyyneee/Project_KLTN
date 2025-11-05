@@ -110,34 +110,73 @@ class OrderApiController extends ApiController
     }
 
     /**
-     * POST /api/orders/{id}/approve - Admin: approve order
-     * Assumption: approving sets status to 'paid' (modify if you prefer 'shipped')
+     * PATCH /api/orders/{id}/status - Admin: update order status with validation
+     * Allowed statuses: pending, paid, shipped, completed, cancelled
+     * Transitions:
+     *  - pending -> paid | cancelled
+     *  - paid -> shipped | cancelled
+     *  - shipped -> completed
+     *  - completed, cancelled -> (no further transitions)
      */
-    public function approve($id)
+    public function updateStatus($id)
     {
         try {
+
             $order = $this->orderModel->findById($id);
             if (!$order) {
                 $this->sendError('Order not found', 404);
             }
 
-            // Only allow approving pending orders
-            if ($order['status'] !== 'pending') {
-                $this->sendError('Only pending orders can be approved', 400);
+            $raw = file_get_contents('php://input');
+            $data = json_decode($raw, true);
+            if (!is_array($data)) {
+                $this->sendError('Invalid JSON body', 400);
+            }
+
+            $targetStatus = strtolower(trim($data['status'] ?? ''));
+            if ($targetStatus === '') {
+                $this->sendError('Missing required field: status', 400);
+            }
+
+            $allowedStatuses = ['pending', 'paid', 'shipped', 'completed', 'cancelled'];
+            if (!in_array($targetStatus, $allowedStatuses, true)) {
+                $this->sendError('Invalid status value', 400);
+            }
+
+            $currentStatus = strtolower($order['status'] ?? '');
+            $transitions = [
+                'pending' => ['paid', 'cancelled'],
+                'paid' => ['shipped', 'cancelled'],
+                'shipped' => ['completed'],
+                'completed' => [],
+                'cancelled' => []
+            ];
+
+            if (!array_key_exists($currentStatus, $transitions)) {
+                $this->sendError('Order has unknown current status', 400);
+            }
+
+            if ($currentStatus === $targetStatus) {
+                $this->sendError('Order already in target status', 400);
+            }
+
+            if (!in_array($targetStatus, $transitions[$currentStatus], true)) {
+                $this->sendError('Invalid status transition', 400);
             }
 
             $now = date('Y-m-d H:i:s');
-            $result = $this->orderModel->update($id, ['status' => 'paid', 'updated_at' => $now]);
+            $result = $this->orderModel->update($id, ['status' => $targetStatus, 'updated_at' => $now]);
 
             if ($result) {
                 $updated = $this->orderModel->findById($id);
                 $updated['items'] = $this->orderItemModel->getItemsByOrder($id);
-                $this->sendResponse($updated, 'Order approved');
+                $this->sendResponse($updated, 'Order status updated');
             } else {
                 $this->sendError('Failed to update order status', 500);
             }
         } catch (\Exception $e) {
-            $this->sendError('Failed to approve order: ' . $e->getMessage(), 500);
+            $this->sendError('Failed to update order status: ' . $e->getMessage(), 500);
         }
     }
+
 }

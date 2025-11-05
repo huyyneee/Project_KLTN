@@ -12,7 +12,7 @@ require_once __DIR__ . '/../app/Controllers/AuthController.php';
 
 // Set CORS headers for all API requests
 header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
 header('Access-Control-Max-Age: 86400');
 
@@ -385,11 +385,11 @@ switch ($path) {
         }
         break;
 
-    case (preg_match('/^\/orders\/(\d+)\/approve$/', $path, $matches) ? true : false):
-        if ($method === 'POST') {
+    case (preg_match('/^\/orders\/(\d+)\/status$/', $path, $matches) ? true : false):
+        if ($method === 'PATCH') {
             $controller = new \App\Controllers\OrderApiController();
             $id = $matches[1];
-            $controller->approve($id);
+            $controller->updateStatus($id);
         } else {
             http_response_code(405);
             echo json_encode(['error' => 'Method not allowed']);
