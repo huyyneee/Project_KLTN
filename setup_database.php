@@ -73,6 +73,7 @@ CREATE TABLE IF NOT EXISTS `products` (
   `code` CHAR(36) UNIQUE NOT NULL,
   `name` VARCHAR(255) NOT NULL,
   `price` DECIMAL(15,2) NOT NULL,
+  `quantity` INT NOT NULL DEFAULT 0,
   `description` TEXT,
   `specifications` TEXT,
   `usage` TEXT,
@@ -142,6 +143,13 @@ CREATE INDEX IF NOT EXISTS idx_products_category ON products(category_id);
 CREATE INDEX IF NOT EXISTS idx_cart_items_cart ON cart_items(cart_id);
 CREATE INDEX IF NOT EXISTS idx_order_items_order ON order_items(order_id);
 CREATE INDEX IF NOT EXISTS idx_orders_user ON orders(user_id);
+
+-- Ensure quantity column exists for existing deployments
+ALTER TABLE `products` ADD COLUMN IF NOT EXISTS `quantity` INT NOT NULL DEFAULT 0;
+-- Migrate any existing stock values to quantity if both exist
+UPDATE `products` SET `quantity` = COALESCE(`stock`, `quantity`) WHERE 1;
+-- Drop old stock column if present
+ALTER TABLE `products` DROP COLUMN IF EXISTS `stock`;
 
 -- Insert sample categories
 INSERT IGNORE INTO `categories` (`name`, `description`) VALUES 
