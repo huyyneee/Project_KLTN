@@ -7,6 +7,8 @@ require_once __DIR__ . '/../app/Controllers/ImageUploadController.php';
 require_once __DIR__ . '/../app/Controllers/UserApiController.php';
 require_once __DIR__ . '/../app/Controllers/OrderApiController.php';
 require_once __DIR__ . '/../app/Controllers/LoginApiController.php';
+require_once __DIR__ . '/../app/Controllers/EmployeeApiController.php';
+require_once __DIR__ . '/../app/Controllers/AuthController.php';
 
 // Set CORS headers for all API requests
 header('Access-Control-Allow-Origin: *');
@@ -69,6 +71,46 @@ switch ($path) {
         if ($method === 'GET') {
             $controller = new \App\Controllers\DashboardApiController();
             $controller->getRecentActivity();
+        } else {
+            http_response_code(405);
+            echo json_encode(['error' => 'Method not allowed']);
+        }
+        break;
+
+    case '/dashboard/category-distribution':
+        if ($method === 'GET') {
+            $controller = new \App\Controllers\DashboardApiController();
+            $controller->getCategoryDistribution();
+        } else {
+            http_response_code(405);
+            echo json_encode(['error' => 'Method not allowed']);
+        }
+        break;
+
+    case '/dashboard/monthly-stats':
+        if ($method === 'GET') {
+            $controller = new \App\Controllers\DashboardApiController();
+            $controller->getMonthlyStats();
+        } else {
+            http_response_code(405);
+            echo json_encode(['error' => 'Method not allowed']);
+        }
+        break;
+
+    case '/dashboard/customer-stats':
+        if ($method === 'GET') {
+            $controller = new \App\Controllers\DashboardApiController();
+            $controller->getCustomerStats();
+        } else {
+            http_response_code(405);
+            echo json_encode(['error' => 'Method not allowed']);
+        }
+        break;
+
+    case '/dashboard/revenue-stats':
+        if ($method === 'GET') {
+            $controller = new \App\Controllers\DashboardApiController();
+            $controller->getRevenueStats();
         } else {
             http_response_code(405);
             echo json_encode(['error' => 'Method not allowed']);
@@ -276,7 +318,7 @@ switch ($path) {
         }
         break;
 
-    // Auth routes
+// Auth routes
     case '/login':
         if ($method === 'POST') {
             $controller = new \App\Controllers\LoginApiController();
@@ -287,9 +329,29 @@ switch ($path) {
         }
         break;
 
+    case '/auth/login':
+        $controller = new \App\Controllers\AuthController();
+        if ($method === 'POST') {
+            $controller->login();
+        } else {
+            http_response_code(405);
+            echo json_encode(['error' => 'Method not allowed']);
+        }
+        break;
+
     case '/logout':
         if ($method === 'POST') {
             $controller = new \App\Controllers\LoginApiController();
+            $controller->logout();
+        } else {
+            http_response_code(405);
+            echo json_encode(['error' => 'Method not allowed']);
+        }
+        break;
+
+    case '/auth/logout':
+        $controller = new \App\Controllers\AuthController();
+        if ($method === 'POST') {
             $controller->logout();
         } else {
             http_response_code(405);
@@ -334,6 +396,50 @@ switch ($path) {
         }
         break;
 
+    case '/auth/me':
+        $controller = new \App\Controllers\AuthController();
+        if ($method === 'GET') {
+            $controller->me();
+        } else {
+            http_response_code(405);
+            echo json_encode(['error' => 'Method not allowed']);
+        }
+        break;
+
+    // Employee routes
+    case '/employees':
+        $controller = new \App\Controllers\EmployeeApiController();
+        switch ($method) {
+            case 'GET':
+                $controller->index();
+                break;
+            case 'POST':
+                $controller->store();
+                break;
+            default:
+                http_response_code(405);
+                echo json_encode(['error' => 'Method not allowed']);
+        }
+        break;
+
+    case (preg_match('/^\/employees\/(\d+)$/', $path, $matches) ? true : false):
+        $controller = new \App\Controllers\EmployeeApiController();
+        $id = $matches[1];
+        switch ($method) {
+            case 'GET':
+                $controller->show($id);
+                break;
+            case 'PUT':
+                $controller->update($id);
+                break;
+            case 'DELETE':
+                $controller->delete($id);
+                break;
+            default:
+                http_response_code(405);
+                echo json_encode(['error' => 'Method not allowed']);
+        }
+        break;
     // Default route
     default:
         http_response_code(404);

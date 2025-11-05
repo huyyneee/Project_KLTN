@@ -21,27 +21,6 @@ class OrderApiController extends ApiController
         $this->orderItemModel = new OrderItemModel();
     }
 
-    // Simple admin check using session + accounts.role
-    private function ensureAdmin()
-    {
-        // Ensure session like other controllers
-        if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
-            session_start();
-        }
-
-        if (empty($_SESSION['account_id'])) {
-            $this->sendError('Unauthorized: not signed in', 401);
-        }
-
-        $db = Database::getInstance()->getConnection();
-        $stmt = $db->prepare('SELECT role FROM accounts WHERE id = :id LIMIT 1');
-        $stmt->execute([':id' => $_SESSION['account_id']]);
-        $row = $stmt->fetch(\PDO::FETCH_ASSOC);
-        if (!$row || ($row['role'] ?? 'user') !== 'admin') {
-            $this->sendError('Forbidden: admin access only', 403);
-        }
-    }
-
     /**
      * GET /api/orders - Admin: list orders (paginated, filter by status)
      */
@@ -53,8 +32,10 @@ class OrderApiController extends ApiController
             $limit = (int) ($_GET['limit'] ?? 20);
             $status = $_GET['status'] ?? null;
 
-            if ($page < 1) $page = 1;
-            if ($limit < 1 || $limit > 200) $limit = 20;
+            if ($page < 1)
+                $page = 1;
+            if ($limit < 1 || $limit > 200)
+                $limit = 20;
 
             $offset = ($page - 1) * $limit;
 
