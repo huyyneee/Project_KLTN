@@ -566,14 +566,23 @@ GET /api/orders/123
 }
 ```
 
-### 3. POST /orders/{id}/approve
+### 3. PATCH /orders/{id}/status
 
-- Mô tả: Duyệt/approve một đơn hàng (admin). Hiện tại hành động này sẽ cập nhật `status` của đơn sang `paid`.
+- Mô tả: Cập nhật trạng thái đơn hàng theo stepper (admin). Hỗ trợ: `pending`, `paid`, `shipped`, `completed`, `cancelled`.
+- Quy tắc chuyển trạng thái:
+  - `pending` → `paid` | `cancelled`
+  - `paid` → `shipped` | `cancelled`
+  - `shipped` → `completed`
+  - `completed`, `cancelled` → không cho đổi
 - Request:
 
 ```http
-POST /api/orders/123/approve
+PATCH /api/orders/123/status
 Content-Type: application/json
+
+{
+  "status": "paid | shipped | completed | cancelled"
+}
 ```
 
 - Response success (200):
@@ -581,7 +590,7 @@ Content-Type: application/json
 ```json
 {
   "success": true,
-  "message": "Order approved",
+  "message": "Order status updated",
   "data": { /* order object after update */ }
 }
 ```
@@ -589,7 +598,7 @@ Content-Type: application/json
 #### Lưu ý important
 
 - Authentication: endpoints admin yêu cầu session-based auth. Bạn cần đăng nhập tới trang admin để có `$_SESSION['account_id']` và `accounts.role` phải là `admin`. Nếu không, API sẽ trả 401 hoặc 403 JSON.
-- Giả định: "approve" = set `status` => `paid`. Nếu bạn muốn đổi thành `shipped` hoặc thêm các trạng thái khác (ví dụ `cancel`), tôi có thể mở rộng API.
+- Chỉ cho phép chuyển theo đúng quy tắc trên; vi phạm sẽ trả 400.
 - Các endpoint trả về danh sách `items` cho mỗi order, mỗi item có thông tin sản phẩm và đường dẫn ảnh đầy đủ khi có.
 
 ## ✅ Ví dụ sử dụng (Admin)
@@ -608,8 +617,8 @@ curl -b cookies.txt "http://localhost/api/orders?page=1&limit=20"
 # Lấy chi tiết 1 đơn
 curl -b cookies.txt "http://localhost/api/orders/123"
 
-# Duyệt đơn
-curl -X POST -b cookies.txt "http://localhost/api/orders/123/approve"
+# Cập nhật trạng thái đơn
+curl -X PATCH -H "Content-Type: application/json" -d '{"status":"paid"}' -b cookies.txt "http://localhost/api/orders/123/status"
 ```
 
 ### JavaScript (fetch) - khi client chạy cùng domain và share session cookie

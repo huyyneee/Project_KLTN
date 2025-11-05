@@ -146,19 +146,30 @@ GET /api/orders/30
 }
 ```
 
-### POST /orders/{id}/approve
-Duyệt đơn hàng (chuyển trạng thái từ `pending` sang `paid`)
+### PATCH /orders/{id}/status
+Cập nhật trạng thái đơn hàng theo stepper
+
+Quy tắc chuyển trạng thái:
+- `pending` → `paid` | `cancelled`
+- `paid` → `shipped` | `cancelled`
+- `shipped` → `completed`
+- `completed`, `cancelled` → không cho đổi
 
 **Request:**
 ```http
-POST /api/orders/30/approve
+PATCH /api/orders/30/status
+Content-Type: application/json
+
+{
+  "status": "paid | shipped | completed | cancelled"
+}
 ```
 
 **Response Success (200):**
 ```json
 {
   "success": true,
-  "message": "Order approved",
+  "message": "Order status updated",
   "data": {
     "id": 30,
     "status": "paid",
@@ -172,7 +183,7 @@ POST /api/orders/30/approve
 ```json
 {
   "success": false,
-  "message": "Only pending orders can be approved",
+  "message": "Invalid status transition",
   "errors": null
 }
 ```
