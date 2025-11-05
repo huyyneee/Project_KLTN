@@ -12,13 +12,14 @@ class Product extends Model
 
     public function create($data)
     {
-        $sql = "INSERT INTO {$this->table} (code, name, price, description, specifications, `usage`, ingredients, category_id) 
-                VALUES (:code, :name, :price, :description, :specifications, :usage, :ingredients, :category_id)";
+        $sql = "INSERT INTO {$this->table} (code, name, price, quantity, description, specifications, `usage`, ingredients, category_id) 
+                VALUES (:code, :name, :price, :quantity, :description, :specifications, :usage, :ingredients, :category_id)";
         $stmt = $this->db->prepare($sql);
         $result = $stmt->execute([
             ':code' => $data['code'] ?? null,
             ':name' => $data['name'],
             ':price' => $data['price'],
+            ':quantity' => isset($data['quantity']) ? (int)$data['quantity'] : 0,
             ':description' => $data['description'],
             ':specifications' => $data['specifications'] ?? null,
             ':usage' => $data['usage'] ?? null,
@@ -37,6 +38,7 @@ class Product extends Model
         $sql = "UPDATE {$this->table} SET 
                 name = :name, 
                 price = :price, 
+                quantity = :quantity,
                 description = :description, 
                 specifications = :specifications, 
                 `usage` = :usage, 
@@ -49,6 +51,7 @@ class Product extends Model
             ':id' => $id,
             ':name' => $data['name'] ?? null,
             ':price' => $data['price'] ?? null,
+            ':quantity' => isset($data['quantity']) ? (int)$data['quantity'] : 0,
             ':description' => $data['description'] ?? null,
             ':specifications' => $data['specifications'] ?? null,
             ':usage' => $data['usage'] ?? null,
