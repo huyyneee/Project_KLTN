@@ -112,4 +112,23 @@ class CartController extends Controller
         $this->cartItemModel->updateQuantity($itemId, $quantity);
         $this->json(['success' => true]);
     }
+    public function count()
+    {
+        $userId = $_SESSION['account_id'] ?? null;
+        if (!$userId) {
+            $this->json(['count' => 0]);
+            return;
+        }
+
+        $cart = $this->cartModel->getCartByUser($userId);
+        if (!$cart) {
+            $this->json(['count' => 0]);
+            return;
+        }
+
+        $total = $this->cartItemModel->getTotalQuantity($cart['id']);
+        $display = $total > 99 ? 99 : $total;
+
+        $this->json(['count' => $display]);
+    }
 }

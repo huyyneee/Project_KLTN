@@ -157,6 +157,80 @@ $userName = $user['full_name'] ?? $account['full_name'] ?? '';
                 <?php endif; ?>
 
             </div>
+            <?php if (!empty($totalPages) && $totalPages > 1): ?>
+                <?php
+                $start = max(1, $currentPage - 2);
+                $end = min($totalPages, $currentPage + 2);
+                ?>
+                <nav class="flex justify-center mt-6">
+                    <ul class="flex items-center space-x-2 text-base select-none">
+
+                        <!-- Nút về trước -->
+                        <li>
+                            <?php if ($currentPage > 1): ?>
+                                <a href="?page=<?= $currentPage - 1 ?>"
+                                    class="px-3 py-1.5 rounded-none border border-gray-300 text-gray-700 hover:bg-gray-100 hover:border-gray-400 transition font-normal">
+                                    « Prev
+                                </a>
+                            <?php endif; ?>
+                        </li>
+
+
+                        <!-- Trang đầu -->
+                        <?php if ($start > 1): ?>
+                            <li>
+                                <a href="?page=1"
+                                    class="px-3 py-1.5 rounded-none border border-gray-300 text-gray-700 hover:bg-gray-100 hover:border-gray-400 transition">
+                                    1
+                                </a>
+                            </li>
+                            <?php if ($start > 2): ?>
+                                <li><span class="px-2 text-gray-400">...</span></li>
+                            <?php endif; ?>
+                        <?php endif; ?>
+
+                        <!-- Các trang giữa -->
+                        <?php for ($i = $start; $i <= $end; $i++): ?>
+                            <li>
+                                <a href="?page=<?= $i ?>"
+                                    class="px-3 py-1.5 rounded-none border transition-all duration-150
+                                     <?= $i === $currentPage
+                                            ? 'bg-green-600 text-white border-green-600 shadow-sm'
+                                            : 'border-gray-300 hover:bg-gray-100 hover:border-gray-400' ?>">
+                                    <?= $i ?>
+                                </a>
+                            </li>
+                        <?php endfor; ?>
+
+                        <!-- Trang cuối -->
+                        <?php if ($end < $totalPages): ?>
+                            <?php if ($end < $totalPages - 1): ?>
+                                <li><span class="px-2 text-gray-400">...</span></li>
+                            <?php endif; ?>
+                            <li>
+                                <a href="?page=<?= $totalPages ?>"
+                                    class="px-3 py-1.5 rounded-none border border-gray-300 text-gray-700 hover:bg-gray-100 hover:border-gray-400 transition">
+                                    <?= $totalPages ?>
+                                </a>
+                            </li>
+                        <?php endif; ?>
+
+                        <!-- Nút tiếp theo -->
+                        <?php if ($currentPage < $totalPages): ?>
+                            <!-- Nút tiếp theo -->
+                            <li>
+                                <?php if ($currentPage < $totalPages): ?>
+                                    <a href="?page=<?= $currentPage + 1 ?>"
+                                        class="px-3 py-1.5 rounded-none border border-gray-300 text-gray-700 hover:bg-gray-100 hover:border-gray-400 transition font-normal">
+                                        Next »
+                                    </a>
+                            </li>
+                        <?php endif; ?>
+                    <?php endif; ?>
+
+                    </ul>
+                </nav>
+            <?php endif; ?>
 
         </main>
     </div>

@@ -48,7 +48,18 @@ if (empty($_SESSION['account_id']) && !empty($_COOKIE['account_id']) && !empty($
 	<link rel="stylesheet" href="/assets/css/output.css">
 
 	<style>
-		/* Dropdown hover for Tailwind JIT (fallback) */
+		@keyframes toastIn {
+			from {
+				opacity: 0;
+				transform: translateY(-20px);
+			}
+
+			to {
+				opacity: 1;
+				transform: translateY(0);
+			}
+		}
+
 		.group:hover .group-hover\:block {
 			display: block;
 		}
@@ -135,13 +146,42 @@ if (empty($_SESSION['account_id']) && !empty($_COOKIE['account_id']) && !empty($
 			<!-- Right: Icons -->
 			<div class="flex items-center space-x-2 flex-shrink-0 min-w-max">
 				<!-- Cart (explicit href, not '#') -->
-				<a href="/cart" class="bg-white rounded w-10 h-10 flex items-center justify-center mr-2" title="Giỏ hàng" aria-label="Giỏ hàng">
-					<svg class="w-7 h-7 text-black" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-						<path d="M3 3h2l.4 2M7 13h10l4-8H5.4" />
-						<circle cx="9" cy="21" r="1" />
-						<circle cx="20" cy="21" r="1" />
-					</svg>
-				</a>
+				<div class="relative mr-2">
+					<a href="/cart" class="bg-white rounded w-10 h-10 flex items-center justify-center" title="Giỏ hàng" aria-label="Giỏ hàng">
+						<svg class="w-6 h-6 text-black" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+							<path d="M3 3h2l.4 2M7 13h10l4-8H5.4" />
+							<circle cx="9" cy="21" r="1" />
+							<circle cx="20" cy="21" r="1" />
+						</svg>
+					</a>
+					<?php
+					$cartCount = 0;
+					if (!empty($_SESSION['account_id'])) {
+						try {
+							$cartModel = new \App\Models\CartModel();
+							$cart = $cartModel->getCartByUser($_SESSION['account_id']);
+							if ($cart) {
+								$stmt = (new \App\Core\Database())->getConnection()->prepare(
+									"SELECT SUM(quantity) FROM cart_items WHERE cart_id = :cart_id"
+								);
+								$stmt->execute(['cart_id' => $cart['id']]);
+								$cartCount = $stmt->fetchColumn() ?: 0;
+							}
+						} catch (\Throwable $e) { /* ignore */
+						}
+					}
+					$cartCountDisplay = $cartCount > 99 ? '99+' : $cartCount;
+					?>
+
+					<!-- Badge số lượng-->
+					<span id="cart-badge"
+						class="absolute top-0 right-0 bg-red-500 text-white rounded-full flex items-center justify-center font-bold w-6 h-6 text-xs"
+						style="transform: translate(12px, -50%); display: <?= $cartCount > 0 ? 'flex' : 'none' ?>;">
+						<?= $cartCountDisplay ?>
+					</span>
+
+
+				</div>
 				<?php
 				// show account dropdown when logged in; fall back to /login link when not
 				$loggedIn = false;
@@ -278,4 +318,99 @@ if (empty($_SESSION['account_id']) && !empty($_COOKIE['account_id']) && !empty($
 				});
 			});
 		})();
+
+		// cart badge
+		document.addEventListener('DOMContentLoaded', function() {
+			const badge = document.getElementById('cart-badge');
+			if (!badge) return;
+
+			// Hàm cập nhật badge
+			function updateCartBadge() {
+				fetch('/cart/count', {
+						method: 'GET',
+						credentials: 'same-origin'
+					})
+					.then(r => r.json())
+					.then(data => {
+						const count = data.count ?? 0;
+						badge.textContent = count > 99 ? '99+' : count;
+						badge.style.display = count > 0 ? 'flex' : 'none';
+					})
+					.catch(() => {
+						badge.textContent = '0';
+						badge.style.display = 'none';
+					});
+			}
+
+			// Gọi lần đầu
+			updateCartBadge();
+			document.addEventListener('cartUpdated', function() {
+				updateCartBadge();
+			});
+
+			// XỬ LÝ THÊM VÀO GIỎ HÀNG
+			document.body.addEventListener('click', function(e) {
+				const btn = e.target.closest('#add-to-cart, #buy-now');
+				if (!btn) return;
+
+				e.preventDefault();
+
+				const productId = btn.dataset.productId;
+				const price = btn.dataset.productPrice;
+				const quantity = parseInt(document.getElementById('qty')?.value || 1);
+				const isBuyNow = btn.id === 'buy-now';
+
+				if (!productId || !price) return;
+				if (!isBuyNow) {
+					if (!confirm('Bạn có muốn thêm sản phẩm vào giỏ hàng?')) {
+						return;
+					}
+				}
+				const formData = new URLSearchParams();
+				formData.append('product_id', productId);
+				formData.append('quantity', quantity);
+				formData.append('price', price);
+
+				fetch('/cart/add', {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/x-www-form-urlencoded'
+						},
+						body: formData,
+						credentials: 'same-origin'
+					})
+					.then(r => r.json())
+					.then(data => {
+						if (data.login_required) {
+							window.location.href = data.redirect;
+						} else if (data.success) {
+							document.dispatchEvent(new CustomEvent('cartUpdated'));
+							badge.style.transition = 'all 0.3s';
+							badge.style.transform = 'translate(12px, -50%) scale(1.4)';
+							setTimeout(() => badge.style.transform = 'translate(12px, -50%) scale(1)', 200);
+
+							if (isBuyNow) {
+								window.location.href = '/checkout';
+							} else {
+								const toast = document.createElement('div');
+								toast.textContent = 'Đã thêm vào giỏ hàng!';
+								toast.style.cssText = `
+												position: fixed; top: 20px; right: 20px; z-index: 10000;
+												background: #16a34a; color: white; padding: 12px 20px;
+												border-radius: 6px; font-weight: 500; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+												animation: toastIn 0.4s ease;
+												`;
+								document.body.appendChild(toast);
+								setTimeout(() => toast.remove(), 2000);
+							}
+						} else if (data.error) {
+							alert('Lỗi: ' + data.error);
+						}
+					})
+					.catch(err => {
+						console.error(err);
+						alert('Có lỗi xảy ra, vui lòng thử lại.');
+					});
+			});
+		});
 	</script>

@@ -152,7 +152,7 @@ $userName = $user['full_name'] ?? $account['full_name'] ?? '';
                             </p>
                         <?php endif; ?>
                     </div>
-                    <?php if ($order['status'] === 'pending'): ?>
+                    <?php if ($order['status'] === 'pending' || $order['status'] === 'paid'): ?>
                         <div class="flex justify-end p-4 border-t bg-gray-50">
                             <button
                                 class="cancel-order-btn px-5 py-2 text-sm font-medium text-red-600 border border-red-500 rounded-lg 
@@ -163,9 +163,6 @@ $userName = $user['full_name'] ?? $account['full_name'] ?? '';
                             </button>
                         </div>
                     <?php endif; ?>
-
-
-
                 </div>
             </div>
         </main>

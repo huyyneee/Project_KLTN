@@ -45,33 +45,36 @@ class OrderModel extends Model
         $stmt->execute();
         return $stmt->fetch(\PDO::FETCH_ASSOC);
     }
-
-    public function getOrdersWithItems($userId, $status = null)
+    public function getOrdersWithItemsPaginated($userId, $limit, $offset, $status = null)
     {
-        //Truy vấn danh sách đơn hàng (có thể lọc theo trạng thái)
+        // --- Lấy danh sách đơn hàng có phân trang ---
         $sql = "SELECT * FROM {$this->table} WHERE user_id = :user_id";
         if ($status !== null) {
             $sql .= " AND status = :status";
         }
         $sql .= " ORDER BY 
-            CASE 
-                WHEN status = 'pending' THEN 1
-                WHEN status = 'paid' THEN 2
-                WHEN status = 'shipped' THEN 3
-                WHEN status = 'completed' THEN 4
-                WHEN status = 'cancelled' THEN 5
-                ELSE 6
-            END,
-            created_at DESC";
+        CASE 
+            WHEN status = 'pending' THEN 1
+            WHEN status = 'paid' THEN 2
+            WHEN status = 'shipped' THEN 3
+            WHEN status = 'completed' THEN 4
+            WHEN status = 'cancelled' THEN 5
+            ELSE 6
+        END,
+        created_at DESC
+        LIMIT :limit OFFSET :offset";
+
         $stmt = $this->db->prepare($sql);
         $stmt->bindValue(':user_id', $userId, \PDO::PARAM_INT);
         if ($status !== null) {
             $stmt->bindValue(':status', $status, \PDO::PARAM_STR);
         }
+        $stmt->bindValue(':limit', (int)$limit, \PDO::PARAM_INT);
+        $stmt->bindValue(':offset', (int)$offset, \PDO::PARAM_INT);
         $stmt->execute();
         $orders = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
-        //Chuẩn bị truy vấn chi tiết sản phẩm
+        // --- Chuẩn bị truy vấn chi tiết sản phẩm ---
         $stmtItem = $this->db->prepare("
         SELECT i.*, 
                p.name AS product_name,
@@ -83,7 +86,7 @@ class OrderModel extends Model
         WHERE i.order_id = :order_id
     ");
 
-        //Lấy host để xử lý link ảnh (nếu có)
+        // --- Lấy host để xử lý link ảnh (giống hàm cũ) ---
         $dbHost = null;
         $cfgPath = __DIR__ . '/../../config/config.php';
         if (file_exists($cfgPath)) {
@@ -91,7 +94,7 @@ class OrderModel extends Model
             $dbHost = $cfg['database']['host'] ?? null;
         }
 
-        //Gắn chi tiết sản phẩm vào từng đơn
+        // --- Gắn items và xử lý đường dẫn ảnh ---
         foreach ($orders as &$order) {
             $stmtItem->bindValue(':order_id', $order['id'], \PDO::PARAM_INT);
             $stmtItem->execute();
@@ -103,9 +106,12 @@ class OrderModel extends Model
                 $img = trim($img, "'\" \t\n\r\0\x0B");
 
                 if ($img !== '') {
+                    // Nếu đường dẫn là tương đối → thêm host
                     if (preg_match('#^/#', $img) && $dbHost) {
                         $item['product_image'] = 'http://' . $dbHost . ':8000' . $img;
-                    } elseif (preg_match('#^https?://#i', $img)) {
+                    }
+                    // Nếu là URL đầy đủ → giữ nguyên
+                    elseif (preg_match('#^https?://#i', $img)) {
                         $item['product_image'] = $img;
                     }
                 } else {
@@ -117,6 +123,21 @@ class OrderModel extends Model
         }
 
         return $orders;
+    }
+    public function countOrders($userId, $status = null)
+    {
+        $sql = "SELECT COUNT(*) AS total FROM {$this->table} WHERE user_id = :user_id";
+        if ($status !== null) {
+            $sql .= " AND status = :status";
+        }
+        $stmt = $this->db->prepare($sql);
+        $stmt->bindValue(':user_id', $userId, \PDO::PARAM_INT);
+        if ($status !== null) {
+            $stmt->bindValue(':status', $status, \PDO::PARAM_STR);
+        }
+        $stmt->execute();
+        $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+        return (int)$row['total'];
     }
     public function cancelOrder($orderId, $userId)
     {

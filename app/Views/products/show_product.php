@@ -43,7 +43,16 @@ $mainUrl = $image ?? ($imagesList[0]['url'] ?? '/imgs/product/placeholder.svg');
                 <div style="color:#777; font-size:13px; margin-bottom:20px;">
                     <h2>(Đã bao gồm VAT)</h2>
                 </div>
-
+                <?php
+                $qty = (int)($product['quantity'] ?? 0);
+                if ($qty > 10) {
+                    echo "<div style='color:#777;font-size:15px;font-weight:400;margin-bottom:10px;'>Còn lại: $qty sản phẩm</div>";
+                } elseif ($qty > 0) {
+                    echo "<div style='color:#777;font-size:15px;font-weight:400;margin-bottom:10px;'>Chỉ còn lại $qty sản phẩm!</div>";
+                } else {
+                    echo "<div style='color:#cc0000;font-size:15px;font-weight:400;margin-bottom:10px;'>Hết hàng</div>";
+                }
+                ?>
                 <!-- quantity (compact) -->
                 <div style="margin-bottom:35px;">
 
@@ -78,7 +87,7 @@ $mainUrl = $image ?? ($imagesList[0]['url'] ?? '/imgs/product/placeholder.svg');
                             </svg>
                             GIỎ HÀNG
                         </button>
-                        <button id="buy-now" type="button" 
+                        <button id="buy-now" type="button"
                             data-product-id="<?= $product['id'] ?>"
                             data-product-price="<?= $product['price'] ?>"
                             style="background:#ff7a00;color:#fff;border:none;padding:10px 18px;border-radius:6px;cursor:pointer; box-shadow:0 2px 0 rgba(0,0,0,0.04);">MUA NGAY NOWFREE 2H</button>
@@ -522,70 +531,70 @@ $mainUrl = $image ?? ($imagesList[0]['url'] ?? '/imgs/product/placeholder.svg');
             }
         })();
 
-        // cart
-        const addToCartBtn = document.getElementById('add-to-cart');
-        if (addToCartBtn) {
-            addToCartBtn.addEventListener('click', function() {
-                const productId = this.getAttribute('data-product-id');
-                const quantity = parseInt(document.getElementById('qty').value) || 1;
-                const price = parseFloat(this.getAttribute('data-product-price'));
+        // // cart
+        // const addToCartBtn = document.getElementById('add-to-cart');
+        // if (addToCartBtn) {
+        //     addToCartBtn.addEventListener('click', function() {
+        //         const productId = this.getAttribute('data-product-id');
+        //         const quantity = parseInt(document.getElementById('qty').value) || 1;
+        //         const price = parseFloat(this.getAttribute('data-product-price'));
 
-                fetch('/cart/add', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded'
-                        },
-                        body: `product_id=${encodeURIComponent(productId)}&quantity=${encodeURIComponent(quantity)}&price=${encodeURIComponent(price)}`
-                    })
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.success) {
-                            alert('Sản phẩm đã được thêm vào giỏ hàng!');
-                        } else if (data.redirect) {
-                            window.location.href = data.redirect;
-                        } else if (data.error) {
-                            alert('Lỗi: ' + data.error);
-                        }
-                    })
-                    .catch(err => {
-                        console.error(err);
-                        alert('Có lỗi xảy ra, thử lại sau.');
-                    });
-            });
-        }
+        //         fetch('/cart/add', {
+        //                 method: 'POST',
+        //                 headers: {
+        //                     'Content-Type': 'application/x-www-form-urlencoded'
+        //                 },
+        //                 body: `product_id=${encodeURIComponent(productId)}&quantity=${encodeURIComponent(quantity)}&price=${encodeURIComponent(price)}`
+        //             })
+        //             .then(res => res.json())
+        //             .then(data => {
+        //                 if (data.success) {
+        //                     alert('Sản phẩm đã được thêm vào giỏ hàng!');
+        //                 } else if (data.redirect) {
+        //                     window.location.href = data.redirect;
+        //                 } else if (data.error) {
+        //                     alert('Lỗi: ' + data.error);
+        //                 }
+        //             })
+        //             .catch(err => {
+        //                 console.error(err);
+        //                 alert('Có lỗi xảy ra, thử lại sau.');
+        //             });
+        //     });
+        // }
 
-        // buy now
-        const buyNowBtn = document.getElementById('buy-now');
-        if (buyNowBtn) {
-            buyNowBtn.addEventListener('click', function() {
-                const productId = this.getAttribute('data-product-id');
-                const quantity = parseInt(document.getElementById('qty').value) || 1;
-                const price = parseFloat(this.getAttribute('data-product-price'));
+        // // buy now
+        // const buyNowBtn = document.getElementById('buy-now');
+        // if (buyNowBtn) {
+        //     buyNowBtn.addEventListener('click', function() {
+        //         const productId = this.getAttribute('data-product-id');
+        //         const quantity = parseInt(document.getElementById('qty').value) || 1;
+        //         const price = parseFloat(this.getAttribute('data-product-price'));
 
-                fetch('/cart/add', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded'
-                        },
-                        body: `product_id=${encodeURIComponent(productId)}&quantity=${encodeURIComponent(quantity)}&price=${encodeURIComponent(price)}`
-                    })
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.success) {
-                            // Thêm thành công, chuyển đến checkout
-                            window.location.href = '/checkout';
-                        } else if (data.redirect) {
-                            window.location.href = data.redirect;
-                        } else if (data.error) {
-                            alert('Lỗi: ' + data.error);
-                        }
-                    })
-                    .catch(err => {
-                        console.error(err);
-                        alert('Có lỗi xảy ra, thử lại sau.');
-                    });
-            });
-        }
+        //         fetch('/cart/add', {
+        //                 method: 'POST',
+        //                 headers: {
+        //                     'Content-Type': 'application/x-www-form-urlencoded'
+        //                 },
+        //                 body: `product_id=${encodeURIComponent(productId)}&quantity=${encodeURIComponent(quantity)}&price=${encodeURIComponent(price)}`
+        //             })
+        //             .then(res => res.json())
+        //             .then(data => {
+        //                 if (data.success) {
+        //                     // Thêm thành công, chuyển đến checkout
+        //                     window.location.href = '/checkout';
+        //                 } else if (data.redirect) {
+        //                     window.location.href = data.redirect;
+        //                 } else if (data.error) {
+        //                     alert('Lỗi: ' + data.error);
+        //                 }
+        //             })
+        //             .catch(err => {
+        //                 console.error(err);
+        //                 alert('Có lỗi xảy ra, thử lại sau.');
+        //             });
+        //     });
+        // }
     </script>
 </div>
 

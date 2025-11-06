@@ -97,7 +97,6 @@ class CartItemModel extends Model
         ]);
     }
 
-
     // Cập nhật số lượng sản phẩm
     public function updateQuantity($itemId, $quantity)
     {
@@ -122,5 +121,12 @@ class CartItemModel extends Model
     {
         $stmt = $this->db->prepare("DELETE FROM {$this->table} WHERE cart_id = :cartId");
         return $stmt->execute(['cartId' => $cartId]);
+    }
+    public function getTotalQuantity($cartId)
+    {
+        $stmt = $this->db->prepare("SELECT SUM(quantity) as total FROM {$this->table} WHERE cart_id = :cart_id");
+        $stmt->execute(['cart_id' => $cartId]);
+        $total = $stmt->fetchColumn();
+        return $total !== false ? (int)$total : 0;
     }
 }

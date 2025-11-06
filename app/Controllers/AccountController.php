@@ -176,19 +176,28 @@ class AccountController extends Controller
         $user = $userModel->findByAccountId($accountId);
 
         if (!$user || empty($user['id'])) {
-            $this->render('account/order', [
-                'orders' => [],
-                'user' => null
-            ]);
+            $this->render('account/order', ['orders' => [], 'user' => null]);
             return;
         }
-        $orders = $this->orderModel->getOrdersWithItems((int)$user['id']);
+
+        // --- Phân trang ---
+        $limit = 3; // số đơn mỗi trang
+        $page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+        $offset = ($page - 1) * $limit;
+
+        $totalOrders = $this->orderModel->countOrders((int)$user['id']);
+        $totalPages = ceil($totalOrders / $limit);
+
+        $orders = $this->orderModel->getOrdersWithItemsPaginated((int)$user['id'], $limit, $offset);
 
         $this->render('account/order', [
             'orders' => $orders,
-            'user' => $user
+            'user' => $user,
+            'totalPages' => $totalPages,
+            'currentPage' => $page
         ]);
     }
+
     // Hiển thị chi tiết 1 đơn hàng
     public function orderDetail()
     {
