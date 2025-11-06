@@ -1,23 +1,35 @@
 <?php include __DIR__ . '/layouts/header.php'; ?>
+<?php include __DIR__ . '/static/widget/hasaki_chat_widget.php'; ?>
 
 <!-- Banner slider -->
 <div class="w-full max-w-7xl mx-auto mt-2 relative">
 	<div id="banner-slider" class="overflow-hidden rounded-lg relative">
 		<div class="flex transition-transform duration-700" id="banner-track">
 			<!-- Thay src các ảnh banner tại đây, mỗi ảnh 1 div -->
-			<a href="#" class="min-w-full block"><img src="/assets/images/chamsocdamat.png" alt="Banner 1" class="w-full h-64 object-cover"></a>
-			<a href="#" class="min-w-full block"><img src="/assets/images/trangdiem.png" alt="Banner 2" class="w-full h-64 object-cover"></a>
-			<a href="#" class="min-w-full block"><img src="/assets/images/chamsocdadau.png" alt="Banner 3" class="w-full h-64 object-cover"></a>
-			<a href="#" class="min-w-full block"><img src="/assets/images/chamsoccothe.png" alt="Banner 1" class="w-full h-64 object-cover"></a>
-			<a href="#" class="min-w-full block"><img src="/assets/images/chamsoccanhan.png" alt="Banner 2" class="w-full h-64 object-cover"></a>
-			<a href="#" class="min-w-full block"><img src="/assets/images/nuochoa.png" alt="Banner 2" class="w-full h-64 object-cover"></a>
-			<a href="#" class="min-w-full block"><img src="/assets/images/thucphamchucnang.png" alt="Banner 3" class="w-full h-64 object-cover"></a>
+			<a href="#" class="min-w-full block"><img src="/assets/images/chamsocdamat.png" alt="Banner 1"
+					class="w-full h-64 object-cover"></a>
+			<a href="#" class="min-w-full block"><img src="/assets/images/trangdiem.png" alt="Banner 2"
+					class="w-full h-64 object-cover"></a>
+			<a href="#" class="min-w-full block"><img src="/assets/images/chamsocdadau.png" alt="Banner 3"
+					class="w-full h-64 object-cover"></a>
+			<a href="#" class="min-w-full block"><img src="/assets/images/chamsoccothe.png" alt="Banner 1"
+					class="w-full h-64 object-cover"></a>
+			<a href="#" class="min-w-full block"><img src="/assets/images/chamsoccanhan.png" alt="Banner 2"
+					class="w-full h-64 object-cover"></a>
+			<a href="#" class="min-w-full block"><img src="/assets/images/nuochoa.png" alt="Banner 2"
+					class="w-full h-64 object-cover"></a>
+			<a href="#" class="min-w-full block"><img src="/assets/images/thucphamchucnang.png" alt="Banner 3"
+					class="w-full h-64 object-cover"></a>
 		</div>
 		<!-- Nút điều hướng -->
-		<button id="banner-prev" class="absolute left-2 top-1/2 -translate-y-1/2 bg-white/70 hover:bg-white rounded-full p-2"><svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+		<button id="banner-prev"
+			class="absolute left-2 top-1/2 -translate-y-1/2 bg-white/70 hover:bg-white rounded-full p-2"><svg
+				class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
 				<path d="M15 19l-7-7 7-7" />
 			</svg></button>
-		<button id="banner-next" class="absolute right-2 top-1/2 -translate-y-1/2 bg-white/70 hover:bg-white rounded-full p-2"><svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+		<button id="banner-next"
+			class="absolute right-2 top-1/2 -translate-y-1/2 bg-white/70 hover:bg-white rounded-full p-2"><svg
+				class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
 				<path d="M9 5l7 7-7 7" />
 			</svg></button>
 	</div>
@@ -28,7 +40,8 @@
 <div class="max-w-7xl mx-auto mt-8">
 	<?php if (!empty($query)): ?>
 		<div class="mb-6 text-center text-gray-600">
-			Kết quả tìm kiếm cho từ khóa: <span class="font-semibold text-green-800">"<?= htmlspecialchars($query) ?>"</span>
+			Kết quả tìm kiếm cho từ khóa: <span
+				class="font-semibold text-green-800">"<?= htmlspecialchars($query) ?>"</span>
 		</div>
 	<?php endif; ?>
 
@@ -39,9 +52,10 @@
 		$catName = $cat['name'] ?? 'Danh mục';
 		$products = $productsByCategory[$catId] ?? [];
 
-		if (empty($products)) continue; // ko hiển thị kết quả tìm kiếm thì ẩn cate
+		if (empty($products))
+			continue; // ko hiển thị kết quả tìm kiếm thì ẩn cate
 		$hasAnyProduct = true;
-	?>
+		?>
 		<div class="mb-8">
 			<div class="flex items-center justify-between mb-2">
 				<div class="font-bold text-lg text-green-800"><?= htmlspecialchars($catName) ?></div>
@@ -52,23 +66,30 @@
 
 			<div class="overflow-hidden relative group">
 				<div class="relative">
-					<div class="flex space-x-4 product-carousel" style="will-change: transform;" data-category-id="<?= (int)$catId ?>">
+					<div class="flex space-x-4 product-carousel" style="will-change: transform;"
+						data-category-id="<?= (int) $catId ?>">
 						<?php foreach ($products as $p): ?>
 							<?php
 							$imgSrc = !empty($p['image_url']) ? $p['image_url'] : '/assets/images/no-image.png';
 							?>
-							<a href="/san-pham?product=<?= (int)$p['id'] ?>" class="block product-item w-36 flex-shrink-0 bg-white rounded overflow-hidden hover:shadow">
-								<img src="<?= htmlspecialchars($imgSrc) ?>" alt="<?= htmlspecialchars($p['name'] ?? '') ?>" class="w-full h-28 object-cover rounded-t">
+							<a href="/san-pham?product=<?= (int) $p['id'] ?>"
+								class="block product-item w-36 flex-shrink-0 bg-white rounded overflow-hidden hover:shadow">
+								<img src="<?= htmlspecialchars($imgSrc) ?>" alt="<?= htmlspecialchars($p['name'] ?? '') ?>"
+									class="w-full h-28 object-cover rounded-t">
 								<div class="p-2 text-center text-xs truncate"><?= htmlspecialchars($p['name'] ?? '') ?></div>
 							</a>
 						<?php endforeach; ?>
 					</div>
 
 					<!-- Nút điều hướng -->
-					<button class="product-prev absolute left-0 top-1/2 -translate-y-1/2 bg-white/70 hover:bg-white rounded-full p-2 z-10"><svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+					<button
+						class="product-prev absolute left-0 top-1/2 -translate-y-1/2 bg-white/70 hover:bg-white rounded-full p-2 z-10"><svg
+							class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
 							<path d="M15 19l-7-7 7-7" />
 						</svg></button>
-					<button class="product-next absolute right-0 top-1/2 -translate-y-1/2 bg-white/70 hover:bg-white rounded-full p-2 z-10"><svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+					<button
+						class="product-next absolute right-0 top-1/2 -translate-y-1/2 bg-white/70 hover:bg-white rounded-full p-2 z-10"><svg
+							class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
 							<path d="M9 5l7 7-7 7" />
 						</svg></button>
 				</div>
@@ -86,7 +107,7 @@
 
 <!-- Script slider và scroll ngang -->
 <script>
-	document.addEventListener('DOMContentLoaded', function() {
+	document.addEventListener('DOMContentLoaded', function () {
 		// Banner slider
 		const banners = document.querySelectorAll('#banner-track > a');
 		let bannerIndex = 0;
@@ -126,7 +147,7 @@
 		startBannerAuto();
 
 		// Product carousels (giống banner)
-		document.querySelectorAll('.product-carousel').forEach(function(carousel) {
+		document.querySelectorAll('.product-carousel').forEach(function (carousel) {
 			const items = carousel.querySelectorAll('a');
 			let idx = 0;
 			let interval = null;
@@ -142,7 +163,7 @@
 			}
 
 			function applyItemWidth(w) {
-				items.forEach(function(it) {
+				items.forEach(function (it) {
 					it.style.width = w + 'px';
 					it.style.flex = '0 0 ' + w + 'px';
 					const img = it.querySelector('img');
@@ -196,7 +217,7 @@
 			recalc();
 			startAuto();
 			// Responsive: recompute sizes on resize
-			window.addEventListener('resize', function() {
+			window.addEventListener('resize', function () {
 				recalc();
 			});
 		});

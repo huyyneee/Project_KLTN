@@ -143,4 +143,92 @@ class ApiController extends Controller
         }
         return $missing;
     }
+
+    /**
+     * Get JWT secret (should be same across all controllers)
+     */
+    protected function getJwtSecret()
+    {
+        // Use same secret as AuthController
+        return '4ff10e904633a0980d0b7288bfeebdce';
+    }
+
+    /**
+     * Lấy Bearer token từ header
+     */
+    protected function getBearerToken()
+    {
+        $headers = getallheaders();
+
+        if (isset($headers['Authorization'])) {
+            if (preg_match('/Bearer\s(\S+)/', $headers['Authorization'], $matches)) {
+                return $matches[1];
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Validate JWT token
+     */
+    protected function validateJWT($token)
+    {
+        $parts = explode('.', $token);
+
+        if (count($parts) !== 3) {
+            return false;
+        }
+
+        list($base64Header, $base64Payload, $base64Signature) = $parts;
+
+        $jwtSecret = $this->getJwtSecret();
+        $signature = hash_hmac('sha256', $base64Header . "." . $base64Payload, $jwtSecret, true);
+        $base64SignatureCheck = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($signature));
+
+        if ($base64Signature !== $base64SignatureCheck) {
+            return false;
+        }
+
+        $payload = json_decode(base64_decode(str_replace(['-', '_'], ['+', '/'], $base64Payload)), true);
+
+        if (!$payload || !isset($payload['exp']) || $payload['exp'] < time()) {
+            return false;
+        }
+
+        return $payload;
+    }
+
+    /**
+     * Get authenticated user ID from JWT token
+     * Returns user ID or null if not authenticated
+     */
+    protected function getAuthenticatedUserId()
+    {
+        $token = $this->getBearerToken();
+        if (!$token) {
+            return null;
+        }
+
+        $payload = $this->validateJWT($token);
+        if (!$payload || !isset($payload['id'])) {
+            return null;
+        }
+
+        return (int) $payload['id'];
+    }
+
+    /**
+     * Require authentication - throws 401 if not authenticated
+     * @param string $loginPath Ignored for API (kept for compatibility with parent class)
+     * @return int User ID
+     */
+    protected function requireAuth($loginPath = '/login')
+    {
+        $userId = $this->getAuthenticatedUserId();
+        if (!$userId) {
+            $this->sendError('Unauthorized', 401);
+        }
+        return $userId;
+    }
 }

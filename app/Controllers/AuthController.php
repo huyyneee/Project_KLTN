@@ -8,7 +8,6 @@ use Exception;
 
 class AuthController extends ApiController
 {
-    private $jwtSecret = 'your-secret-key-change-this-in-production';
 
     /**
      * POST /api/auth/login - Đăng nhập
@@ -184,54 +183,26 @@ class AuthController extends ApiController
         $base64Header = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($header));
         $base64Payload = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($payload));
 
-        $signature = hash_hmac('sha256', $base64Header . "." . $base64Payload, $this->jwtSecret, true);
+        $jwtSecret = $this->getJwtSecret();
+        $signature = hash_hmac('sha256', $base64Header . "." . $base64Payload, $jwtSecret, true);
         $base64Signature = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($signature));
 
         return $base64Header . "." . $base64Payload . "." . $base64Signature;
     }
 
     /**
-     * Validate JWT token
+     * Validate JWT token (uses parent method, kept for backward compatibility)
      */
-    private function validateJWT($token)
+    protected function validateJWT($token)
     {
-        $parts = explode('.', $token);
-
-        if (count($parts) !== 3) {
-            return false;
-        }
-
-        list($base64Header, $base64Payload, $base64Signature) = $parts;
-
-        $signature = hash_hmac('sha256', $base64Header . "." . $base64Payload, $this->jwtSecret, true);
-        $base64SignatureCheck = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($signature));
-
-        if ($base64Signature !== $base64SignatureCheck) {
-            return false;
-        }
-
-        $payload = json_decode(base64_decode(str_replace(['-', '_'], ['+', '/'], $base64Payload)), true);
-
-        if (!$payload || $payload['exp'] < time()) {
-            return false;
-        }
-
-        return $payload;
+        return parent::validateJWT($token);
     }
 
     /**
-     * Lấy Bearer token từ header
+     * Lấy Bearer token từ header (uses parent method, kept for backward compatibility)
      */
-    private function getBearerToken()
+    protected function getBearerToken()
     {
-        $headers = getallheaders();
-
-        if (isset($headers['Authorization'])) {
-            if (preg_match('/Bearer\s(\S+)/', $headers['Authorization'], $matches)) {
-                return $matches[1];
-            }
-        }
-
-        return null;
+        return parent::getBearerToken();
     }
 }

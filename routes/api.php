@@ -9,6 +9,7 @@ require_once __DIR__ . '/../app/Controllers/OrderApiController.php';
 require_once __DIR__ . '/../app/Controllers/LoginApiController.php';
 require_once __DIR__ . '/../app/Controllers/EmployeeApiController.php';
 require_once __DIR__ . '/../app/Controllers/AuthController.php';
+require_once __DIR__ . '/../app/Controllers/InventoryApiController.php';
 
 // Set CORS headers for all API requests
 header('Access-Control-Allow-Origin: *');
@@ -31,9 +32,11 @@ $path = parse_url($uri, PHP_URL_PATH);
 
 // Handle different API path formats
 if (strpos($path, '/api/') === 0) {
+    $path = substr($path, 4); // Remove '/api' prefix, result: '/inventory/stock-in'
+} elseif (strpos($path, '/api') === 0 && strlen($path) > 4) {
     $path = substr($path, 4); // Remove '/api' prefix
-} elseif (strpos($path, '/api') === 0) {
-    $path = substr($path, 4); // Remove '/api' prefix
+} elseif (strpos($path, 'api/') === 0) {
+    $path = '/' . substr($path, 4); // Add leading slash if missing
 }
 
 // Remove trailing slash
@@ -43,6 +46,9 @@ $path = rtrim($path, '/');
 if (empty($path)) {
     $path = '/';
 }
+
+// Debug logging (remove in production)
+error_log("API Route Debug - Method: $method, URI: $uri, Path: $path");
 
 // Route the request
 switch ($path) {
@@ -318,7 +324,7 @@ switch ($path) {
         }
         break;
 
-// Auth routes
+    // Auth routes
     case '/login':
         if ($method === 'POST') {
             $controller = new \App\Controllers\LoginApiController();
@@ -422,6 +428,23 @@ switch ($path) {
         }
         break;
 
+    // Inventory routes
+    case '/inventory/stock-in':
+        error_log("Inventory route matched - Method: $method");
+        $controller = new \App\Controllers\InventoryApiController();
+        switch ($method) {
+            case 'GET':
+                $controller->list();
+                break;
+            case 'POST':
+                $controller->stockIn();
+                break;
+            default:
+                http_response_code(405);
+                echo json_encode(['error' => 'Method not allowed']);
+        }
+        break;
+
     case (preg_match('/^\/employees\/(\d+)$/', $path, $matches) ? true : false):
         $controller = new \App\Controllers\EmployeeApiController();
         $id = $matches[1];
@@ -442,8 +465,9 @@ switch ($path) {
         break;
     // Default route
     default:
+        error_log("API Route not found - Path: $path, Method: $method");
         http_response_code(404);
-        echo json_encode(['error' => 'API endpoint not found']);
+        echo json_encode(['error' => 'API endpoint not found', 'path' => $path, 'method' => $method]);
         break;
 }
 ?>
