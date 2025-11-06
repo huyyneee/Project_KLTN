@@ -276,6 +276,7 @@ require_once __DIR__ . '/layouts/header.php';
                             updateTotal();
                             updateCartCount();
                             showToast('Đã xóa sản phẩm', 'success');
+                            document.dispatchEvent(new CustomEvent('cartUpdated'));
                             if (cartItems.querySelectorAll('tr').length === 0) {
                                 document.querySelector('.cart-page').innerHTML = `
                                 <div class="flex flex-col items-center justify-center h-[60vh] text-center space-y-4">
@@ -310,6 +311,8 @@ require_once __DIR__ . '/layouts/header.php';
                             }).format(price * qty);
                             updateTotal();
                             showToast('Cập nhật số lượng thành công', 'success');
+                            document.dispatchEvent(new CustomEvent('cartUpdated'));
+
                         }
                     });
             }
