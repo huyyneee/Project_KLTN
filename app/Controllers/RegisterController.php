@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Controllers;
 
 use App\Core\Controller;
@@ -28,11 +29,11 @@ class RegisterController extends Controller
         }
         $email = isset($_POST['email']) ? trim($_POST['email']) : '';
         $password = isset($_POST['password']) ? $_POST['password'] : '';
-    $full_name = isset($_POST['full_name']) ? trim($_POST['full_name']) : '';
-    $gender = isset($_POST['gender']) ? $_POST['gender'] : '';
-    $birth_year = isset($_POST['birth_year']) ? $_POST['birth_year'] : '';
-    $birth_month = isset($_POST['birth_month']) ? $_POST['birth_month'] : '';
-    $birth_day = isset($_POST['birth_day']) ? $_POST['birth_day'] : '';
+        $full_name = isset($_POST['full_name']) ? trim($_POST['full_name']) : '';
+        $gender = isset($_POST['gender']) ? $_POST['gender'] : '';
+        $birth_year = isset($_POST['birth_year']) ? $_POST['birth_year'] : '';
+        $birth_month = isset($_POST['birth_month']) ? $_POST['birth_month'] : '';
+        $birth_day = isset($_POST['birth_day']) ? $_POST['birth_day'] : '';
 
         $errors = [];
         if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -90,7 +91,7 @@ class RegisterController extends Controller
             if ($birthTs === false) {
                 $errors[] = 'Ngày sinh không hợp lệ.';
             } else {
-                $age = (int) floor((time() - $birthTs) / (365.25*24*60*60));
+                $age = (int) floor((time() - $birthTs) / (365.25 * 24 * 60 * 60));
                 if ($age < 18) {
                     $errors[] = 'Người dùng phải đủ 18 tuổi trở lên để đăng ký.';
                 }
@@ -193,8 +194,7 @@ class RegisterController extends Controller
             'role' => 'user',
             'status' => 1
         ];
-
-        $id = $this->accountModel->create($data);
+        $id = $this->accountModel->insert($data);
         if ($id) {
             // registration success -> clear session code
             unset($_SESSION['verif_codes'][$email]);
@@ -226,7 +226,7 @@ class RegisterController extends Controller
             return;
         } else {
             $errors[] = 'Lỗi hệ thống, vui lòng thử lại.';
-            $this->render('register', ['errors' => $errors, 'old' => ['email'=>$email, 'full_name'=>$full_name]]);
+            $this->render('register', ['errors' => $errors, 'old' => ['email' => $email, 'full_name' => $full_name]]);
         }
     }
 
