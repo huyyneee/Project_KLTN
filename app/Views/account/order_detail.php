@@ -3,7 +3,7 @@
 /** @var array $orders */
 /** @var array|null $user */
 $userEmail = $account['email'] ?? '';
-$userName = $user['full_name'] ?? $account['full_name'] ?? '';
+$userName = $account['full_name'] ?? $account['full_name'] ?? '';
 ?>
 <?php include __DIR__ . '/../layouts/header.php'; ?>
 <div class="max-w-7xl mx-auto py-6 sm:py-8 md:py-10 px-4 bg-gray-50">
@@ -42,8 +42,7 @@ $userName = $user['full_name'] ?? $account['full_name'] ?? '';
                                     : ''
                             ) ?>
                         </p>
-                        <?= htmlspecialchars($order['shipping_address']) ?>
-                        </p>
+                        <p><?= htmlspecialchars($order['shipping_address']) ?></p>
                     </div>
                 </div>
                 <!-- Hình thức thanh toán -->
@@ -71,14 +70,11 @@ $userName = $user['full_name'] ?? $account['full_name'] ?? '';
                                 <span>Phí vận chuyển</span>
                                 <span>0 ₫</span>
                             </div>
-
                             <div class="flex justify-between font-semibold text-[15px] text-gray-800">
                                 <span>Thành tiền (Đã VAT)</span>
                                 <span class="text-orange-500"><?= number_format($subtotal) ?> ₫</span>
                             </div>
                         </div>
-
-
                     </div>
                 </div>
             </div>
@@ -118,11 +114,10 @@ $userName = $user['full_name'] ?? $account['full_name'] ?? '';
                             ?>
                             <?php foreach ($items as $index => $item): ?>
                                 <div class="product-item <?= $index >= $visibleLimit ? 'hidden extra-item' : '' ?> 
-                        flex items-start gap-4 p-4 hover:bg-gray-50 transition">
+                                    flex items-start gap-4 p-4 hover:bg-gray-50 transition">
                                     <img src="<?= htmlspecialchars($item['image_url'] ?? '/public/images/no-image.jpg') ?>"
                                         alt="<?= htmlspecialchars($item['product_name']) ?>"
                                         class="w-20 h-20 object-cover rounded-md border flex-shrink-0 shadow-sm" />
-
                                     <div class="flex-1">
                                         <p class="text-gray-800 font-medium"><?= htmlspecialchars($item['product_name']) ?></p>
                                         <p class="text-gray-500 text-sm mt-1">
@@ -152,6 +147,7 @@ $userName = $user['full_name'] ?? $account['full_name'] ?? '';
                             </p>
                         <?php endif; ?>
                     </div>
+
                     <?php if ($order['status'] === 'pending' || $order['status'] === 'paid'): ?>
                         <div class="flex justify-end p-4 border-t bg-gray-50">
                             <button
@@ -171,20 +167,15 @@ $userName = $user['full_name'] ?? $account['full_name'] ?? '';
 <script>
     document.addEventListener("DOMContentLoaded", function() {
         const btn = document.getElementById("toggleItemsBtn");
-        if (!btn) return;
-
-        btn.addEventListener("click", function() {
-            const extraItems = document.querySelectorAll(".extra-item");
-            const isHidden = extraItems[0].classList.contains("hidden");
-
-            extraItems.forEach(item => {
-                item.classList.toggle("hidden");
+        if (btn) {
+            btn.addEventListener("click", function() {
+                const extraItems = document.querySelectorAll(".extra-item");
+                const isHidden = extraItems[0].classList.contains("hidden");
+                extraItems.forEach(item => item.classList.toggle("hidden"));
+                btn.textContent = isHidden ? "Thu gọn" : "Xem thêm (<?= $totalItems - $visibleLimit ?>)";
             });
-
-            btn.textContent = isHidden ? "Thu gọn" : "Xem thêm (<?= $totalItems - $visibleLimit ?>)";
-        });
-    });
-    document.addEventListener('DOMContentLoaded', () => {
+        }
+        // Hủy đơn hàng
         document.querySelectorAll('.cancel-order-btn').forEach(button => {
             button.addEventListener('click', function() {
                 const orderId = this.dataset.id;
