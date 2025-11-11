@@ -31,6 +31,7 @@ class OrderApiController extends ApiController
             $page = (int) ($_GET['page'] ?? 1);
             $limit = (int) ($_GET['limit'] ?? 20);
             $status = $_GET['status'] ?? null;
+            $keyword = isset($_GET['q']) ? trim((string) $_GET['q']) : null;
 
             if ($page < 1)
                 $page = 1;
@@ -41,28 +42,39 @@ class OrderApiController extends ApiController
 
             $db = Database::getInstance()->getConnection();
 
-            // Count
+            $whereClauses = [];
+            $params = [];
             if ($status) {
-                $countStmt = $db->prepare("SELECT COUNT(*) as total FROM orders WHERE status = :status");
-                $countStmt->execute([':status' => $status]);
-            } else {
-                $countStmt = $db->query("SELECT COUNT(*) as total FROM orders");
+                $whereClauses[] = 'status = :status';
+                $params[':status'] = $status;
             }
+            if ($keyword !== null && $keyword !== '') {
+                $whereClauses[] = '(order_code LIKE :kw OR receiver_name LIKE :kw OR receiver_phone LIKE :kw OR shipping_address LIKE :kw)';
+                $params[':kw'] = '%' . $keyword . '%';
+            }
+            $whereSql = '';
+            if (!empty($whereClauses)) {
+                $whereSql = 'WHERE ' . implode(' AND ', $whereClauses);
+            }
+
+            // Count
+            $countSql = "SELECT COUNT(*) as total FROM orders $whereSql";
+            $countStmt = $db->prepare($countSql);
+            foreach ($params as $key => $value) {
+                $countStmt->bindValue($key, $value);
+            }
+            $countStmt->execute();
             $totalRecords = (int) ($countStmt->fetch(\PDO::FETCH_ASSOC)['total'] ?? 0);
 
             // Fetch orders
-            if ($status) {
-                $stmt = $db->prepare("SELECT * FROM orders WHERE status = :status ORDER BY created_at DESC LIMIT :limit OFFSET :offset");
-                $stmt->bindValue(':status', $status);
-                $stmt->bindValue(':limit', $limit, \PDO::PARAM_INT);
-                $stmt->bindValue(':offset', $offset, \PDO::PARAM_INT);
-                $stmt->execute();
-            } else {
-                $stmt = $db->prepare("SELECT * FROM orders ORDER BY created_at DESC LIMIT :limit OFFSET :offset");
-                $stmt->bindValue(':limit', $limit, \PDO::PARAM_INT);
-                $stmt->bindValue(':offset', $offset, \PDO::PARAM_INT);
-                $stmt->execute();
+            $sql = "SELECT * FROM orders $whereSql ORDER BY created_at DESC LIMIT :limit OFFSET :offset";
+            $stmt = $db->prepare($sql);
+            foreach ($params as $key => $value) {
+                $stmt->bindValue($key, $value);
             }
+            $stmt->bindValue(':limit', $limit, \PDO::PARAM_INT);
+            $stmt->bindValue(':offset', $offset, \PDO::PARAM_INT);
+            $stmt->execute();
 
             $orders = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
@@ -83,7 +95,11 @@ class OrderApiController extends ApiController
                 ]
             ];
 
-            $this->sendResponse($response, 'Orders retrieved');
+            $message = 'Orders retrieved';
+            if ($keyword !== null && $keyword !== '') {
+                $message .= ' (search: "' . $keyword . '")';
+            }
+            $this->sendResponse($response, $message);
         } catch (\Exception $e) {
             $this->sendError('Failed to load orders: ' . $e->getMessage(), 500);
         }
@@ -109,15 +125,6 @@ class OrderApiController extends ApiController
         }
     }
 
-    /**
-     * PATCH /api/orders/{id}/status - Admin: update order status with validation
-     * Allowed statuses: pending, paid, shipped, completed, cancelled
-     * Transitions:
-     *  - pending -> paid | cancelled
-     *  - paid -> shipped | cancelled
-     *  - shipped -> completed
-     *  - completed, cancelled -> (no further transitions)
-     */
     public function updateStatus($id)
     {
         try {
@@ -165,7 +172,61 @@ class OrderApiController extends ApiController
             }
 
             $now = date('Y-m-d H:i:s');
-            $result = $this->orderModel->update($id, ['status' => $targetStatus, 'updated_at' => $now]);
+
+            // If moving from paid -> shipped, deduct inventory for each order item atomically
+            if ($currentStatus === 'paid' && $targetStatus === 'shipped') {
+                $db = Database::getInstance()->getConnection();
+                $db->beginTransaction();
+                try {
+                    // Fetch order items
+                    $items = $this->orderItemModel->getItemsByOrder($id);
+                    if (!is_array($items)) {
+                        throw new \Exception('Failed to load order items for stock deduction');
+                    }
+
+                    // Lock and update each product's quantity
+                    $selectStmt = $db->prepare("SELECT id, name, quantity FROM products WHERE id = :pid FOR UPDATE");
+                    $updateStmt = $db->prepare("UPDATE products SET quantity = :qty, updated_at = CURRENT_TIMESTAMP WHERE id = :pid");
+
+                    foreach ($items as $item) {
+                        $productId = (int) ($item['product_id'] ?? 0);
+                        $qtyToDeduct = (int) ($item['quantity'] ?? 0);
+                        if ($productId <= 0 || $qtyToDeduct <= 0) {
+                            continue;
+                        }
+
+                        $selectStmt->execute([':pid' => $productId]);
+                        $product = $selectStmt->fetch(\PDO::FETCH_ASSOC);
+                        if (!$product) {
+                            throw new \Exception('Product not found for order item (ID: ' . $productId . ')');
+                        }
+
+                        $currentQty = (int) ($product['quantity'] ?? 0);
+                        $newQty = $currentQty - $qtyToDeduct;
+                        if ($newQty < 0) {
+                            throw new \Exception('Insufficient stock for product ID ' . $productId . ' (' . ($product['name'] ?? 'Unknown') . '). Required: ' . $qtyToDeduct . ', Available: ' . $currentQty);
+                        }
+
+                        $updateStmt->execute([':qty' => $newQty, ':pid' => $productId]);
+                    }
+
+                    // Update order status
+                    $result = $this->orderModel->update($id, ['status' => $targetStatus, 'updated_at' => $now]);
+                    if (!$result) {
+                        throw new \Exception('Failed to update order status');
+                    }
+
+                    $db->commit();
+                } catch (\Exception $txe) {
+                    if ($db->inTransaction()) {
+                        $db->rollBack();
+                    }
+                    $this->sendError('Failed to ship order: ' . $txe->getMessage(), 400);
+                }
+            } else {
+                // Other transitions: just update status
+                $result = $this->orderModel->update($id, ['status' => $targetStatus, 'updated_at' => $now]);
+            }
 
             if ($result) {
                 $updated = $this->orderModel->findById($id);
