@@ -13,6 +13,7 @@ class ProductModel extends Model
         'code',
         'name',
         'price',
+        'quantity',
         'description',
         'specifications',
         'usage',

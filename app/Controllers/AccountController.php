@@ -253,12 +253,12 @@ class AccountController extends Controller
     public function cancelOrder()
     {
         $this->requireAuth();
-        $userId = $_SESSION['account_id'] ?? null;
+        $accountId = $_SESSION['account_id'] ?? null;
         $orderId = $_POST['order_id'] ?? null;
 
         header('Content-Type: application/json');
 
-        if (!$userId || !$orderId) {
+        if (!$accountId || !$orderId) {
             http_response_code(400);
             echo json_encode([
                 'success' => false,
@@ -266,9 +266,7 @@ class AccountController extends Controller
             ]);
             return;
         }
-
-        $result = $this->orderModel->cancelOrder($orderId, $userId);
-
+        $result = $this->orderModel->cancelOrder($orderId, $accountId);
         if ($result) {
             echo json_encode([
                 'success' => true,

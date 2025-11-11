@@ -139,15 +139,46 @@ class OrderModel extends Model
         $row = $stmt->fetch(\PDO::FETCH_ASSOC);
         return (int)$row['total'];
     }
-    public function cancelOrder($orderId, $userId)
+    public function cancelOrder($orderId, $accountId)
     {
-        $sql = "UPDATE {$this->table} 
-                SET status = 'cancelled', updated_at = NOW() 
-                WHERE id = :id AND user_id = :user_id";
+        // --- Lấy user_id từ account_id ---
+        $stmtUser = $this->db->prepare("SELECT id AS user_id FROM users WHERE account_id = :account_id LIMIT 1");
+        $stmtUser->bindValue(':account_id', $accountId, \PDO::PARAM_INT);
+        $stmtUser->execute();
+        $userRow = $stmtUser->fetch(\PDO::FETCH_ASSOC);
+        if (!$userRow) return false;
+        $userId = $userRow['user_id'];
+        // --- Lấy trạng thái đơn ---
+        $stmtOrder = $this->db->prepare("SELECT status FROM {$this->table} WHERE id = :id AND user_id = :user_id LIMIT 1");
+        $stmtOrder->bindValue(':id', $orderId, \PDO::PARAM_INT);
+        $stmtOrder->bindValue(':user_id', $userId, \PDO::PARAM_INT);
+        $stmtOrder->execute();
+        $order = $stmtOrder->fetch(\PDO::FETCH_ASSOC);
+        if (!$order) return false;
+        $status = $order['status'];
 
-        $stmt = $this->db->prepare($sql);
-        $stmt->bindValue(':id', $orderId, \PDO::PARAM_INT);
-        $stmt->bindValue(':user_id', $userId, \PDO::PARAM_INT);
-        return $stmt->execute();
+        // --- Nếu trạng thái là paid, cộng lại số lượng sản phẩm  còn pending thì ko---
+        if ($status === 'paid') {
+            $stmtItems = $this->db->prepare("SELECT product_id, quantity FROM order_items WHERE order_id = :order_id");
+            $stmtItems->bindValue(':order_id', $orderId, \PDO::PARAM_INT);
+            $stmtItems->execute();
+            $items = $stmtItems->fetchAll(\PDO::FETCH_ASSOC);
+
+            foreach ($items as $item) {
+                $stmtUpdate = $this->db->prepare("UPDATE products SET quantity = quantity + :qty WHERE id = :product_id");
+                $stmtUpdate->bindValue(':qty', $item['quantity'], \PDO::PARAM_INT);
+                $stmtUpdate->bindValue(':product_id', $item['product_id'], \PDO::PARAM_INT);
+                $stmtUpdate->execute();
+            }
+        }
+        // --- Cập nhật trạng thái đơn sang cancelled ---
+        $stmtCancel = $this->db->prepare("UPDATE {$this->table} 
+                                      SET status = 'cancelled', updated_at = NOW() 
+                                      WHERE id = :id AND user_id = :user_id");
+        $stmtCancel->bindValue(':id', $orderId, \PDO::PARAM_INT);
+        $stmtCancel->bindValue(':user_id', $userId, \PDO::PARAM_INT);
+        $stmtCancel->execute();
+
+        return true;
     }
 }

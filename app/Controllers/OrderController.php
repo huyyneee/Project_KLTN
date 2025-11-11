@@ -78,6 +78,7 @@ class OrderController extends Controller
 
         $user = $this->userModel->findByAccountId($accountId);
         if (!$user) {
+            if (session_status() === PHP_SESSION_NONE) session_start();
             $_SESSION['error'] = "Không tìm thấy người dùng.";
             header("Location: /checkout");
             exit;
@@ -104,6 +105,11 @@ class OrderController extends Controller
 
         // Lấy địa chỉ giao hàng
         $address = $addressId ? $this->addressModel->findByIdAndUser($addressId, $user['id']) : null;
+        if ($address === null) {
+            $_SESSION['error'] = "Vui lòng thêm địa chỉ nhận hàng.";
+            header("Location: /checkout");
+            exit;
+        }
         $shippingAddress = '';
         if ($address) {
             $receiverName = $address['receiver_name'];

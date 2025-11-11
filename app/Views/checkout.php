@@ -15,7 +15,43 @@ if (!empty($addresses)) {
     }
 }
 ?>
+<style>
+    .toast {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 12px 20px;
+        border-radius: 5px;
+        color: #fff;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(-20px);
+        transition: all 0.4s ease;
+        font-weight: 500;
+    }
 
+    .toast.show {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translateY(0);
+    }
+
+    .toast.success {
+        background-color: #16a34a;
+    }
+
+    .toast.error {
+        background-color: #dc2626;
+    }
+
+    .toast svg {
+        width: 20px;
+        height: 20px;
+    }
+</style>
 <form action="/checkout/placeOrder" method="POST">
     <div class="max-w-7xl mx-auto py-6 sm:py-8 md:py-10 px-4 bg-gray-50">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -193,7 +229,34 @@ if (!empty($addresses)) {
         </div>
     </div>
 </form>
+<div id="toast" class="toast"></div>
+<!-- message -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const toast = document.getElementById('toast');
 
+        const showToast = (msg, type = 'info') => {
+            toast.innerHTML = `
+            ${type==='success' ? '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>' :
+            '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>'}
+            ${msg}
+             `;
+            toast.className = 'toast show ' + type;
+            setTimeout(() => toast.className = 'toast', 3000);
+        };
+        const headerHeight = document.querySelector('header')?.offsetHeight || 0;
+        toast.style.top = (headerHeight + 20) + 'px';
+        // Hiển thị message từ session PHP
+        <?php if (!empty($_SESSION['success'])): ?>
+            showToast("<?= $_SESSION['success'] ?>", 'success');
+            <?php unset($_SESSION['success']); ?>
+        <?php endif; ?>
+        <?php if (!empty($_SESSION['error'])): ?>
+            showToast("<?= $_SESSION['error'] ?>", 'error');
+            <?php unset($_SESSION['error']); ?>
+        <?php endif; ?>
+    });
+</script>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         const btn = document.getElementById('toggle-items');
