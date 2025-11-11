@@ -485,17 +485,18 @@ Endpoints:
 
 ### 1. GET /orders
 
-- Mô tả: Lấy danh sách đơn hàng (admin). Hỗ trợ phân trang và lọc theo `status`.
+- Mô tả: Lấy danh sách đơn hàng (admin). Hỗ trợ phân trang, lọc theo `status`, và tìm kiếm.
 - Request:
 
 ```http
-GET /api/orders?page=1&limit=20&status=pending
+GET /api/orders?page=1&limit=20&status=pending&q=keyword
 ```
 
 - Query parameters:
   - `page` (integer, optional) - trang hiện tại (mặc định 1)
   - `limit` (integer, optional) - số bản ghi/trang (mặc định 20, tối đa 200)
   - `status` (string, optional) - filter theo trạng thái (`pending`, `paid`, `shipped`, `completed`, `cancelled`)
+  - `q` (string, optional) - tìm kiếm theo keyword (tìm trong `order_code`, `receiver_name`, `receiver_phone`, `shipping_address`)
 
 - Response success (200):
 
@@ -566,14 +567,125 @@ GET /api/orders/123
 }
 ```
 
+### 2.1. GET /orders/search (Alternative endpoint)
+
+- Mô tả: Tìm kiếm đơn hàng (alias của GET /orders với query parameter `q`). Hỗ trợ tìm kiếm trong `order_code`, `receiver_name`, `receiver_phone`, `shipping_address`.
+- Request:
+
+```http
+GET /api/orders/search?q=ORD123&status=paid&page=1&limit=20
+```
+
+- Query parameters:
+  - `q` (string, required) - keyword để tìm kiếm
+  - `status` (string, optional) - filter theo trạng thái (có thể kết hợp với search)
+  - `page` (integer, optional) - trang hiện tại (mặc định 1)
+  - `limit` (integer, optional) - số bản ghi/trang (mặc định 20, tối đa 200)
+
+- Response success (200):
+
+```json
+{
+  "success": true,
+  "message": "Orders retrieved (search: \"ORD123\")",
+  "data": {
+    "orders": [
+      {
+        "id": 123,
+        "order_code": "ORD123ABC",
+        "receiver_name": "Nguyễn Văn A",
+        "receiver_phone": "0123456789",
+        "shipping_address": "123 Đường ABC",
+        "status": "paid",
+        "total_amount": "150000.00",
+        "items": [ /* ... */ ]
+      }
+    ],
+    "pagination": {
+      "current_page": 1,
+      "total_pages": 1,
+      "total_records": 1,
+      "limit": 20
+    }
+  }
+}
+```
+
+**Lưu ý:**
+- Có thể sử dụng `GET /api/orders?q=keyword` hoặc `GET /api/orders/search?q=keyword` - cả hai đều hoạt động giống nhau
+- Tìm kiếm hỗ trợ partial match (LIKE query), ví dụ: `q=ORD` sẽ tìm thấy `ORD123`, `ORD456`, etc.
+- Có thể kết hợp search với status filter: `GET /api/orders?q=keyword&status=paid`
+
+#### Triển khai backend
+
+- Bộ điều khiển đã hỗ trợ tham số `q` cho endpoint `GET /orders` và trả về message kèm annotate khi có tìm kiếm.
+
+```24:48:app/Controllers/OrderApiController.php
+/**
+ * GET /api/orders - Admin: list orders (paginated, filter by status)
+ */
+public function index()
+{
+    $page = (int) ($_GET['page'] ?? 1);
+    $limit = (int) ($_GET['limit'] ?? 20);
+    $status = $_GET['status'] ?? null;
+    $keyword = isset($_GET['q']) ? trim((string) $_GET['q']) : null;
+    // ...
+}
+```
+
+- Logic lọc động theo `status` và `q` (tìm trong `order_code`, `receiver_name`, `receiver_phone`, `shipping_address`):
+
+```49:88:app/Controllers/OrderApiController.php
+// Build WHERE conditions dynamically
+$whereClauses = [];
+$params = [];
+if ($status) {
+    $whereClauses[] = 'status = :status';
+    $params[':status'] = $status;
+}
+if ($keyword !== null && $keyword !== '') {
+    $whereClauses[] = '(order_code LIKE :kw OR receiver_name LIKE :kw OR receiver_phone LIKE :kw OR shipping_address LIKE :kw)';
+    $params[':kw'] = '%' . $keyword . '%';
+}
+$whereSql = !empty($whereClauses) ? ('WHERE ' . implode(' AND ', $whereClauses)) : '';
+
+// Count
+$countSql = "SELECT COUNT(*) as total FROM orders $whereSql";
+// ...
+// Fetch orders
+$sql = "SELECT * FROM orders $whereSql ORDER BY created_at DESC LIMIT :limit OFFSET :offset";
+```
+
+- Thêm route alias `GET /orders/search` trỏ về cùng handler:
+
+```381:392:routes/api.php
+case '/orders/search':
+    if ($method === 'GET') {
+        // Alias of GET /orders with ?q=
+        $controller = new \App\Controllers\OrderApiController();
+        $controller->index();
+    } else {
+        http_response_code(405);
+        echo json_encode(['error' => 'Method not allowed']);
+    }
+    break;
+```
+
 ### 3. PATCH /orders/{id}/status
 
 - Mô tả: Cập nhật trạng thái đơn hàng theo stepper (admin). Hỗ trợ: `pending`, `paid`, `shipped`, `completed`, `cancelled`.
 - Quy tắc chuyển trạng thái:
   - `pending` → `paid` | `cancelled`
-  - `paid` → `shipped` | `cancelled`
+  - `paid` → `shipped` | `cancelled` ⭐ **Quan trọng: Để chuyển sang "shipped", đơn phải ở trạng thái "paid"**
   - `shipped` → `completed`
   - `completed`, `cancelled` → không cho đổi
+
+> **📌 Lưu ý cho Frontend:**
+> - Để gửi hàng (ship), gọi: `PATCH /api/orders/{id}/status` với body `{ "status": "shipped" }`
+> - Đơn hàng phải ở trạng thái `paid` mới có thể chuyển sang `shipped`
+> - Xem phần "Triển khai API Order cho Admin" bên dưới để có code example đầy đủ
+
 - Request:
 
 ```http
@@ -614,6 +726,15 @@ Giả sử bạn đã đăng nhập trong trình duyệt (session cookie). Dư�
 # Lấy danh sách đơn hàng (admin)
 curl -b cookies.txt "http://localhost/api/orders?page=1&limit=20"
 
+# Tìm kiếm đơn hàng theo keyword
+curl -b cookies.txt "http://localhost/api/orders?q=ORD123"
+
+# Tìm kiếm kết hợp với filter status
+curl -b cookies.txt "http://localhost/api/orders?q=Nguyễn&status=paid"
+
+# Sử dụng endpoint search riêng
+curl -b cookies.txt "http://localhost/api/orders/search?q=0123456789"
+
 # Lấy chi tiết 1 đơn
 curl -b cookies.txt "http://localhost/api/orders/123"
 
@@ -628,13 +749,253 @@ fetch('/api/orders?page=1&limit=20', { credentials: 'same-origin' })
   .then(r => r.json())
   .then(console.log);
 
+// Tìm kiếm đơn hàng
+fetch('/api/orders?q=ORD123', { credentials: 'same-origin' })
+  .then(r => r.json())
+  .then(console.log);
+
+// Tìm kiếm kết hợp với filter status
+fetch('/api/orders?q=Nguyễn&status=paid', { credentials: 'same-origin' })
+  .then(r => r.json())
+  .then(console.log);
+
+// Sử dụng endpoint search riêng
+fetch('/api/orders/search?q=0123456789', { credentials: 'same-origin' })
+  .then(r => r.json())
+  .then(console.log);
+
 fetch('/api/orders/123', { credentials: 'same-origin' })
   .then(r => r.json())
   .then(console.log);
 
-fetch('/api/orders/123/approve', { method: 'POST', credentials: 'same-origin' })
+// Cập nhật trạng thái đơn (API mới - dùng PATCH)
+fetch('/api/orders/123/status', {
+  method: 'PATCH',
+  headers: { 'Content-Type': 'application/json' },
+  credentials: 'same-origin',
+  body: JSON.stringify({ status: 'shipped' })
+})
   .then(r => r.json())
   .then(console.log);
+```
+
+### Postman
+
+1) Đăng nhập để tạo session (bắt buộc trước khi gọi Orders)
+
+```http
+POST {{baseUrl}}/login
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "your_password"
+}
+```
+
+- Nếu thành công, Postman sẽ tự lưu cookie session cho domain. Các request sau KHÔNG cần Authorization header.
+
+2) Danh sách đơn hàng (có phân trang)
+
+```http
+GET {{baseUrl}}/orders?page=1&limit=20
+Accept: application/json
+```
+
+3) Tìm kiếm đơn hàng theo keyword
+
+```http
+GET {{baseUrl}}/orders?q=ORD123
+Accept: application/json
+```
+
+4) Tìm kiếm kết hợp trạng thái
+
+```http
+GET {{baseUrl}}/orders?q=Nguyễn&status=paid&page=1&limit=20
+Accept: application/json
+```
+
+5) Sử dụng endpoint alias /orders/search
+
+```http
+GET {{baseUrl}}/orders/search?q=0123456789
+Accept: application/json
+```
+
+Gợi ý cấu hình nhanh trong Postman:
+- Tạo Environment với biến `baseUrl`, ví dụ: `http://localhost/api` hoặc `http://localhost:8000/api`.
+- Thứ tự chạy: Login → Orders/List hoặc Search.
+- Đảm bảo Postman Cookies đã lưu `PHPSESSID` cho domain backend sau khi login.
+
+### TypeScript + Axios Example
+
+```typescript
+// api.ts
+import axios from 'axios';
+
+const api = axios.create({
+  baseURL: 'http://159.65.2.46:8000/api',
+  withCredentials: true, // Quan trọng: để gửi session cookie
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+export interface ApiResponse<T> {
+  success: boolean;
+  message: string;
+  data: T;
+}
+
+export interface Order {
+  id: number;
+  status: 'pending' | 'paid' | 'shipped' | 'completed' | 'cancelled';
+  // ... other fields
+}
+
+export interface OrderListResponse {
+  orders: Order[];
+  pagination: {
+    current_page: number;
+    total_pages: number;
+    total_records: number;
+    limit: number;
+  };
+}
+
+export interface OrderSearchParams {
+  page?: number;
+  limit?: number;
+  status?: 'pending' | 'paid' | 'shipped' | 'completed' | 'cancelled';
+  q?: string; // Search keyword
+}
+
+export const orderApi = {
+  // Lấy danh sách đơn hàng với phân trang, filter và search
+  getAll: (params?: OrderSearchParams): Promise<ApiResponse<OrderListResponse>> => {
+    return api.get('/orders', { params });
+  },
+
+  // Tìm kiếm đơn hàng (alias của getAll với query parameter q)
+  search: (query: string, params?: Omit<OrderSearchParams, 'q'>): Promise<ApiResponse<OrderListResponse>> => {
+    return api.get('/orders/search', { params: { ...params, q: query } });
+  },
+
+  // Lấy chi tiết đơn hàng
+  getById: (id: number): Promise<ApiResponse<Order>> => {
+    return api.get(`/orders/${id}`);
+  },
+
+  // Cập nhật trạng thái đơn hàng (API mới - dùng cho tất cả các trạng thái)
+  updateStatus: (
+    id: number,
+    status: 'paid' | 'shipped' | 'completed' | 'cancelled'
+  ): Promise<ApiResponse<Order>> => {
+    return api.patch(`/orders/${id}/status`, { status });
+  },
+
+  // Duyệt đơn hàng (pending → paid)
+  approve: (id: number): Promise<ApiResponse<Order>> => {
+    return orderApi.updateStatus(id, 'paid');
+  },
+
+  // Gửi hàng (paid → shipped) ⭐ HÀM MỚI
+  ship: (id: number): Promise<ApiResponse<Order>> => {
+    return orderApi.updateStatus(id, 'shipped');
+  },
+
+  // Hoàn thành đơn hàng (shipped → completed)
+  complete: (id: number): Promise<ApiResponse<Order>> => {
+    return orderApi.updateStatus(id, 'completed');
+  },
+
+  // Hủy đơn hàng (pending/paid → cancelled)
+  cancel: (id: number): Promise<ApiResponse<Order>> => {
+    return orderApi.updateStatus(id, 'cancelled');
+  },
+};
+
+// useOrders.ts
+import { useState, useEffect } from 'react';
+import { orderApi, Order, OrderSearchParams } from '@/lib/api';
+
+export const useOrders = () => {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [pagination, setPagination] = useState({
+    current_page: 1,
+    total_pages: 1,
+    total_records: 0,
+    limit: 20
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Lấy danh sách đơn hàng
+  const fetchOrders = async (params?: OrderSearchParams) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await orderApi.getAll(params);
+      if (response.success && response.data) {
+        setOrders(response.data.orders);
+        setPagination(response.data.pagination);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch orders');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Tìm kiếm đơn hàng
+  const searchOrders = async (query: string, params?: Omit<OrderSearchParams, 'q'>) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await orderApi.search(query, params);
+      if (response.success && response.data) {
+        setOrders(response.data.orders);
+        setPagination(response.data.pagination);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to search orders');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const shipOrder = async (id: number) => {
+    try {
+      setLoading(true);
+      const result = await orderApi.ship(id);
+      if (result.success) {
+        await fetchOrders(); // Refresh orders list
+        return result.data;
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to ship order');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchOrders();
+  }, []);
+
+  return {
+    orders,
+    pagination,
+    loading,
+    error,
+    fetchOrders,
+    searchOrders, // ⭐ Hàm tìm kiếm mới
+    shipOrder,
+    // ... other functions
+  };
+};
 ```
 
 ### PHP (test script)
@@ -683,10 +1044,10 @@ apiClient.interceptors.response.use(
 );
 
 export const orderService = {
-  // Lấy danh sách đơn hàng với phân trang và filter
+  // Lấy danh sách đơn hàng với phân trang, filter và search
   async getOrders(params = {}) {
     try {
-      const { page = 1, limit = 20, status } = params;
+      const { page = 1, limit = 20, status, q } = params;
       const queryParams = new URLSearchParams({
         page: page.toString(),
         limit: limit.toString()
@@ -695,11 +1056,24 @@ export const orderService = {
       if (status) {
         queryParams.append('status', status);
       }
+      
+      if (q) {
+        queryParams.append('q', q);
+      }
 
       const response = await apiClient.get(`/orders?${queryParams}`);
       return response.data;
     } catch (error) {
       throw new Error(error.response?.data?.message || 'Lỗi khi tải danh sách đơn hàng');
+    }
+  },
+
+  // Tìm kiếm đơn hàng (alias của getOrders với query parameter q)
+  async searchOrders(query, params = {}) {
+    try {
+      return this.getOrders({ ...params, q: query });
+    } catch (error) {
+      throw new Error(error.response?.data?.message || 'Lỗi khi tìm kiếm đơn hàng');
     }
   },
 
@@ -713,14 +1087,34 @@ export const orderService = {
     }
   },
 
-  // Duyệt đơn hàng
-  async approveOrder(orderId) {
+  // Cập nhật trạng thái đơn hàng (API mới - dùng cho tất cả các trạng thái)
+  async updateStatus(orderId, status) {
     try {
-      const response = await apiClient.post(`/orders/${orderId}/approve`);
+      const response = await apiClient.patch(`/orders/${orderId}/status`, { status });
       return response.data;
     } catch (error) {
-      throw new Error(error.response?.data?.message || 'Lỗi khi duyệt đơn hàng');
+      throw new Error(error.response?.data?.message || 'Lỗi khi cập nhật trạng thái đơn hàng');
     }
+  },
+
+  // Duyệt đơn hàng (pending → paid)
+  async approveOrder(orderId) {
+    return this.updateStatus(orderId, 'paid');
+  },
+
+  // Gửi hàng (paid → shipped)
+  async shipOrder(orderId) {
+    return this.updateStatus(orderId, 'shipped');
+  },
+
+  // Hoàn thành đơn hàng (shipped → completed)
+  async completeOrder(orderId) {
+    return this.updateStatus(orderId, 'completed');
+  },
+
+  // Hủy đơn hàng (pending/paid → cancelled)
+  async cancelOrder(orderId) {
+    return this.updateStatus(orderId, 'cancelled');
   }
 };
 ```
@@ -759,6 +1153,25 @@ export const useOrders = (initialParams = {}) => {
     }
   }, [params]);
 
+  const searchOrders = useCallback(async (query) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await orderService.searchOrders(query, params);
+      if (response.success) {
+        setOrders(response.data.orders);
+        setPagination(response.data.pagination);
+      } else {
+        setError(response.message);
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [params]);
+
   const updateParams = (newParams) => {
     setParams(prev => ({ ...prev, ...newParams }));
   };
@@ -778,7 +1191,8 @@ export const useOrders = (initialParams = {}) => {
     error,
     params,
     updateParams,
-    refreshOrders
+    refreshOrders,
+    searchOrders // ⭐ Hàm tìm kiếm mới
   };
 };
 
@@ -807,14 +1221,14 @@ export const useOrderDetail = (orderId) => {
     }
   }, [orderId]);
 
-  const approveOrder = async () => {
-    if (!orderId) return;
+  const updateOrderStatus = async (status) => {
+    if (!orderId) return false;
     
     setLoading(true);
     setError(null);
     
     try {
-      const response = await orderService.approveOrder(orderId);
+      const response = await orderService.updateStatus(orderId, status);
       if (response.success) {
         setOrder(response.data);
         return true;
@@ -830,6 +1244,22 @@ export const useOrderDetail = (orderId) => {
     }
   };
 
+  const approveOrder = async () => {
+    return updateOrderStatus('paid');
+  };
+
+  const shipOrder = async () => {
+    return updateOrderStatus('shipped');
+  };
+
+  const completeOrder = async () => {
+    return updateOrderStatus('completed');
+  };
+
+  const cancelOrder = async () => {
+    return updateOrderStatus('cancelled');
+  };
+
   useEffect(() => {
     fetchOrder();
   }, [fetchOrder]);
@@ -839,12 +1269,96 @@ export const useOrderDetail = (orderId) => {
     loading,
     error,
     approveOrder,
+    shipOrder,
+    completeOrder,
+    cancelOrder,
+    updateOrderStatus,
     refreshOrder: fetchOrder
   };
 };
 ```
 
-### 3. Component Danh sách Đơn hàng
+### 3. Hướng dẫn sử dụng các hàm chuyển trạng thái
+
+#### Quy tắc chuyển trạng thái (Stepper)
+
+Backend chỉ cho phép chuyển trạng thái theo quy tắc sau:
+
+```
+pending → paid | cancelled
+paid → shipped | cancelled
+shipped → completed
+completed → (không cho đổi)
+cancelled → (không cho đổi)
+```
+
+#### Ví dụ sử dụng trong Component
+
+```jsx
+import { useOrderDetail } from '@/hooks/useOrders';
+
+const OrderDetail = ({ orderId }) => {
+  const {
+    order,
+    loading,
+    error,
+    approveOrder,
+    shipOrder,      // ⭐ Hàm mới: chuyển từ paid → shipped
+    completeOrder,
+    cancelOrder
+  } = useOrderDetail(orderId);
+
+  const handleShip = async () => {
+    if (!confirm('Xác nhận gửi hàng?')) return;
+    
+    const success = await shipOrder();
+    if (success) {
+      alert('Đã chuyển đơn hàng sang trạng thái "shipped"');
+    }
+  };
+
+  // Hiển thị nút theo trạng thái hiện tại
+  return (
+    <div>
+      {order?.status === 'pending' && (
+        <button onClick={approveOrder}>Duyệt đơn</button>
+      )}
+      {order?.status === 'paid' && (
+        <>
+          <button onClick={shipOrder}>Gửi hàng</button>
+          <button onClick={cancelOrder}>Hủy đơn</button>
+        </>
+      )}
+      {order?.status === 'shipped' && (
+        <button onClick={completeOrder}>Hoàn thành</button>
+      )}
+    </div>
+  );
+};
+```
+
+#### Sử dụng trực tiếp từ orderService
+
+```javascript
+import { orderService } from '@/lib/api/orderService';
+
+// Gửi hàng (paid → shipped)
+const handleShip = async (orderId) => {
+  try {
+    const response = await orderService.shipOrder(orderId);
+    if (response.success) {
+      console.log('Đơn hàng đã được gửi:', response.data);
+    }
+  } catch (error) {
+    console.error('Lỗi:', error.message);
+  }
+};
+
+// Hoặc dùng hàm tổng quát
+const response = await orderService.updateStatus(orderId, 'shipped');
+```
+
+### 4. Component Danh sách Đơn hàng
 
 Tạo file `components/admin/OrdersList.jsx`:
 
@@ -1360,4 +1874,9 @@ export const config = {
   - Custom hooks cho state management
   - Components admin với Tailwind CSS
   - Authentication và middleware
+
+- **v1.3** - Bổ sung Order Search
+  - Hỗ trợ tham số `q` cho `GET /orders`
+  - Thêm alias `GET /orders/search`
+  - Ví dụ sử dụng bằng cURL, Fetch, Axios/TypeScript
 

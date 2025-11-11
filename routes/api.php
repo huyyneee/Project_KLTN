@@ -378,6 +378,17 @@ switch ($path) {
         }
         break;
 
+    case '/orders/search':
+        if ($method === 'GET') {
+            // Alias of GET /orders with ?q=
+            $controller = new \App\Controllers\OrderApiController();
+            $controller->index();
+        } else {
+            http_response_code(405);
+            echo json_encode(['error' => 'Method not allowed']);
+        }
+        break;
+
     case (preg_match('/^\/orders\/(\d+)$/', $path, $matches) ? true : false):
         $controller = new \App\Controllers\OrderApiController();
         $id = $matches[1];
