@@ -18,7 +18,9 @@ class AccountModel extends Model
         'updated_at',
         'last_login',
         'role',
-        'status'
+        'status',
+        'password_reset_token',
+        'password_reset_expires'
     ];
     public function insert(array $data)
     {
@@ -44,5 +46,42 @@ class AccountModel extends Model
             error_log("Account insert error: " . $e->getMessage());
             return false;
         }
+    }
+    public function findByEmail($email)
+    {
+        $stmt = $this->db->prepare("SELECT * FROM {$this->table} WHERE email = :email LIMIT 1");
+        $stmt->execute([':email' => $email]);
+        $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+        return $row ?: null;
+    }
+    public function setPasswordResetToken($accountId, $token, $expires)
+    {
+        $stmt = $this->db->prepare(
+            "UPDATE {$this->table} SET password_reset_token = :token, password_reset_expires = :expires WHERE id = :id"
+        );
+        return $stmt->execute([':token' => $token, ':expires' => $expires, ':id' => $accountId]);
+    }
+    public function findByResetToken($token)
+    {
+        $stmt = $this->db->prepare(
+            "SELECT * FROM {$this->table} WHERE password_reset_token = :token LIMIT 1"
+        );
+        $stmt->execute([':token' => $token]);
+        $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+        return $row ?: null;
+    }
+    public function updatePassword($accountId, $hashedPassword)
+    {
+        $stmt = $this->db->prepare(
+            "UPDATE {$this->table} SET password = :pwd, password_reset_token = NULL, password_reset_expires = NULL WHERE id = :id"
+        );
+        return $stmt->execute([':pwd' => $hashedPassword, ':id' => $accountId]);
+    }
+    public function updateLastLogin($accountId)
+    {
+        $stmt = $this->db->prepare(
+            "UPDATE {$this->table} SET last_login = NOW() WHERE id = :id"
+        );
+        return $stmt->execute([':id' => $accountId]);
     }
 }

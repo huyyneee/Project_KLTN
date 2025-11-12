@@ -1,43 +1,57 @@
 <?php
-// Ensure session starts before any output to avoid "headers already sent" errors.
-if (session_status() === PHP_SESSION_NONE) {
-	if (!headers_sent()) {
-		session_start();
+if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
+	session_start();
+}
+
+$currentUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+
+// Danh sách các trang KHÔNG auto-login từ cookie
+$noAutoLoginPages = [
+	'/login/reset-password',
+];
+
+// Kiểm tra token reset-password trong query string
+$disableAutoLogin = false;
+if (in_array($currentUri, $noAutoLoginPages)) {
+	$token = $_GET['token'] ?? '';
+	if ($token) {
+		$disableAutoLogin = true; // đang trong flow reset-password
+		// Xóa session nếu có
+		unset($_SESSION['account_id'], $_SESSION['account_email']);
 	}
 }
-// If session is missing but cookies exist, attempt to restore session (7-day cookie login)
-if (empty($_SESSION['account_id']) && !empty($_COOKIE['account_id']) && !empty($_COOKIE['account_email'])) {
-	// first validate server-side expiry cookie (stored as unix timestamp)
-	$expiresOk = false;
-	if (!empty($_COOKIE['account_expires']) && ctype_digit($_COOKIE['account_expires'])) {
-		$expiresTs = (int) $_COOKIE['account_expires'];
-		if ($expiresTs > time()) $expiresOk = true;
-	}
-	if ($expiresOk) {
-		try {
-			$db = (new \App\Core\Database())->getConnection();
-			// ensure the cookie values correspond to an active account
-			$stmt = $db->prepare('SELECT id, email, status FROM accounts WHERE id = :id LIMIT 1');
-			$stmt->execute([':id' => $_COOKIE['account_id']]);
-			$row = $stmt->fetch(\PDO::FETCH_ASSOC);
-			if ($row && ($row['email'] === $_COOKIE['account_email']) && ($row['status'] ?? 'active') === 'active') {
-				// restore session
-				$_SESSION['account_id'] = $row['id'];
-				$_SESSION['account_email'] = $row['email'];
-			}
-		} catch (\Throwable $e) {
-			// ignore - leave session empty
+
+// AUTO-LOGIN bình thường, chỉ khi không disable
+if (!$disableAutoLogin) {
+	if (empty($_SESSION['account_id']) && !empty($_COOKIE['account_id']) && !empty($_COOKIE['account_email'])) {
+		$expiresOk = false;
+		if (!empty($_COOKIE['account_expires']) && ctype_digit($_COOKIE['account_expires'])) {
+			$expiresTs = (int) $_COOKIE['account_expires'];
+			if ($expiresTs > time()) $expiresOk = true;
 		}
-	} else {
-		// expired or invalid expiry: clear cookies to avoid repeated attempts
-		setcookie('account_id', '', time() - 3600, '/', '', false, true);
-		setcookie('account_email', '', time() - 3600, '/', '', false, true);
-		setcookie('account_expires', '', time() - 3600, '/', '', false, true);
+
+		if ($expiresOk) {
+			try {
+				$db = (new \App\Core\Database())->getConnection();
+				$stmt = $db->prepare('SELECT id, email, status FROM accounts WHERE id = :id LIMIT 1');
+				$stmt->execute([':id' => $_COOKIE['account_id']]);
+				$row = $stmt->fetch(\PDO::FETCH_ASSOC);
+				if ($row && ($row['email'] === $_COOKIE['account_email']) && ($row['status'] ?? 'active') === 'active') {
+					$_SESSION['account_id'] = $row['id'];
+					$_SESSION['account_email'] = $row['email'];
+				}
+			} catch (\Throwable $e) {
+				// ignore
+			}
+		} else {
+			$expire = time() + 5 * 60; // 5 phút
+			setcookie('account_id', '', $expire, '/', '', false, true);
+			setcookie('account_email', '', $expire, '/', '', false, true);
+			setcookie('account_expires', '', $expire, '/', '', false, true);
+		}
 	}
 }
-
 ?>
-
 <!DOCTYPE html>
 <html lang="vi">
 
@@ -162,12 +176,13 @@ if (empty($_SESSION['account_id']) && !empty($_COOKIE['account_id']) && !empty($
 							$cart = $cartModel->getCartByUser($_SESSION['account_id']);
 							if ($cart) {
 								$stmt = (new \App\Core\Database())->getConnection()->prepare(
-									"SELECT SUM(quantity) FROM cart_items WHERE cart_id = :cart_id"
+									"SELECT SUM(quantity) as total_qty FROM cart_items WHERE cart_id = :cart_id"
 								);
 								$stmt->execute(['cart_id' => $cart['id']]);
-								$cartCount = $stmt->fetchColumn() ?: 0;
+								$cartCount = (int) $stmt->fetchColumn();
 							}
-						} catch (\Throwable $e) { /* ignore */
+						} catch (\Throwable $e) {
+							$cartCount = 0;
 						}
 					}
 					$cartCountDisplay = $cartCount > 99 ? '99+' : $cartCount;
@@ -332,7 +347,7 @@ if (empty($_SESSION['account_id']) && !empty($_COOKIE['account_id']) && !empty($
 					})
 					.then(r => r.json())
 					.then(data => {
-						const count = data.count ?? 0;
+						const count = Number(data.count || 0);
 						badge.textContent = count > 99 ? '99+' : count;
 						badge.style.display = count > 0 ? 'flex' : 'none';
 					})

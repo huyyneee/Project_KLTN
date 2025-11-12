@@ -25,7 +25,7 @@
             <div class="flex justify-center">
                 <div class="w-64 flex items-center justify-between text-sm">
                     <label class="flex items-center text-gray-700 text-sm"><input type="checkbox" name="remember" class="form-checkbox" /> <span class="ml-2">Nhớ mật khẩu</span></label>
-                    <a href="/account/forgot" class="text-green-700 hover:underline text-sm">Quên mật khẩu</a>
+                    <a href="/login/forgot-password" class="text-green-700 hover:underline text-sm">Quên mật khẩu</a>
                 </div>
             </div>
 

@@ -1904,4 +1904,14 @@ video {
 .md\:col-span-1 {
   grid-column: span 1 / span 1;
 }
+.bg-blue-500 {
+    background-color: #3B82F6; /* màu xanh Tailwind gốc */
+}
+
+.hover\:bg-blue-600:hover {
+    background-color: #2563EB;
+}
+.hover\:bg-green-600:hover {
+    background-color:#16a34a;
+}
 }

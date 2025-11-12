@@ -6,33 +6,31 @@ use App\Core\Controller;
 use App\Models\UserModel;
 use App\Models\CartModel;
 use App\Models\CartItemModel;
+use App\Models\AccountModel;
 
 class LoginController extends Controller
 {
     private $userModel;
+    private $accountModel;
 
     public function __construct()
     {
         $this->userModel = new UserModel();
+        $this->accountModel = new AccountModel();
     }
-
     public function index()
     {
-        // render login page (header/footer included by layout)
         $this->render('login', []);
     }
 
     // POST /account/login
     public function authenticate()
     {
-        if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
-            session_start();
-        }
-
-        $identity = isset($_POST['identity']) ? trim($_POST['identity']) : '';
-        $password = isset($_POST['password']) ? $_POST['password'] : '';
-
+        if (session_status() === PHP_SESSION_NONE && !headers_sent()) session_start();
         header('Content-Type: application/json');
+
+        $identity = trim($_POST['identity'] ?? '');
+        $password = $_POST['password'] ?? '';
 
         if (!$identity || !$password) {
             http_response_code(400);
@@ -40,47 +38,40 @@ class LoginController extends Controller
             return;
         }
 
-        // find account by email
-        $db = (new \App\Core\Database())->getConnection();
-        $stmt = $db->prepare('SELECT * FROM accounts WHERE email = :id LIMIT 1');
-        $stmt->execute([':id' => $identity]);
-        $row = $stmt->fetch(\PDO::FETCH_ASSOC);
-
-        if (!$row) {
+        $account = $this->accountModel->findByEmail($identity);
+        if (!$account) {
             echo json_encode(['ok' => false, 'reason' => 'not_found', 'message' => 'ACCOUNT_NOT_FOUND']);
             return;
         }
 
-        // check status
-        $status = $row['status'] ?? 'active';
+        $status = $account['status'] ?? 'active';
         if ($status !== 'active') {
-            echo json_encode(['ok' => false, 'reason' => 'status', 'status' => $status, 'message' => 'YOUR ACCOUNT HAS BEEN ' . $status]);
+            echo json_encode([
+                'ok' => false,
+                'reason' => 'status',
+                'status' => $status,
+                'message' => 'YOUR ACCOUNT HAS BEEN ' . strtoupper($status)
+            ]);
             return;
         }
 
-        // password check
-        $hashed = md5($password);
-        if (!hash_equals($row['password'], $hashed)) {
+        if (!hash_equals($account['password'], md5($password))) {
             echo json_encode(['ok' => false, 'reason' => 'bad_password', 'message' => 'please check password']);
             return;
         }
 
         // login success: set session and cookies
-        $_SESSION['account_id'] = $row['id'];
-        $_SESSION['account_email'] = $row['email'];
-        $expire = time() + 7 * 24 * 60 * 60;
-        setcookie('account_id', $row['id'], $expire, '/', '', false, true);
-        setcookie('account_email', $row['email'], $expire, '/', '', false, true);
+        $_SESSION['account_id'] = $account['id'];
+        $_SESSION['account_email'] = $account['email'];
+        $expire = time() + 2 * 60;
+        setcookie('account_id', $account['id'], $expire, '/', '', false, true);
+        setcookie('account_email', $account['email'], $expire, '/', '', false, true);
         setcookie('account_expires', (string)$expire, $expire, '/', '', false, true);
 
         // update last_login
-        try {
-            $u = $db->prepare('UPDATE accounts SET last_login = :ts WHERE id = :id');
-            $u->execute([':ts' => date('Y-m-d H:i:s'), ':id' => $row['id']]);
-        } catch (\Throwable $e) {
-        }
+        $this->accountModel->updateLastLogin($account['id']);
 
-        // === HANDLE PENDING CART ITEM ===
+        // Handle pending cart
         $return = '/';
         if (!empty($_SESSION['cart_pending'])) {
             $pending = $_SESSION['cart_pending'];
@@ -89,26 +80,17 @@ class LoginController extends Controller
             $cartModel = new CartModel();
             $cartItemModel = new CartItemModel();
 
-            // Lấy giỏ hàng hiện tại hoặc tạo mới
-            $cart = $cartModel->getCartByUser($row['id']);
-            $cartId = $cart ? $cart['id'] : $cartModel->createCart($row['id']);
+            $cart = $cartModel->getCartByUser($account['id']);
+            $cartId = $cart ? $cart['id'] : $cartModel->createCart($account['id']);
 
-            // Thêm sản phẩm pending vào giỏ
             $existingItem = $cartItemModel->getItemByCartAndProduct($cartId, $pending['product_id']);
             if ($existingItem) {
-                $newQuantity = $existingItem['quantity'] + $pending['quantity'];
-                $cartItemModel->updateQuantity($existingItem['id'], $newQuantity);
+                $cartItemModel->updateQuantity($existingItem['id'], $existingItem['quantity'] + $pending['quantity']);
             } else {
-                $cartItemModel->addItem(
-                    $cartId,
-                    $pending['product_id'],
-                    $pending['quantity'],
-                    $pending['price']
-                );
+                $cartItemModel->addItem($cartId, $pending['product_id'], $pending['quantity'], $pending['price']);
             }
-
             $return = '/cart';
-        } else if (!empty($_GET['return'])) {
+        } elseif (!empty($_GET['return'])) {
             $r = $_GET['return'];
             if (is_string($r) && strlen($r) > 0 && strpos($r, '/') === 0) {
                 $return = $r;
@@ -116,19 +98,114 @@ class LoginController extends Controller
         }
 
         echo json_encode(['ok' => true, 'redirect' => $return]);
-        return;
     }
 
     // GET /account/logout
     public function logout()
     {
         if (session_status() === PHP_SESSION_NONE && !headers_sent()) session_start();
-        unset($_SESSION['account_id']);
-        unset($_SESSION['account_email']);
+        unset($_SESSION['account_id'], $_SESSION['account_email']);
         setcookie('account_id', '', time() - 3600, '/', '', false, true);
         setcookie('account_email', '', time() - 3600, '/', '', false, true);
         setcookie('account_expires', '', time() - 3600, '/', '', false, true);
         header('Location: /');
-        return;
+    }
+
+    // GET /account/forgot-password
+    public function forgotPasswordForm()
+    {
+        $this->render('forgot_password', []);
+    }
+
+    // POST /account/send-reset-link
+    public function sendResetLink()
+    {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+        header('Content-Type: application/json');
+
+        $email = trim($_POST['email'] ?? '');
+        if (!$email) {
+            echo json_encode(['ok' => false, 'message' => 'Vui lòng nhập email']);
+            return;
+        }
+
+        $account = $this->accountModel->findByEmail($email);
+        if (!$account) {
+            echo json_encode(['ok' => false, 'message' => 'Email không tồn tại']);
+            return;
+        }
+
+        $token = bin2hex(random_bytes(32));
+        $expires = date('Y-m-d H:i:s', time() + 300); // 5p
+        $this->accountModel->setPasswordResetToken($account['id'], $token, $expires);
+
+        $resetLink = "http://{$_SERVER['HTTP_HOST']}/login/reset-password?token=$token";
+        $body = "Nhấn vào link sau để đặt lại mật khẩu: <a href=\"$resetLink\">$resetLink</a>";
+
+        if (\send_mail($email, 'Đặt lại mật khẩu', $body)) {
+            echo json_encode(['ok' => true, 'message' => 'Vui lòng kiểm tra email để đặt lại mật khẩu']);
+        } else {
+            echo json_encode(['ok' => false, 'message' => 'Gửi email thất bại']);
+        }
+    }
+
+    // GET /account/reset-password
+    public function resetPasswordForm()
+    {
+        $_SESSION['disable_auto_login'] = true;
+        unset($_SESSION['account_id'], $_SESSION['account_email']);
+        $token = $_GET['token'] ?? '';
+        if (!$token) {
+            echo 'Token không hợp lệ';
+            return;
+        }
+
+        $account = $this->accountModel->findByResetToken($token);
+        if (!$account || strtotime($account['password_reset_expires']) < time()) {
+            echo 'Token đã hết hạn hoặc không hợp lệ';
+            return;
+        }
+
+        $this->render('reset_password', ['token' => $token]);
+    }
+
+    // POST /account/reset-password
+    public function resetPassword()
+    {
+        header('Content-Type: application/json');
+        $token = $_POST['token'] ?? '';
+        $password = $_POST['password'] ?? '';
+        $confirm = $_POST['confirm_password'] ?? '';
+
+        if (!$token || !$password || !$confirm) {
+            echo json_encode(['ok' => false, 'message' => 'Thiếu dữ liệu']);
+            return;
+        }
+
+        if ($password !== $confirm) {
+            echo json_encode(['ok' => false, 'message' => 'Mật khẩu không khớp']);
+            return;
+        }
+        // Kiểm tra độ mạnh mật khẩu
+        if (
+            !preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]).{8,}$/', $password)
+            || strlen($password) > 32
+        ) {
+            echo json_encode([
+                'ok' => false,
+                'message' => 'Mật khẩu phải từ 8-32 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt.'
+            ]);
+            return;
+        }
+        $account = $this->accountModel->findByResetToken($token);
+        if (!$account || strtotime($account['password_reset_expires']) < time()) {
+            echo json_encode(['ok' => false, 'message' => 'Token không hợp lệ hoặc đã hết hạn']);
+            return;
+        }
+        // Mã hóa mật khẩu
+        $hashed = md5($password);
+        $this->accountModel->updatePassword($account['id'], $hashed);
+
+        echo json_encode(['ok' => true, 'message' => 'Đặt lại mật khẩu thành công']);
     }
 }

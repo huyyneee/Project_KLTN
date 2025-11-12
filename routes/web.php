@@ -32,6 +32,12 @@ $routes = [
     '/account/address/delete'   => ['controller' => 'AddressController', 'method' => 'deleteAddress'],
     '/addresses'                => ['controller' => 'AccountController', 'method' => 'address'],
 
+    //forgot password
+    '/login/forgot-password' => ['controller' => 'LoginController', 'method' => 'forgotPasswordForm'],
+    '/login/send-reset-link' => ['controller' => 'LoginController', 'method' => 'sendResetLink'],
+    '/login/reset-password' => ['controller' => 'LoginController', 'method' => 'resetPasswordForm'],
+    '/login/reset-password-post' => ['controller' => 'LoginController', 'method' => 'resetPassword'],
+
 
     // Admin Routes
     '/admin'                    => ['controller' => 'AdminController', 'method' => 'dashboard'],
