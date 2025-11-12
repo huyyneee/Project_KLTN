@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Models;
 
 use App\Core\Model;
@@ -10,8 +11,6 @@ class UserModel extends Model
     protected $fillable = [
         'account_id',
         'full_name',
-        'phone',
-        'address',
         'birthday',
         'gender',
         'created_at',
@@ -40,32 +39,47 @@ class UserModel extends Model
     public function updateByAccountId($accountId, $data)
     {
         $user = $this->findByAccountId($accountId);
-        
+
         if (!$user) {
             // Create new user if not exists
             $data['account_id'] = $accountId;
             $data['created_at'] = date('Y-m-d H:i:s');
             $data['updated_at'] = date('Y-m-d H:i:s');
-            
+
             $columns = implode(', ', array_keys($data));
             $values = ':' . implode(', :', array_keys($data));
-            
+
             $stmt = $this->db->prepare("INSERT INTO {$this->table} ($columns) VALUES ($values)");
             return $stmt->execute($data);
         }
 
         // Update existing user
         $data['updated_at'] = date('Y-m-d H:i:s');
-        
+
         $sets = [];
         foreach ($data as $key => $value) {
             $sets[] = "$key = :$key";
         }
-        
+
         $sql = "UPDATE {$this->table} SET " . implode(', ', $sets) . " WHERE account_id = :account_id";
         $data['account_id'] = $accountId;
-        
+
         $stmt = $this->db->prepare($sql);
         return $stmt->execute($data);
+    }
+    public function insertUser($data)
+    {
+        $sql = "INSERT INTO users (account_id, full_name, birthday, gender, created_at, updated_at)
+            VALUES (:account_id, :full_name, :birthday, :gender, :created_at, :updated_at)";
+
+        $stmt = $this->db->prepare($sql);
+        return $stmt->execute([
+            ':account_id' => $data['account_id'],
+            ':full_name'  => $data['full_name'],
+            ':birthday'   => $data['birthday'],
+            ':gender'     => $data['gender'],
+            ':created_at' => $data['created_at'],
+            ':updated_at' => $data['updated_at'],
+        ]);
     }
 }
