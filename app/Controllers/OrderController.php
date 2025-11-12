@@ -49,7 +49,7 @@ class OrderController extends Controller
         }
 
         // Lấy giỏ hàng
-        $cart = $this->cartModel->getCartByUser($accountId);
+        $cart = $this->cartModel->getCartByUser($user['id']);
         $cartItems = $cart ? $this->cartItemModel->getItemsByCart($cart['id']) : [];
 
         // Tính tổng tiền
@@ -85,7 +85,7 @@ class OrderController extends Controller
         }
 
         // Lấy giỏ hàng
-        $cart = $this->cartModel->getCartByUser($accountId);
+        $cart = $this->cartModel->getCartByUser($user['id']);
         if (!$cart) {
             $_SESSION['error'] = "Không tìm thấy giỏ hàng.";
             header("Location: /cart");

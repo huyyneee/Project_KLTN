@@ -208,14 +208,12 @@ class RegisterController extends Controller
                 $userData = [
                     'account_id' => $id,
                     'full_name' => $full_name,
-                    'phone' => '',
-                    'address' => '',
                     'birthday' => $birthday,
                     'gender' => $gender,
                     'created_at' => $now,
                     'updated_at' => $now
                 ];
-                $userModel->create($userData);
+                $userModel->insertUser($userData);
             } catch (\Throwable $e) {
                 // log but continue
                 error_log('Failed to create users row: ' . $e->getMessage());
