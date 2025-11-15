@@ -49,8 +49,13 @@ class OrderApiController extends ApiController
                 $params[':status'] = $status;
             }
             if ($keyword !== null && $keyword !== '') {
-                $whereClauses[] = '(order_code LIKE :kw OR receiver_name LIKE :kw OR receiver_phone LIKE :kw OR shipping_address LIKE :kw)';
-                $params[':kw'] = '%' . $keyword . '%';
+                // Use separate placeholders for each LIKE condition to avoid parameter binding issues
+                $whereClauses[] = '(order_code LIKE :kw1 OR receiver_name LIKE :kw2 OR receiver_phone LIKE :kw3 OR shipping_address LIKE :kw4)';
+                $keywordValue = '%' . $keyword . '%';
+                $params[':kw1'] = $keywordValue;
+                $params[':kw2'] = $keywordValue;
+                $params[':kw3'] = $keywordValue;
+                $params[':kw4'] = $keywordValue;
             }
             $whereSql = '';
             if (!empty($whereClauses)) {
