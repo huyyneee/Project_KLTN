@@ -13,6 +13,10 @@ $routes = [
     '/register'             => ['controller' => 'RegisterController', 'method' => 'index'],
     '/privacy'              => ['controller' => 'PrivacyController', 'method' => 'index'],
     '/terms'                => ['controller' => 'TermsController', 'method' => 'index'],
+    
+    // Blog Routes
+    '/blog'                 => ['controller' => 'BlogController', 'method' => 'index'],
+    '/blog/detail'          => ['controller' => 'BlogController', 'method' => 'detail'],
 
     // Account Routes
     '/account'              => ['controller' => 'AccountController', 'method' => 'index'],
