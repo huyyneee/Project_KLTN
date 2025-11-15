@@ -134,16 +134,14 @@ class EmployeeApiController extends Controller
             $userData = [
                 'account_id' => $accountId,
                 'full_name' => $input['full_name'],
-                'phone' => $input['phone'] ?? '',
-                'address' => $input['address'] ?? '',
                 'birthday' => $input['birthday'] ?? null,
                 'gender' => $input['gender'] ?? '',
                 'created_at' => date('Y-m-d H:i:s'),
                 'updated_at' => date('Y-m-d H:i:s')
             ];
 
-            $userSql = "INSERT INTO users (account_id, full_name, phone, address, birthday, gender, created_at, updated_at) 
-                        VALUES (:account_id, :full_name, :phone, :address, :birthday, :gender, :created_at, :updated_at)";
+            $userSql = "INSERT INTO users (account_id, full_name, birthday, gender, created_at, updated_at) 
+                        VALUES (:account_id, :full_name, :birthday, :gender, :created_at, :updated_at)";
             $userStmt = $db->prepare($userSql);
             $userStmt->execute($userData);
             $userId = $db->lastInsertId();
@@ -205,15 +203,13 @@ class EmployeeApiController extends Controller
             // Cập nhật thông tin user
             $userData = [
                 'full_name' => $input['full_name'] ?? $existingUser['full_name'],
-                'phone' => $input['phone'] ?? $existingUser['phone'],
-                'address' => $input['address'] ?? $existingUser['address'],
                 'birthday' => $input['birthday'] ?? $existingUser['birthday'],
                 'gender' => $input['gender'] ?? $existingUser['gender'],
                 'updated_at' => date('Y-m-d H:i:s'),
                 'id' => $id
             ];
 
-            $userSql = "UPDATE users SET full_name = :full_name, phone = :phone, address = :address, 
+            $userSql = "UPDATE users SET full_name = :full_name, 
                         birthday = :birthday, gender = :gender, updated_at = :updated_at WHERE id = :id";
             $userStmt = $db->prepare($userSql);
             $userStmt->execute($userData);

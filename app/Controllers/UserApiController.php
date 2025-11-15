@@ -32,8 +32,6 @@ class UserApiController extends ApiController
                     'id' => (int) $user['id'],
                     'account_id' => (int) $user['account_id'],
                     'full_name' => $user['full_name'],
-                    'phone' => $user['phone'],
-                    'address' => $user['address'],
                     'birthday' => $user['birthday'],
                     'gender' => $user['gender'],
                     'created_at' => $user['created_at'],
