@@ -139,7 +139,7 @@ if (empty($_SESSION['account_id']) && !empty($_COOKIE['account_id']) && !empty($
 				<nav class="menu flex space-x-6">
 					<a href="/" class="font-semibold hover:text-yellow-300">TRANG CHỦ</a>
 					<a href="/about" class="font-semibold hover:text-yellow-300">GIỚI THIỆU</a>
-					<a href="#" class="font-semibold hover:text-yellow-300">TIN TỨC & SỰ KIỆN</a>
+					<a href="/blog" class="font-semibold hover:text-yellow-300">TIN TỨC & SỰ KIỆN</a>
 					<a href="/contact" class="font-semibold hover:text-yellow-300">LIÊN HỆ</a>
 				</nav>
 			</div>
