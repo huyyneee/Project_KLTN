@@ -54,7 +54,10 @@ class LoginController extends Controller
         // check status
         $status = $row['status'] ?? 'active';
         if ($status !== 'active') {
-            echo json_encode(['ok' => false, 'reason' => 'status', 'status' => $status, 'message' => 'YOUR ACCOUNT HAS BEEN ' . $status]);
+            $message = $status === 'banned'
+                ? 'Tài khoản của bạn đã bị cấm. Vui lòng liên hệ quản trị viên.'
+                : 'Tài khoản của bạn không hoạt động.';
+            echo json_encode(['ok' => false, 'reason' => 'status', 'status' => $status, 'message' => $message]);
             return;
         }
 
@@ -71,7 +74,7 @@ class LoginController extends Controller
         $expire = time() + 7 * 24 * 60 * 60;
         setcookie('account_id', $row['id'], $expire, '/', '', false, true);
         setcookie('account_email', $row['email'], $expire, '/', '', false, true);
-        setcookie('account_expires', (string)$expire, $expire, '/', '', false, true);
+        setcookie('account_expires', (string) $expire, $expire, '/', '', false, true);
 
         // update last_login
         try {
@@ -122,7 +125,8 @@ class LoginController extends Controller
     // GET /account/logout
     public function logout()
     {
-        if (session_status() === PHP_SESSION_NONE && !headers_sent()) session_start();
+        if (session_status() === PHP_SESSION_NONE && !headers_sent())
+            session_start();
         unset($_SESSION['account_id']);
         unset($_SESSION['account_email']);
         setcookie('account_id', '', time() - 3600, '/', '', false, true);

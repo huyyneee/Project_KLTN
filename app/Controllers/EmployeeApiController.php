@@ -116,11 +116,24 @@ class EmployeeApiController extends Controller
             $db = (new \App\Core\Database())->getConnection();
             $db->beginTransaction();
 
+            // Validate role - chỉ cho phép các giá trị hợp lệ
+            $validRoles = ['user', 'admin', 'employee', 'manager'];
+            $role = $input['role'] ?? 'employee';
+
+            if (!in_array($role, $validRoles)) {
+                http_response_code(400);
+                echo json_encode([
+                    'success' => false,
+                    'message' => 'Vai trò không hợp lệ. Vai trò hợp lệ: ' . implode(', ', $validRoles)
+                ]);
+                return;
+            }
+
             // Tạo account trước
             $accountData = [
                 'email' => $input['email'],
                 'password' => md5($input['password']), // Sử dụng md5 như hệ thống hiện tại
-                'role' => $input['role'] ?? 'employee',
+                'role' => $role,
                 'status' => 'active',
                 'created_at' => date('Y-m-d H:i:s')
             ];
@@ -236,6 +249,17 @@ class EmployeeApiController extends Controller
 
             // Cập nhật role nếu có
             if (!empty($input['role'])) {
+                // Validate role - chỉ cho phép các giá trị hợp lệ
+                $validRoles = ['user', 'admin', 'employee', 'manager'];
+                if (!in_array($input['role'], $validRoles)) {
+                    http_response_code(400);
+                    echo json_encode([
+                        'success' => false,
+                        'message' => 'Vai trò không hợp lệ. Vai trò hợp lệ: ' . implode(', ', $validRoles)
+                    ]);
+                    return;
+                }
+
                 $roleSql = "UPDATE accounts SET role = :role WHERE id = :account_id";
                 $roleStmt = $db->prepare($roleSql);
                 $roleStmt->execute([

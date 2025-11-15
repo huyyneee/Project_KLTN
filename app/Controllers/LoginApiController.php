@@ -19,7 +19,7 @@ class LoginApiController extends ApiController
             }
 
             $data = $this->getJsonInput();
-            
+
             if (!$data) {
                 $this->sendError('Invalid JSON data', 400);
             }
@@ -42,7 +42,7 @@ class LoginApiController extends ApiController
 
             // Check password (support both MD5 and bcrypt)
             $isValidPassword = false;
-            
+
             // Try bcrypt first
             if (password_verify($password, $account['password'])) {
                 $isValidPassword = true;
@@ -51,14 +51,18 @@ class LoginApiController extends ApiController
             elseif (md5($password) === $account['password']) {
                 $isValidPassword = true;
             }
-            
+
             if (!$isValidPassword) {
                 $this->sendError('Invalid password', 401);
             }
 
             // Check status
-            if (($account['status'] ?? 'active') !== 'active') {
-                $this->sendError('Account is not active', 403);
+            $status = $account['status'] ?? 'active';
+            if ($status !== 'active') {
+                $message = $status === 'banned'
+                    ? 'Tài khoản của bạn đã bị cấm. Vui lòng liên hệ quản trị viên.'
+                    : 'Tài khoản của bạn không hoạt động.';
+                $this->sendError($message, 403);
             }
 
             // Set session

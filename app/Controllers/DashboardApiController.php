@@ -645,4 +645,304 @@ class DashboardApiController extends ApiController
             $this->sendError('Failed to retrieve revenue stats: ' . $e->getMessage(), 500);
         }
     }
+
+    // GET /api/statistics/top-products - Top sản phẩm bán chạy
+    public function getTopProducts()
+    {
+        try {
+            $db = \App\Core\Database::getInstance();
+            $conn = $db->getConnection();
+
+            $limit = (int) ($_GET['limit'] ?? 10);
+            $startDate = $_GET['start_date'] ?? date('Y-m-01', strtotime('-6 months'));
+            $endDate = $_GET['end_date'] ?? date('Y-m-t');
+
+            // Check if orders table exists
+            $tableCheckQuery = "SHOW TABLES LIKE 'orders'";
+            $tableStmt = $conn->query($tableCheckQuery);
+            $hasOrdersTable = $tableStmt->rowCount() > 0;
+
+            if ($hasOrdersTable) {
+                $query = "SELECT 
+                            p.id,
+                            p.name,
+                            p.price,
+                            c.name as category_name,
+                            COALESCE(SUM(oi.quantity), 0) as total_sold,
+                            COALESCE(SUM(oi.quantity * oi.price), 0) as total_revenue,
+                            COUNT(DISTINCT o.id) as order_count
+                          FROM products p
+                          LEFT JOIN categories c ON p.category_id = c.id
+                          LEFT JOIN order_items oi ON p.id = oi.product_id
+                          LEFT JOIN orders o ON oi.order_id = o.id AND o.status = 'completed'
+                          WHERE p.deleted_at IS NULL 
+                            AND (o.created_at IS NULL OR (o.created_at >= :start_date AND o.created_at <= :end_date))
+                          GROUP BY p.id, p.name, p.price, c.name
+                          ORDER BY total_sold DESC, total_revenue DESC
+                          LIMIT :limit";
+
+                $stmt = $conn->prepare($query);
+                $stmt->bindParam(':start_date', $startDate);
+                $stmt->bindParam(':end_date', $endDate);
+                $stmt->bindParam(':limit', $limit, \PDO::PARAM_INT);
+                $stmt->execute();
+                $results = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+                $topProducts = [];
+                foreach ($results as $index => $row) {
+                    $topProducts[] = [
+                        'rank' => $index + 1,
+                        'id' => (int) $row['id'],
+                        'name' => $row['name'],
+                        'price' => (float) $row['price'],
+                        'category' => $row['category_name'] ?: 'Chưa phân loại',
+                        'total_sold' => (int) $row['total_sold'],
+                        'total_revenue' => (float) $row['total_revenue'],
+                        'order_count' => (int) $row['order_count']
+                    ];
+                }
+            } else {
+                // Fallback: Show products by creation date
+                $query = "SELECT 
+                            p.id,
+                            p.name,
+                            p.price,
+                            c.name as category_name,
+                            0 as total_sold,
+                            0 as total_revenue,
+                            0 as order_count
+                          FROM products p
+                          LEFT JOIN categories c ON p.category_id = c.id
+                          WHERE p.deleted_at IS NULL
+                          ORDER BY p.created_at DESC
+                          LIMIT :limit";
+
+                $stmt = $conn->prepare($query);
+                $stmt->bindParam(':limit', $limit, \PDO::PARAM_INT);
+                $stmt->execute();
+                $results = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+                $topProducts = [];
+                foreach ($results as $index => $row) {
+                    $topProducts[] = [
+                        'rank' => $index + 1,
+                        'id' => (int) $row['id'],
+                        'name' => $row['name'],
+                        'price' => (float) $row['price'],
+                        'category' => $row['category_name'] ?: 'Chưa phân loại',
+                        'total_sold' => 0,
+                        'total_revenue' => 0,
+                        'order_count' => 0
+                    ];
+                }
+            }
+
+            $this->sendResponse($topProducts, 'Top products retrieved successfully');
+        } catch (Exception $e) {
+            $this->sendError('Failed to retrieve top products: ' . $e->getMessage(), 500);
+        }
+    }
+
+    // GET /api/statistics/hot-categories - Danh mục hot
+    public function getHotCategories()
+    {
+        try {
+            $db = \App\Core\Database::getInstance();
+            $conn = $db->getConnection();
+
+            $limit = (int) ($_GET['limit'] ?? 10);
+            $startDate = $_GET['start_date'] ?? date('Y-m-01', strtotime('-6 months'));
+            $endDate = $_GET['end_date'] ?? date('Y-m-t');
+
+            // Check if orders table exists
+            $tableCheckQuery = "SHOW TABLES LIKE 'orders'";
+            $tableStmt = $conn->query($tableCheckQuery);
+            $hasOrdersTable = $tableStmt->rowCount() > 0;
+
+            if ($hasOrdersTable) {
+                $query = "SELECT 
+                            c.id,
+                            c.name,
+                            COUNT(DISTINCT o.id) as order_count,
+                            COALESCE(SUM(oi.quantity), 0) as total_sold,
+                            COALESCE(SUM(oi.quantity * oi.price), 0) as total_revenue,
+                            COUNT(DISTINCT p.id) as product_count
+                          FROM categories c
+                          LEFT JOIN products p ON c.id = p.category_id AND p.deleted_at IS NULL
+                          LEFT JOIN order_items oi ON p.id = oi.product_id
+                          LEFT JOIN orders o ON oi.order_id = o.id AND o.status = 'completed'
+                          WHERE c.deleted_at IS NULL
+                            AND (o.created_at IS NULL OR (o.created_at >= :start_date AND o.created_at <= :end_date))
+                          GROUP BY c.id, c.name
+                          HAVING order_count > 0 OR total_sold > 0
+                          ORDER BY total_revenue DESC, total_sold DESC, order_count DESC
+                          LIMIT :limit";
+
+                $stmt = $conn->prepare($query);
+                $stmt->bindParam(':start_date', $startDate);
+                $stmt->bindParam(':end_date', $endDate);
+                $stmt->bindParam(':limit', $limit, \PDO::PARAM_INT);
+                $stmt->execute();
+                $results = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+                $hotCategories = [];
+                foreach ($results as $index => $row) {
+                    $hotCategories[] = [
+                        'rank' => $index + 1,
+                        'id' => (int) $row['id'],
+                        'name' => $row['name'],
+                        'order_count' => (int) $row['order_count'],
+                        'total_sold' => (int) $row['total_sold'],
+                        'total_revenue' => (float) $row['total_revenue'],
+                        'product_count' => (int) $row['product_count']
+                    ];
+                }
+            } else {
+                // Fallback: Show categories by product count
+                $query = "SELECT 
+                            c.id,
+                            c.name,
+                            0 as order_count,
+                            0 as total_sold,
+                            0 as total_revenue,
+                            COUNT(p.id) as product_count
+                          FROM categories c
+                          LEFT JOIN products p ON c.id = p.category_id AND p.deleted_at IS NULL
+                          WHERE c.deleted_at IS NULL
+                          GROUP BY c.id, c.name
+                          ORDER BY product_count DESC
+                          LIMIT :limit";
+
+                $stmt = $conn->prepare($query);
+                $stmt->bindParam(':limit', $limit, \PDO::PARAM_INT);
+                $stmt->execute();
+                $results = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+                $hotCategories = [];
+                foreach ($results as $index => $row) {
+                    $hotCategories[] = [
+                        'rank' => $index + 1,
+                        'id' => (int) $row['id'],
+                        'name' => $row['name'],
+                        'order_count' => 0,
+                        'total_sold' => 0,
+                        'total_revenue' => 0,
+                        'product_count' => (int) $row['product_count']
+                    ];
+                }
+            }
+
+            $this->sendResponse($hotCategories, 'Hot categories retrieved successfully');
+        } catch (Exception $e) {
+            $this->sendError('Failed to retrieve hot categories: ' . $e->getMessage(), 500);
+        }
+    }
+
+    // GET /api/statistics/top-customers - Khách hàng mua nhiều đơn
+    public function getTopCustomers()
+    {
+        try {
+            $db = \App\Core\Database::getInstance();
+            $conn = $db->getConnection();
+
+            $limit = (int) ($_GET['limit'] ?? 10);
+            $startDate = $_GET['start_date'] ?? date('Y-m-01', strtotime('-6 months'));
+            $endDate = $_GET['end_date'] ?? date('Y-m-t');
+
+            // Check if orders table exists
+            $tableCheckQuery = "SHOW TABLES LIKE 'orders'";
+            $tableStmt = $conn->query($tableCheckQuery);
+            $hasOrdersTable = $tableStmt->rowCount() > 0;
+
+            if ($hasOrdersTable) {
+                $query = "SELECT 
+                            u.id,
+                            u.full_name,
+                            a.email,
+                            COUNT(DISTINCT o.id) as order_count,
+                            COALESCE(SUM(o.total_amount), 0) as total_spent,
+                            COALESCE(SUM(oi.quantity), 0) as total_items,
+                            MAX(o.created_at) as last_order_date,
+                            MIN(o.created_at) as first_order_date
+                          FROM users u
+                          JOIN accounts a ON u.account_id = a.id
+                          LEFT JOIN orders o ON u.id = o.user_id 
+                            AND o.status = 'completed'
+                            AND o.created_at >= :start_date 
+                            AND o.created_at <= :end_date
+                          LEFT JOIN order_items oi ON o.id = oi.order_id
+                          WHERE a.role = 'user' AND a.status = 'active'
+                          GROUP BY u.id, u.full_name, a.email
+                          HAVING order_count > 0
+                          ORDER BY total_spent DESC, order_count DESC
+                          LIMIT :limit";
+
+                $stmt = $conn->prepare($query);
+                $stmt->bindParam(':start_date', $startDate);
+                $stmt->bindParam(':end_date', $endDate);
+                $stmt->bindParam(':limit', $limit, \PDO::PARAM_INT);
+                $stmt->execute();
+                $results = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+                $topCustomers = [];
+                foreach ($results as $index => $row) {
+                    $topCustomers[] = [
+                        'rank' => $index + 1,
+                        'id' => (int) $row['id'],
+                        'full_name' => $row['full_name'] ?: 'Khách hàng',
+                        'email' => $row['email'],
+                        'order_count' => (int) $row['order_count'],
+                        'total_spent' => (float) $row['total_spent'],
+                        'total_items' => (int) $row['total_items'],
+                        'average_order_value' => $row['order_count'] > 0
+                            ? round($row['total_spent'] / $row['order_count'], 2)
+                            : 0,
+                        'last_order_date' => $row['last_order_date'],
+                        'first_order_date' => $row['first_order_date']
+                    ];
+                }
+            } else {
+                // Fallback: Show active users
+                $query = "SELECT 
+                            u.id,
+                            u.full_name,
+                            a.email,
+                            0 as order_count,
+                            0 as total_spent,
+                            0 as total_items,
+                            NULL as last_order_date,
+                            NULL as first_order_date
+                          FROM users u
+                          JOIN accounts a ON u.account_id = a.id
+                          WHERE a.role = 'user' AND a.status = 'active'
+                          ORDER BY u.created_at DESC
+                          LIMIT :limit";
+
+                $stmt = $conn->prepare($query);
+                $stmt->bindParam(':limit', $limit, \PDO::PARAM_INT);
+                $stmt->execute();
+                $results = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+                $topCustomers = [];
+                foreach ($results as $index => $row) {
+                    $topCustomers[] = [
+                        'rank' => $index + 1,
+                        'id' => (int) $row['id'],
+                        'full_name' => $row['full_name'] ?: 'Khách hàng',
+                        'email' => $row['email'],
+                        'order_count' => 0,
+                        'total_spent' => 0,
+                        'total_items' => 0,
+                        'average_order_value' => 0,
+                        'last_order_date' => null,
+                        'first_order_date' => null
+                    ];
+                }
+            }
+
+            $this->sendResponse($topCustomers, 'Top customers retrieved successfully');
+        } catch (Exception $e) {
+            $this->sendError('Failed to retrieve top customers: ' . $e->getMessage(), 500);
+        }
+    }
 }

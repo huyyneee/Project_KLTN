@@ -24,14 +24,54 @@ class UserApiController extends ApiController
     public function index()
     {
         try {
-            $users = $this->userModel->findAll();
+            $db = Database::getInstance()->getConnection();
+
+            // Lấy danh sách users với địa chỉ mặc định
+            $stmt = $db->prepare("
+                SELECT 
+                    u.id,
+                    u.account_id,
+                    u.full_name,
+                    u.birthday,
+                    u.gender,
+                    u.created_at,
+                    u.updated_at,
+                    a.email,
+                    a.status as account_status,
+                    addr.phone as default_address_phone,
+                    CONCAT(
+                        COALESCE(addr.street, ''), 
+                        ', ',
+                        COALESCE(addr.ward, ''), 
+                        ', ',
+                        COALESCE(addr.district, ''), 
+                        ', ',
+                        COALESCE(addr.city, ''), 
+                        ', ',
+                        COALESCE(addr.province, '')
+                    ) as default_address
+                FROM users u
+                LEFT JOIN accounts a ON u.account_id = a.id
+                LEFT JOIN addresses addr ON u.id = addr.user_id AND addr.is_default = 1
+                ORDER BY u.created_at DESC
+            ");
+            $stmt->execute();
+            $users = $stmt->fetchAll(\PDO::FETCH_ASSOC);
 
             // Format dữ liệu để trả về
             $formattedUsers = array_map(function ($user) {
                 return [
                     'id' => (int) $user['id'],
                     'account_id' => (int) $user['account_id'],
+                    'name' => $user['full_name'],
                     'full_name' => $user['full_name'],
+                    'email' => $user['email'] ?? '',
+                    'phone' => $user['default_address_phone'] ?? $user['phone'] ?? '',
+                    'address' => !empty($user['default_address']) ? trim($user['default_address'], ', ') : ($user['address'] ?? ''),
+                    'default_address_phone' => $user['default_address_phone'] ?? null,
+                    'default_address' => !empty($user['default_address']) ? trim($user['default_address'], ', ') : null,
+                    'status' => $user['account_status'] ?? 'active',
+                    'account_status' => $user['account_status'] ?? 'active',
                     'birthday' => $user['birthday'],
                     'gender' => $user['gender'],
                     'created_at' => $user['created_at'],
@@ -59,13 +99,48 @@ class UserApiController extends ApiController
                 return;
             }
 
+            // Lấy thông tin account và địa chỉ mặc định
+            $db = Database::getInstance()->getConnection();
+
+            // Lấy status từ account
+            $accountStmt = $db->prepare("SELECT status FROM accounts WHERE id = :account_id LIMIT 1");
+            $accountStmt->execute([':account_id' => $user['account_id']]);
+            $account = $accountStmt->fetch(\PDO::FETCH_ASSOC);
+
+            // Lấy địa chỉ mặc định
+            $addrStmt = $db->prepare("
+                SELECT 
+                    phone as default_address_phone,
+                    CONCAT(
+                        COALESCE(street, ''), 
+                        ', ',
+                        COALESCE(ward, ''), 
+                        ', ',
+                        COALESCE(district, ''), 
+                        ', ',
+                        COALESCE(city, ''), 
+                        ', ',
+                        COALESCE(province, '')
+                    ) as default_address
+                FROM addresses
+                WHERE user_id = :user_id AND is_default = 1
+                LIMIT 1
+            ");
+            $addrStmt->execute([':user_id' => $id]);
+            $defaultAddress = $addrStmt->fetch(\PDO::FETCH_ASSOC);
+
             // Format dữ liệu để trả về
             $formattedUser = [
                 'id' => (int) $user['id'],
                 'account_id' => (int) $user['account_id'],
+                'name' => $user['full_name'],
                 'full_name' => $user['full_name'],
-                'phone' => $user['phone'],
-                'address' => $user['address'],
+                'phone' => $defaultAddress['default_address_phone'] ?? $user['phone'] ?? '',
+                'address' => !empty($defaultAddress['default_address']) ? trim($defaultAddress['default_address'], ', ') : ($user['address'] ?? ''),
+                'default_address_phone' => $defaultAddress['default_address_phone'] ?? null,
+                'default_address' => !empty($defaultAddress['default_address']) ? trim($defaultAddress['default_address'], ', ') : null,
+                'status' => $account['status'] ?? 'active',
+                'account_status' => $account['status'] ?? 'active',
                 'birthday' => $user['birthday'],
                 'gender' => $user['gender'],
                 'created_at' => $user['created_at'],
@@ -92,13 +167,37 @@ class UserApiController extends ApiController
                 return;
             }
 
-            // Sử dụng SQL LIKE để tìm kiếm
+            // Sử dụng SQL LIKE để tìm kiếm với địa chỉ mặc định
             $db = Database::getInstance()->getConnection();
             $stmt = $db->prepare("
-                SELECT * FROM users 
-                WHERE full_name LIKE :query 
-                OR phone LIKE :query 
-                ORDER BY created_at DESC
+                SELECT 
+                    u.id,
+                    u.account_id,
+                    u.full_name,
+                    u.birthday,
+                    u.gender,
+                    u.created_at,
+                    u.updated_at,
+                    a.email,
+                    a.status as account_status,
+                    addr.phone as default_address_phone,
+                    CONCAT(
+                        COALESCE(addr.street, ''), 
+                        ', ',
+                        COALESCE(addr.ward, ''), 
+                        ', ',
+                        COALESCE(addr.district, ''), 
+                        ', ',
+                        COALESCE(addr.city, ''), 
+                        ', ',
+                        COALESCE(addr.province, '')
+                    ) as default_address
+                FROM users u
+                LEFT JOIN accounts a ON u.account_id = a.id
+                LEFT JOIN addresses addr ON u.id = addr.user_id AND addr.is_default = 1
+                WHERE u.full_name LIKE :query 
+                OR addr.phone LIKE :query
+                ORDER BY u.created_at DESC
             ");
             $stmt->execute([':query' => '%' . $query . '%']);
             $users = $stmt->fetchAll(\PDO::FETCH_ASSOC);
@@ -108,9 +207,15 @@ class UserApiController extends ApiController
                 return [
                     'id' => (int) $user['id'],
                     'account_id' => (int) $user['account_id'],
+                    'name' => $user['full_name'],
                     'full_name' => $user['full_name'],
-                    'phone' => $user['phone'],
-                    'address' => $user['address'],
+                    'email' => $user['email'] ?? '',
+                    'phone' => $user['default_address_phone'] ?? $user['phone'] ?? '',
+                    'address' => !empty($user['default_address']) ? trim($user['default_address'], ', ') : ($user['address'] ?? ''),
+                    'default_address_phone' => $user['default_address_phone'] ?? null,
+                    'default_address' => !empty($user['default_address']) ? trim($user['default_address'], ', ') : null,
+                    'status' => $user['account_status'] ?? 'active',
+                    'account_status' => $user['account_status'] ?? 'active',
                     'birthday' => $user['birthday'],
                     'gender' => $user['gender'],
                     'created_at' => $user['created_at'],
@@ -148,10 +253,34 @@ class UserApiController extends ApiController
             $countStmt = $db->query("SELECT COUNT(*) as total FROM users");
             $totalRecords = $countStmt->fetch(\PDO::FETCH_ASSOC)['total'];
 
-            // Lấy dữ liệu với phân trang
+            // Lấy dữ liệu với phân trang và địa chỉ mặc định
             $stmt = $db->prepare("
-                SELECT * FROM users 
-                ORDER BY created_at DESC 
+                SELECT 
+                    u.id,
+                    u.account_id,
+                    u.full_name,
+                    u.birthday,
+                    u.gender,
+                    u.created_at,
+                    u.updated_at,
+                    a.email,
+                    a.status as account_status,
+                    addr.phone as default_address_phone,
+                    CONCAT(
+                        COALESCE(addr.street, ''), 
+                        ', ',
+                        COALESCE(addr.ward, ''), 
+                        ', ',
+                        COALESCE(addr.district, ''), 
+                        ', ',
+                        COALESCE(addr.city, ''), 
+                        ', ',
+                        COALESCE(addr.province, '')
+                    ) as default_address
+                FROM users u
+                LEFT JOIN accounts a ON u.account_id = a.id
+                LEFT JOIN addresses addr ON u.id = addr.user_id AND addr.is_default = 1
+                ORDER BY u.created_at DESC 
                 LIMIT :limit OFFSET :offset
             ");
             $stmt->bindValue(':limit', $limit, \PDO::PARAM_INT);
@@ -164,9 +293,15 @@ class UserApiController extends ApiController
                 return [
                     'id' => (int) $user['id'],
                     'account_id' => (int) $user['account_id'],
+                    'name' => $user['full_name'],
                     'full_name' => $user['full_name'],
-                    'phone' => $user['phone'],
-                    'address' => $user['address'],
+                    'email' => $user['email'] ?? '',
+                    'phone' => $user['default_address_phone'] ?? $user['phone'] ?? '',
+                    'address' => !empty($user['default_address']) ? trim($user['default_address'], ', ') : ($user['address'] ?? ''),
+                    'default_address_phone' => $user['default_address_phone'] ?? null,
+                    'default_address' => !empty($user['default_address']) ? trim($user['default_address'], ', ') : null,
+                    'status' => $user['account_status'] ?? 'active',
+                    'account_status' => $user['account_status'] ?? 'active',
                     'birthday' => $user['birthday'],
                     'gender' => $user['gender'],
                     'created_at' => $user['created_at'],
@@ -191,6 +326,62 @@ class UserApiController extends ApiController
             $this->sendResponse($responseData, 'Danh sách khách hàng với phân trang');
         } catch (\Exception $e) {
             $this->sendError('Lỗi khi tải danh sách khách hàng: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * POST /api/users/{id}/ban - Cấm tài khoản người dùng
+     */
+    public function ban($id)
+    {
+        try {
+            $db = Database::getInstance()->getConnection();
+
+            // Lấy account_id từ user_id
+            $userStmt = $db->prepare("SELECT account_id FROM users WHERE id = :id LIMIT 1");
+            $userStmt->execute([':id' => $id]);
+            $user = $userStmt->fetch(\PDO::FETCH_ASSOC);
+
+            if (!$user) {
+                $this->sendError('Không tìm thấy người dùng với ID: ' . $id, 404);
+                return;
+            }
+
+            // Cập nhật status thành 'banned'
+            $updateStmt = $db->prepare("UPDATE accounts SET status = 'banned' WHERE id = :account_id");
+            $updateStmt->execute([':account_id' => $user['account_id']]);
+
+            $this->sendResponse(null, 'Tài khoản đã bị cấm thành công');
+        } catch (\Exception $e) {
+            $this->sendError('Lỗi khi cấm tài khoản: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * POST /api/users/{id}/unban - Bỏ cấm tài khoản người dùng
+     */
+    public function unban($id)
+    {
+        try {
+            $db = Database::getInstance()->getConnection();
+
+            // Lấy account_id từ user_id
+            $userStmt = $db->prepare("SELECT account_id FROM users WHERE id = :id LIMIT 1");
+            $userStmt->execute([':id' => $id]);
+            $user = $userStmt->fetch(\PDO::FETCH_ASSOC);
+
+            if (!$user) {
+                $this->sendError('Không tìm thấy người dùng với ID: ' . $id, 404);
+                return;
+            }
+
+            // Cập nhật status thành 'active'
+            $updateStmt = $db->prepare("UPDATE accounts SET status = 'active' WHERE id = :account_id");
+            $updateStmt->execute([':account_id' => $user['account_id']]);
+
+            $this->sendResponse(null, 'Tài khoản đã được bỏ cấm thành công');
+        } catch (\Exception $e) {
+            $this->sendError('Lỗi khi bỏ cấm tài khoản: ' . $e->getMessage(), 500);
         }
     }
 }
