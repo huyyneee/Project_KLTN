@@ -59,11 +59,15 @@ class AuthController extends ApiController
             }
 
             // Kiểm tra trạng thái tài khoản
-            if ($user['status'] !== 'active') {
-                http_response_code(401);
+            $status = $user['status'] ?? 'active';
+            if ($status !== 'active') {
+                $message = $status === 'banned'
+                    ? 'Tài khoản của bạn đã bị cấm. Vui lòng liên hệ quản trị viên.'
+                    : 'Tài khoản của bạn không hoạt động.';
+                http_response_code(403);
                 echo json_encode([
                     'success' => false,
-                    'message' => 'Tài khoản đã bị khóa'
+                    'message' => $message
                 ]);
                 return;
             }

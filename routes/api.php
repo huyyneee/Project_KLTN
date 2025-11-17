@@ -123,6 +123,37 @@ switch ($path) {
         }
         break;
 
+    // Statistics routes
+    case '/statistics/top-products':
+        if ($method === 'GET') {
+            $controller = new \App\Controllers\DashboardApiController();
+            $controller->getTopProducts();
+        } else {
+            http_response_code(405);
+            echo json_encode(['error' => 'Method not allowed']);
+        }
+        break;
+
+    case '/statistics/hot-categories':
+        if ($method === 'GET') {
+            $controller = new \App\Controllers\DashboardApiController();
+            $controller->getHotCategories();
+        } else {
+            http_response_code(405);
+            echo json_encode(['error' => 'Method not allowed']);
+        }
+        break;
+
+    case '/statistics/top-customers':
+        if ($method === 'GET') {
+            $controller = new \App\Controllers\DashboardApiController();
+            $controller->getTopCustomers();
+        } else {
+            http_response_code(405);
+            echo json_encode(['error' => 'Method not allowed']);
+        }
+        break;
+
     // Product routes
     case '/products':
         $controller = new \App\Controllers\ProductApiController();
@@ -301,6 +332,28 @@ switch ($path) {
             default:
                 http_response_code(405);
                 echo json_encode(['error' => 'Method not allowed']);
+        }
+        break;
+
+    case (preg_match('/^\/users\/(\d+)\/ban$/', $path, $matches) ? true : false):
+        if ($method === 'POST') {
+            $controller = new \App\Controllers\UserApiController();
+            $id = $matches[1];
+            $controller->ban($id);
+        } else {
+            http_response_code(405);
+            echo json_encode(['error' => 'Method not allowed']);
+        }
+        break;
+
+    case (preg_match('/^\/users\/(\d+)\/unban$/', $path, $matches) ? true : false):
+        if ($method === 'POST') {
+            $controller = new \App\Controllers\UserApiController();
+            $id = $matches[1];
+            $controller->unban($id);
+        } else {
+            http_response_code(405);
+            echo json_encode(['error' => 'Method not allowed']);
         }
         break;
 

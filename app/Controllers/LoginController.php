@@ -26,7 +26,8 @@ class LoginController extends Controller
     // POST /account/login
     public function authenticate()
     {
-        if (session_status() === PHP_SESSION_NONE && !headers_sent()) session_start();
+        if (session_status() === PHP_SESSION_NONE && !headers_sent())
+            session_start();
         header('Content-Type: application/json');
 
         $identity = trim($_POST['identity'] ?? '');
@@ -46,12 +47,10 @@ class LoginController extends Controller
 
         $status = $account['status'] ?? 'active';
         if ($status !== 'active') {
-            echo json_encode([
-                'ok' => false,
-                'reason' => 'status',
-                'status' => $status,
-                'message' => 'YOUR ACCOUNT HAS BEEN ' . strtoupper($status)
-            ]);
+            $message = $status === 'banned'
+                ? 'Tài khoản của bạn đã bị cấm. Vui lòng liên hệ quản trị viên.'
+                : 'Tài khoản của bạn không hoạt động.';
+            echo json_encode(['ok' => false, 'reason' => 'status', 'status' => $status, 'message' => $message]);
             return;
         }
 
@@ -63,10 +62,10 @@ class LoginController extends Controller
         // login success: set session and cookies
         $_SESSION['account_id'] = $account['id'];
         $_SESSION['account_email'] = $account['email'];
-        $expire = time() + 2 * 60;
+        $expire = time() + 7 * 24 * 60 * 60;
         setcookie('account_id', $account['id'], $expire, '/', '', false, true);
         setcookie('account_email', $account['email'], $expire, '/', '', false, true);
-        setcookie('account_expires', (string)$expire, $expire, '/', '', false, true);
+        setcookie('account_expires', (string) $expire, $expire, '/', '', false, true);
 
         // update last_login
         $this->accountModel->updateLastLogin($account['id']);
@@ -103,7 +102,9 @@ class LoginController extends Controller
     // GET /account/logout
     public function logout()
     {
-        if (session_status() === PHP_SESSION_NONE && !headers_sent()) session_start();
+        if (session_status() === PHP_SESSION_NONE && !headers_sent()) {
+            session_start();
+        }
         unset($_SESSION['account_id'], $_SESSION['account_email']);
         setcookie('account_id', '', time() - 3600, '/', '', false, true);
         setcookie('account_email', '', time() - 3600, '/', '', false, true);
@@ -120,7 +121,8 @@ class LoginController extends Controller
     // POST /account/send-reset-link
     public function sendResetLink()
     {
-        if (session_status() === PHP_SESSION_NONE) session_start();
+        if (session_status() === PHP_SESSION_NONE)
+            session_start();
         header('Content-Type: application/json');
 
         $email = trim($_POST['email'] ?? '');
