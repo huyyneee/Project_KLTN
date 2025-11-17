@@ -47,6 +47,21 @@ class AccountModel extends Model
             return false;
         }
     }
+    public function updateFullName($accountId, $fullName)
+    {
+        $stmt = $this->db->prepare(
+            "UPDATE {$this->table} SET full_name = :full_name WHERE id = :id"
+        );
+        return $stmt->execute([':full_name' => $fullName, ':id' => $accountId]);
+    }
+    public function findById($id)
+    {
+        $stmt = $this->db->prepare("SELECT * FROM {$this->table} WHERE id = :id LIMIT 1");
+        $stmt->execute([':id' => $id]);
+        $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+        return $row ?: null;
+    }
+
     public function findByEmail($email)
     {
         $stmt = $this->db->prepare("SELECT * FROM {$this->table} WHERE email = :email LIMIT 1");

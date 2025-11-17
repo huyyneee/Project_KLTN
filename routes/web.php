@@ -68,6 +68,8 @@ $routes = [
     '/order'                => ['controller' => 'AccountController', 'method' => 'order'],
     '/account/order_detail'         => ['controller' => 'AccountController', 'method' => 'orderDetail'],
     '/account/cancel-order'         => ['controller' => 'AccountController', 'method' => 'cancelOrder'],
+    '/account/reset-password'       => ['controller' => 'AccountController', 'method' => 'formResetPassword'],
+    '/account/change-password' => ['controller' => 'AccountController', 'method' => 'changePassword'],
     '/cart/count'           => ['controller' => 'CartController', 'method' => 'count'],
 ];
 
