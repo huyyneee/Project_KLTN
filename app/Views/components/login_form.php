@@ -13,7 +13,7 @@
     <div class="w-full">
         <form id="login-form" action="/account/login" method="post" class="space-y-4 w-full text-sm">
             <div class="flex justify-center">
-                <input name="identity" type="text" placeholder="Nhập email hoặc số điện thoại" required
+                <input name="identity" type="text" placeholder="Nhập email" required
                     class="w-64 bg-white border border-gray-200 rounded px-2 text-sm placeholder-gray-400 focus:outline-none focus:ring-0" style="height:34px;" />
             </div>
 
@@ -24,7 +24,7 @@
 
             <div class="flex justify-center">
                 <div class="w-64 flex items-center justify-between text-sm">
-                    <label class="flex items-center text-gray-700 text-sm"><input type="checkbox" name="remember" class="form-checkbox" /> <span class="ml-2">Nhớ mật khẩu</span></label>
+                    <label class="flex items-center text-gray-700 text-sm"><span class="ml-2"></span></label>
                     <a href="/login/forgot-password" class="text-green-700 hover:underline text-sm">Quên mật khẩu</a>
                 </div>
             </div>
