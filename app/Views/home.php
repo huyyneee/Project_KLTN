@@ -223,18 +223,3 @@
 		});
 	});
 </script>
-
-<!-- Hướng dẫn thêm sản phẩm và hình ảnh cho từng mục -->
-<!--
-1. Để thêm sản phẩm cho từng mục:
-	- Tìm mảng $productsByCategory ở trên.
-	- Thêm phần tử mới dạng ['img' => 'ten_anh.png', 'name' => 'Tên sản phẩm'] vào đúng danh mục.
-	- Ví dụ: ['img' => 'chamsocdamat4.png', 'name' => 'Sữa rửa mặt 04']
-2. Để thêm hình ảnh:
-	- Upload file ảnh vào đúng thư mục con theo tên danh mục trong /public/assets/images/ (ví dụ: /public/assets/images/Chăm Sóc Da Mặt/chamsocdamat4.png)
-	- Tên thư mục con phải đúng với tên danh mục (có thể copy-paste từ mảng $productsByCategory).
-	- Đảm bảo tên file ảnh trùng với giá trị 'img' trong mảng sản phẩm.
-3. Để thay đổi tên sản phẩm:
-	- Sửa giá trị 'name' trong mảng sản phẩm tương ứng.
-4. Sản phẩm sẽ tự động hiển thị và lướt ngang, khi đưa chuột vào sẽ dừng lại.
--->

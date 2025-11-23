@@ -20,19 +20,39 @@
 		<div>
 			<h3 class="text-lg font-bold mb-2 flex items-center"><span class="text-yellow-400 mr-2 text-xl">■</span>BẢN ĐỒ</h3>
 			<div class="rounded overflow-hidden border-2 border-white shadow-lg">
-				<iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3918.753234857934!2d106.6641393153346!3d10.830681192287073!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3175293e2e2e2e2e%3A0x1234567890abcdef!2zS2nhu4duIE5naOG7iyAtIE3hu7kgUGjhuqFtIFh1w6JuIEhp4buHcA!5e0!3m2!1svi!2s!4v1660000000000!5m2!1svi!2s" width="100%" height="180" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+				<iframe src="https://maps.google.com/maps?q=115%20L%C3%AA%20V%C4%83n%20Th%E1%BB%8D%2C%20Ph%C6%B0%E1%BB%9Dng%208%2C%20G%C3%B2%20V%E1%BA%A5p%2C%20Tp%20H%E1%BB%93%20Ch%C3%AD%20Minh&t=&z=17&ie=UTF8&iwloc=&output=embed" width="100%" height="180" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
 			</div>
 		</div>
-		<!-- Fanpage Facebook -->
+		<!-- Fanpage Facebook: fix green gap by matching box width to plugin (340px) -->
 		<div>
 			<h3 class="text-lg font-bold mb-2 flex items-center"><span class="text-yellow-400 mr-2 text-xl">■</span>FANPAGE FACEBOOK</h3>
-			<div class="rounded overflow-hidden border-2 border-white shadow-lg">
-				<iframe src="https://www.facebook.com/plugins/page.php?href=https%3A%2F%2Fwww.facebook.com%2Fmyphamxuanhiep&tabs=timeline&width=340&height=180&small_header=false&adapt_container_width=true&hide_cover=false&show_facepile=true&appId" width="100%" height="180" style="border:none;overflow:hidden" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
+			<div class="rounded overflow-hidden border-2 border-white shadow-lg mx-auto" style="padding:0; width:340px; height:180px;">
+				<div id="fb-root"></div>
+				<div class="fb-page" data-href="https://www.facebook.com/myphamxuanhiep" data-tabs="timeline" data-width="340" data-height="180" data-small-header="false" data-adapt-container-width="false" data-hide-cover="false" data-show-facepile="true">
+					<blockquote cite="https://www.facebook.com/myphamxuanhiep" class="fb-xfbml-parse-ignore"><a href="https://www.facebook.com/myphamxuanhiep">Kềm Nghĩa Mỹ Phẩm Xuân Hiệp</a></blockquote>
+				</div>
 			</div>
 		</div>
 	</div>
 	<div class="text-center text-xs text-white bg-green-950 bg-opacity-80 py-2 mt-6">
-		Copyright © 2022 XUAN HIEP COSMETIC. All rights reserved. Web design : NiNa Co., Ltd
+		Copyright © 2022 XUAN HIEP COSMETIC. All rights reserved. Web design : HUY&HUNG
 	</div>
 </footer>
+
+<!-- Load Facebook SDK once (if not already loaded) and force plugin background transparent -->
+<script>
+if (!window.FB) {
+	(function(d, s, id) {
+		var js, fjs = d.getElementsByTagName(s)[0];
+		if (d.getElementById(id)) return;
+		js = d.createElement(s); js.id = id;
+		js.async = true; js.defer = true; js.crossOrigin = 'anonymous';
+		js.src = 'https://connect.facebook.net/vi_VN/sdk.js#xfbml=1&version=v16.0';
+		fjs.parentNode.insertBefore(js, fjs);
+	}(document, 'script', 'facebook-jssdk'));
+} else {
+	if (window.FB && window.FB.XFBML) window.FB.XFBML.parse();
+}
+</script>
+
 

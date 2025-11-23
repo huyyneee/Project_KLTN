@@ -17,7 +17,7 @@ $PRODUCT_DETAIL_QUERY_PARAM = isset($_GET['product_detail_param']) ? $_GET['prod
 $PRODUCT_DETAIL_PREFIX = isset($_GET['product_detail_prefix']) ? $_GET['product_detail_prefix'] : '/product/';
 
 // UI labels
-$WIDGET_TITLE = isset($_GET['title']) ? $_GET['title'] : 'Hasaki Chat';
+$WIDGET_TITLE = isset($_GET['title']) ? $_GET['title'] : 'Xuân Hiệp Chat';
 $PLACEHOLDER = isset($_GET['placeholder']) ? $_GET['placeholder'] : 'Nhập câu hỏi của bạn...';
 $SEND_LABEL = isset($_GET['send_label']) ? $_GET['send_label'] : 'Gửi';
 
@@ -279,7 +279,7 @@ $PROMPTS = isset($_GET['prompts']) && $_GET['prompts'] !== ''
             </div>
         </div>
     </div>
-    <div class="hasaki-chat-bubble" id="hasakiChatBubble" title="Chat với Hasaki">
+    <div class="hasaki-chat-bubble" id="hasakiChatBubble" title="Chat với Xuân Hiệp">
         <!-- chat icon -->
         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path
@@ -431,7 +431,7 @@ $PROMPTS = isset($_GET['prompts']) && $_GET['prompts'] !== ''
             input.addEventListener('keypress', (e) => { if (e.key === 'Enter') send(); });
 
             // Greeting
-            addBotMessage('👋 Xin chào! Tôi là trợ lý tìm kiếm sản phẩm Hasaki. Hãy hỏi tôi bất kỳ sản phẩm nào bạn quan tâm nhé!', []);
+            addBotMessage('👋 Xin chào! Tôi là trợ lý tìm kiếm sản phẩm Xuân Hiệp Beauty Store. Hãy hỏi tôi bất kỳ sản phẩm nào bạn quan tâm nhé!', []);
             attachQuickPrompts();
             showQuickIfEligible();
         })();

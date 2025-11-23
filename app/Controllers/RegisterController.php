@@ -36,13 +36,8 @@ class RegisterController extends Controller
         $birth_day = isset($_POST['birth_day']) ? $_POST['birth_day'] : '';
 
         $errors = [];
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        if (strpos($email, '@') === false) {
             $errors[] = 'Email không hợp lệ.';
-        } else {
-            // require gmail.com domain
-            if (strtolower(substr($email, -10)) !== '@gmail.com') {
-                $errors[] = 'Email phải có định dạng @gmail.com.';
-            }
         }
         // require full name
         if (empty($full_name)) {
@@ -235,7 +230,7 @@ class RegisterController extends Controller
             session_start();
         }
         $email = isset($_POST['email']) ? trim($_POST['email']) : '';
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        if (strpos($email, '@') === false) {
             http_response_code(400);
             echo json_encode(['ok' => false, 'message' => 'Email không hợp lệ']);
             return;
@@ -269,7 +264,7 @@ class RegisterController extends Controller
     public function checkEmail()
     {
         $email = isset($_POST['email']) ? trim($_POST['email']) : '';
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        if (strpos($email, '@') === false) {
             http_response_code(400);
             echo json_encode(['ok' => false, 'message' => 'Email không hợp lệ']);
             return;
