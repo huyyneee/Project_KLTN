@@ -31,7 +31,7 @@ $old = $old ?? [];
         <form id="register-form" action="/account/register" method="post" class="space-y-4 w-full text-sm">
             <!-- identity (email or phone) -->
             <div class="flex justify-center">
-                <input name="email" type="text" placeholder="Nhập email hoặc số điện thoại" required value="<?php echo htmlspecialchars($old['email'] ?? ''); ?>"
+                <input name="email" type="text" placeholder="Nhập email" required value="<?php echo htmlspecialchars($old['email'] ?? ''); ?>"
                     class="w-64 bg-white border border-gray-200 rounded px-3 text-sm placeholder-gray-400 focus:outline-none focus:ring-0" style="height:36px;" />
             </div>
 
@@ -54,7 +54,7 @@ $old = $old ?? [];
                     <?php if (!empty($message) && !empty($require_verification)): ?>
                         <!-- inline hint removed as requested; message will be shown via modal. -->
                     <?php endif; ?>
-                    <button type="button" id="send-code" class="bg-green-700 text-white rounded px-3 py-1 text-sm" style="height:32px; min-width:60px; text-align:center;">Lấy mã</button>
+                    <button type="button" id="send-code" class="bg-green-700 text-white rounded px-3 py-1 text-sm" style="height:32px; min-width:70px; text-align:center;">Lấy mã</button>
                 </div>
             </div>
             <!-- password with hint -->
