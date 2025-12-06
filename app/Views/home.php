@@ -55,7 +55,7 @@
 		if (empty($products))
 			continue; // ko hiển thị kết quả tìm kiếm thì ẩn cate
 		$hasAnyProduct = true;
-		?>
+	?>
 		<div class="mb-8">
 			<div class="flex items-center justify-between mb-2">
 				<div class="font-bold text-lg text-green-800"><?= htmlspecialchars($catName) ?></div>
@@ -76,7 +76,7 @@
 								class="block product-item w-36 flex-shrink-0 bg-white rounded overflow-hidden hover:shadow">
 								<img src="<?= htmlspecialchars($imgSrc) ?>" alt="<?= htmlspecialchars($p['name'] ?? '') ?>"
 									class="w-full h-28 object-cover rounded-t">
-								<div class="p-2 text-center text-xs truncate"><?= htmlspecialchars($p['name'] ?? '') ?></div>
+								<div class="p-2 text-center text-base truncate"><?= htmlspecialchars($p['name'] ?? '') ?></div>
 							</a>
 						<?php endforeach; ?>
 					</div>
@@ -107,7 +107,7 @@
 
 <!-- Script slider và scroll ngang -->
 <script>
-	document.addEventListener('DOMContentLoaded', function () {
+	document.addEventListener('DOMContentLoaded', function() {
 		// Banner slider
 		const banners = document.querySelectorAll('#banner-track > a');
 		let bannerIndex = 0;
@@ -147,7 +147,7 @@
 		startBannerAuto();
 
 		// Product carousels (giống banner)
-		document.querySelectorAll('.product-carousel').forEach(function (carousel) {
+		document.querySelectorAll('.product-carousel').forEach(function(carousel) {
 			const items = carousel.querySelectorAll('a');
 			let idx = 0;
 			let interval = null;
@@ -163,7 +163,7 @@
 			}
 
 			function applyItemWidth(w) {
-				items.forEach(function (it) {
+				items.forEach(function(it) {
 					it.style.width = w + 'px';
 					it.style.flex = '0 0 ' + w + 'px';
 					const img = it.querySelector('img');
@@ -217,7 +217,7 @@
 			recalc();
 			startAuto();
 			// Responsive: recompute sizes on resize
-			window.addEventListener('resize', function () {
+			window.addEventListener('resize', function() {
 				recalc();
 			});
 		});

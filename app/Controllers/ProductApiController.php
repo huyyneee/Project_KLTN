@@ -87,19 +87,47 @@ class ProductApiController extends ApiController
                 $sort_order
             );
 
+            // Batch load all images for all products in one query to avoid N+1 problem
+            $productIds = array_column($result['data'], 'id');
+            $allImages = [];
+            if (!empty($productIds)) {
+                try {
+                    $db = \App\Core\Database::getInstance()->getConnection();
+                    // Limit to prevent huge queries, process in batches if needed
+                    $batchSize = 100;
+                    $batches = array_chunk($productIds, $batchSize);
+
+                    foreach ($batches as $batch) {
+                        $placeholders = implode(',', array_fill(0, count($batch), '?'));
+                        $sql = "SELECT product_id, url, is_main FROM product_images WHERE product_id IN ($placeholders) ORDER BY product_id, is_main DESC, id ASC";
+                        $stmt = $db->prepare($sql);
+                        $stmt->execute($batch);
+                        $imageRows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+                        // Group images by product_id
+                        foreach ($imageRows as $image) {
+                            $allImages[$image['product_id']][] = $image;
+                        }
+                    }
+                } catch (\Exception $e) {
+                    error_log("Error loading product images: " . $e->getMessage());
+                    // Continue without images if there's an error
+                }
+            }
+
             // Format dữ liệu để frontend dễ sử dụng
-            $formattedProducts = array_map(function ($product) {
+            $baseUrl = 'http://' . $_SERVER['HTTP_HOST'];
+            $formattedProducts = array_map(function ($product) use ($allImages, $baseUrl) {
                 $specifications = [];
                 if (!empty($product['specifications'])) {
                     $specifications = json_decode($product['specifications'], true) ?: [];
                 }
 
-                // Get images for this product
-                $images = $this->productImageModel->findByProductId($product['id']);
+                // Get images for this product from pre-loaded array
+                $images = $allImages[$product['id']] ?? [];
                 $mainImage = null;
                 $detailImages = [];
 
-                $baseUrl = 'http://' . $_SERVER['HTTP_HOST'];
                 foreach ($images as $image) {
                     $fullUrl = $image['url'];
                     if (strpos($fullUrl, 'http') !== 0) {
@@ -117,7 +145,7 @@ class ProductApiController extends ApiController
                     'code' => $product['code'],
                     'name' => $product['name'],
                     'price' => (float) $product['price'],
-                    'quantity' => isset($product['quantity']) ? (int)$product['quantity'] : 0,
+                    'quantity' => isset($product['quantity']) ? (int) $product['quantity'] : 0,
                     'description' => $product['description'],
                     'specifications' => $specifications,
                     'usage' => $product['usage'],
@@ -187,7 +215,7 @@ class ProductApiController extends ApiController
                 'code' => $product['code'],
                 'name' => $product['name'],
                 'price' => (float) $product['price'],
-                'quantity' => isset($product['quantity']) ? (int)$product['quantity'] : 0,
+                'quantity' => isset($product['quantity']) ? (int) $product['quantity'] : 0,
                 'description' => $product['description'],
                 'specifications' => $specifications,
                 'usage' => $product['usage'],
@@ -433,7 +461,7 @@ class ProductApiController extends ApiController
                     'code' => $product['code'],
                     'name' => $product['name'],
                     'price' => (float) $product['price'],
-                    'quantity' => isset($product['quantity']) ? (int)$product['quantity'] : 0,
+                    'quantity' => isset($product['quantity']) ? (int) $product['quantity'] : 0,
                     'description' => $product['description'],
                     'specifications' => $specifications,
                     'usage' => $product['usage'],
@@ -471,7 +499,7 @@ class ProductApiController extends ApiController
                     'code' => $product['code'],
                     'name' => $product['name'],
                     'price' => (float) $product['price'],
-                    'quantity' => isset($product['quantity']) ? (int)$product['quantity'] : 0,
+                    'quantity' => isset($product['quantity']) ? (int) $product['quantity'] : 0,
                     'description' => $product['description'],
                     'specifications' => $specifications,
                     'usage' => $product['usage'],

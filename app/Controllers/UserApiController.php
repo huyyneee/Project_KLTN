@@ -26,7 +26,7 @@ class UserApiController extends ApiController
         try {
             $db = Database::getInstance()->getConnection();
 
-            // Lấy danh sách users với địa chỉ mặc định
+            // Lấy danh sách users với địa chỉ mặc định - chỉ lấy khách hàng (role = 'user')
             $stmt = $db->prepare("
                 SELECT 
                     u.id,
@@ -53,6 +53,7 @@ class UserApiController extends ApiController
                 FROM users u
                 LEFT JOIN accounts a ON u.account_id = a.id
                 LEFT JOIN addresses addr ON u.id = addr.user_id AND addr.is_default = 1
+                WHERE a.role = 'user' OR a.role IS NULL
                 ORDER BY u.created_at DESC
             ");
             $stmt->execute();
@@ -249,11 +250,16 @@ class UserApiController extends ApiController
 
             $db = Database::getInstance()->getConnection();
 
-            // Đếm tổng số bản ghi
-            $countStmt = $db->query("SELECT COUNT(*) as total FROM users");
+            // Đếm tổng số bản ghi - chỉ đếm khách hàng (role = 'user')
+            $countStmt = $db->query("
+                SELECT COUNT(*) as total 
+                FROM users u
+                LEFT JOIN accounts a ON u.account_id = a.id
+                WHERE a.role = 'user' OR a.role IS NULL
+            ");
             $totalRecords = $countStmt->fetch(\PDO::FETCH_ASSOC)['total'];
 
-            // Lấy dữ liệu với phân trang và địa chỉ mặc định
+            // Lấy dữ liệu với phân trang và địa chỉ mặc định - chỉ lấy khách hàng (role = 'user')
             $stmt = $db->prepare("
                 SELECT 
                     u.id,
@@ -280,6 +286,7 @@ class UserApiController extends ApiController
                 FROM users u
                 LEFT JOIN accounts a ON u.account_id = a.id
                 LEFT JOIN addresses addr ON u.id = addr.user_id AND addr.is_default = 1
+                WHERE a.role = 'user' OR a.role IS NULL
                 ORDER BY u.created_at DESC 
                 LIMIT :limit OFFSET :offset
             ");

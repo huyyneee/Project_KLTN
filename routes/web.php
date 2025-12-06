@@ -36,6 +36,12 @@ $routes = [
     '/account/address/delete'   => ['controller' => 'AddressController', 'method' => 'deleteAddress'],
     '/addresses'                => ['controller' => 'AccountController', 'method' => 'address'],
 
+    //forgot password
+    '/login/forgot-password' => ['controller' => 'LoginController', 'method' => 'forgotPasswordForm'],
+    '/login/send-reset-link' => ['controller' => 'LoginController', 'method' => 'sendResetLink'],
+    '/login/reset-password' => ['controller' => 'LoginController', 'method' => 'resetPasswordForm'],
+    '/login/reset-password-post' => ['controller' => 'LoginController', 'method' => 'resetPassword'],
+
 
     // Admin Routes
     '/admin'                    => ['controller' => 'AdminController', 'method' => 'dashboard'],
@@ -66,6 +72,8 @@ $routes = [
     '/order'                => ['controller' => 'AccountController', 'method' => 'order'],
     '/account/order_detail'         => ['controller' => 'AccountController', 'method' => 'orderDetail'],
     '/account/cancel-order'         => ['controller' => 'AccountController', 'method' => 'cancelOrder'],
+    '/account/reset-password'       => ['controller' => 'AccountController', 'method' => 'formResetPassword'],
+    '/account/change-password' => ['controller' => 'AccountController', 'method' => 'changePassword'],
     '/cart/count'           => ['controller' => 'CartController', 'method' => 'count'],
 ];
 

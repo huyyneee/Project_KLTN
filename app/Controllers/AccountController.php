@@ -126,9 +126,9 @@ class AccountController extends Controller
             $userData['birthday'] = $birthday;
         }
 
-        $success = $userModel->updateByAccountId($accountId, $userData);
-
-        if ($success) {
+        $userSuccess = $userModel->updateByAccountId($accountId, $userData);
+        $accountSuccess = $this->accountModel->updateFullName($accountId, $fullName);
+        if ($userSuccess && $accountSuccess) {
             $_SESSION['success'] = 'Cập nhật thông tin thành công';
         } else {
             $_SESSION['error'] = 'Có lỗi xảy ra khi cập nhật thông tin';
@@ -278,5 +278,88 @@ class AccountController extends Controller
                 'message' => 'Không thể hủy đơn hàng. Vui lòng thử lại.'
             ]);
         }
+    }
+    public function formResetPassword()
+    {
+        $this->requireAuth();
+
+        $accountId = $_SESSION['account_id'] ?? null;
+        if (!$accountId) {
+            header('Location: /login');
+            exit;
+        }
+
+        $account = $this->accountModel->find($accountId);
+        $userModel = new UserModel();
+        $user = $userModel->findByAccountId($accountId);
+
+        $this->render('account/reset_password', [
+            'account' => $account,
+            'user' => $user
+        ]);
+    }
+    public function changePassword()
+    {
+        $this->requireAuth();
+
+        // Lấy account ID từ session
+        $accountId = $_SESSION['account_id'] ?? null;
+        if (!$accountId) {
+            header('Location: /login');
+            exit;
+        }
+
+        $error = '';
+        $success = '';
+        $account = $this->accountModel->findById($accountId); // Lấy thông tin account
+
+        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $current = trim($_POST['current-password'] ?? '');
+            $new = trim($_POST['new-password'] ?? '');
+            $confirm = trim($_POST['confirm-password'] ?? '');
+
+            // Kiểm tra rỗng
+            if (!$current || !$new || !$confirm) {
+                $error = 'Vui lòng điền đầy đủ thông tin.';
+            }
+            // Kiểm tra mật khẩu hiện tại
+            elseif (!hash_equals($account['password'], md5($current))) {
+                $error = 'Mật khẩu hiện tại không đúng.';
+            }
+            // Kiểm tra mật khẩu mới không được trùng mật khẩu hiện tại
+            elseif (hash_equals($account['password'], md5($new))) {
+                $error = 'Mật khẩu mới không được trùng với mật khẩu hiện tại.';
+            }
+            // Kiểm tra trùng mật khẩu mới và xác nhận
+            elseif ($new !== $confirm) {
+                $error = 'Mật khẩu mới và nhập lại không khớp.';
+            }
+            // Kiểm tra độ dài
+            elseif (strlen($new) < 8 || strlen($new) > 32) {
+                $error = 'Mật khẩu mới phải từ 8-32 ký tự.';
+            }
+            // Kiểm tra yêu cầu mạnh
+            elseif (!preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,32}$/', $new)) {
+                $error = 'Mật khẩu phải có chữ hoa, chữ thường, số và ký tự đặc biệt.';
+            } else {
+                $hashed = md5($new);
+
+                if ($this->accountModel->updatePassword($accountId, $hashed)) {
+                    $_SESSION['success'] = 'Đổi mật khẩu thành công!';
+                    $_SESSION['account'] = $this->accountModel->findById($accountId);
+                    $account = $_SESSION['account'];
+                    header('Location: /account/edit');
+                    exit;
+                } else {
+                    $error = 'Có lỗi xảy ra, vui lòng thử lại.';
+                }
+            }
+        }
+        $data = [
+            'error' => $error,
+            'success' => $success
+        ];
+
+        $this->render('account/reset_password', $data);
     }
 }
