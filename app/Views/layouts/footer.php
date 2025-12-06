@@ -35,7 +35,7 @@
 		</div>
 	</div>
 	<div class="text-center text-xs text-white bg-green-950 bg-opacity-80 py-2 mt-6">
-		Copyright © 2022 XUAN HIEP COSMETIC. All rights reserved. Web design : HUY&HUNG
+		Copyright © 2025 XUAN HIEP COSMETIC. All rights reserved. Web design : HUY&HUNG
 	</div>
 </footer>
 
