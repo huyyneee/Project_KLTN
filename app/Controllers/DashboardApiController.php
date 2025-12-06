@@ -487,13 +487,16 @@ class DashboardApiController extends ApiController
             $growth = $prevCustomers > 0 ? round((($newCustomers - $prevCustomers) / $prevCustomers) * 100) : 0;
             $growthText = $growth >= 0 ? '+' . $growth . '%' : $growth . '%';
 
-            // Get customer distribution by city (from users table)
-            $cityQuery = "SELECT u.address, COUNT(*) as count 
+            // Get customer distribution by city (from addresses table)
+            $cityQuery = "SELECT 
+                            COALESCE(addr.city, addr.province, 'Không xác định') as city_name,
+                            COUNT(DISTINCT u.id) as count 
                          FROM users u 
                          JOIN accounts a ON u.account_id = a.id 
+                         LEFT JOIN addresses addr ON u.id = addr.user_id AND addr.is_default = 1
                          WHERE a.role = 'user' AND a.status = 'active' 
-                         AND u.address IS NOT NULL AND u.address != ''
-                         GROUP BY u.address 
+                         AND (addr.city IS NOT NULL OR addr.province IS NOT NULL)
+                         GROUP BY COALESCE(addr.city, addr.province, 'Không xác định')
                          ORDER BY count DESC 
                          LIMIT 5";
             $cityStmt = $conn->query($cityQuery);
@@ -502,7 +505,7 @@ class DashboardApiController extends ApiController
             $topCities = [];
             foreach ($cityResults as $row) {
                 $topCities[] = [
-                    'name' => $row['address'] ?: 'Không xác định',
+                    'name' => $row['city_name'] ?: 'Không xác định',
                     'count' => (int) $row['count']
                 ];
             }

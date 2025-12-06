@@ -113,9 +113,37 @@ class AdminController extends Controller
     {
         $products = $this->productModel->findAllWithCategory();
 
-        // Load images for each product
+        // Batch load all images for all products in one query to avoid N+1 problem
+        $productIds = array_column($products, 'id');
+        $allImages = [];
+        if (!empty($productIds)) {
+            try {
+                $db = (new \App\Core\Database())->getConnection();
+                // Process in batches to prevent huge queries
+                $batchSize = 100;
+                $batches = array_chunk($productIds, $batchSize);
+
+                foreach ($batches as $batch) {
+                    $placeholders = implode(',', array_fill(0, count($batch), '?'));
+                    $sql = "SELECT product_id, url, is_main FROM product_images WHERE product_id IN ($placeholders) ORDER BY product_id, is_main DESC, id ASC";
+                    $stmt = $db->prepare($sql);
+                    $stmt->execute($batch);
+                    $imageRows = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+
+                    // Group images by product_id
+                    foreach ($imageRows as $image) {
+                        $allImages[$image['product_id']][] = $image;
+                    }
+                }
+            } catch (\Exception $e) {
+                error_log("Error loading product images in AdminController: " . $e->getMessage());
+                // Continue without images if there's an error
+            }
+        }
+
+        // Load images for each product from pre-loaded array
         foreach ($products as &$product) {
-            $images = $this->productImageModel->findByProductId($product['id']);
+            $images = $allImages[$product['id']] ?? [];
             $product['images'] = $images;
             $product['main_image'] = null;
             $product['detail_images'] = [];
