@@ -5,19 +5,19 @@
 
 // -------------------- Configuration --------------------
 // API base URL of your Hasaki chatbot backend
-$API_BASE = isset($_GET['api_base']) ? $_GET['api_base'] : 'http://localhost:6060/api';
+$API_BASE = isset($_GET['api_base']) ? $_GET['api_base'] : 'http://159.65.2.46:6060/api';
 
 // Product URL building (choose either path+param or slug style)
 // Pattern A (query style): <domain><PRODUCT_DETAIL_PATH>?<PRODUCT_DETAIL_QUERY_PARAM>=<id>
-$PRODUCT_DOMAIN = isset($_GET['product_domain']) ? $_GET['product_domain'] : (isset($_SERVER['HTTP_HOST']) ? (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https://' : 'http://') . $_SERVER['HTTP_HOST'] : '');
-$PRODUCT_DETAIL_PATH = isset($_GET['product_detail_path']) ? $_GET['product_detail_path'] : null; // e.g., /san-pham
-$PRODUCT_DETAIL_QUERY_PARAM = isset($_GET['product_detail_param']) ? $_GET['product_detail_param'] : null; // e.g., product
+$PRODUCT_DOMAIN = isset($_GET['product_domain']) ? $_GET['product_domain'] : 'http://159.65.2.46:8000';
+$PRODUCT_DETAIL_PATH = isset($_GET['product_detail_path']) ? $_GET['product_detail_path'] : '/san-pham'; // e.g., /san-pham
+$PRODUCT_DETAIL_QUERY_PARAM = isset($_GET['product_detail_param']) ? $_GET['product_detail_param'] : 'product'; // e.g., product
 
 // Pattern B (path style): <domain><PRODUCT_DETAIL_PREFIX><id>
 $PRODUCT_DETAIL_PREFIX = isset($_GET['product_detail_prefix']) ? $_GET['product_detail_prefix'] : '/product/';
 
 // UI labels
-$WIDGET_TITLE = isset($_GET['title']) ? $_GET['title'] : 'Hasaki Chat';
+$WIDGET_TITLE = isset($_GET['title']) ? $_GET['title'] : 'Xuân Hiệp Beauty Chat';
 $PLACEHOLDER = isset($_GET['placeholder']) ? $_GET['placeholder'] : 'Nhập câu hỏi của bạn...';
 $SEND_LABEL = isset($_GET['send_label']) ? $_GET['send_label'] : 'Gửi';
 
@@ -201,6 +201,12 @@ $PROMPTS = isset($_GET['prompts']) && $_GET['prompts'] !== ''
         border-color: #667eea;
     }
 
+    .hasaki-chat-text:disabled {
+        background-color: #f5f5f5;
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+
     .hasaki-chat-send {
         background: #667eea;
         color: #fff;
@@ -210,6 +216,12 @@ $PROMPTS = isset($_GET['prompts']) && $_GET['prompts'] !== ''
         font-weight: 700;
         font-size: 13px;
         cursor: pointer;
+        transition: opacity 0.2s ease;
+    }
+
+    .hasaki-chat-send:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
     }
 
     .hasaki-loading {
@@ -219,6 +231,33 @@ $PROMPTS = isset($_GET['prompts']) && $_GET['prompts'] !== ''
         font-style: italic;
         font-size: 12px;
         padding: 6px 0;
+    }
+
+    .hasaki-spinner {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid #e1e5e9;
+        border-top-color: #667eea;
+        border-radius: 50%;
+        animation: hasaki-spin 0.8s linear infinite;
+        vertical-align: middle;
+        margin-right: 8px;
+    }
+
+    @keyframes hasaki-spin {
+        to { transform: rotate(360deg); }
+    }
+
+    .hasaki-loading-msg {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+    }
+
+    .hasaki-loading-msg .hasaki-msg-content {
+        display: flex;
+        align-items: center;
     }
 
     .hasaki-quick {
@@ -279,7 +318,7 @@ $PROMPTS = isset($_GET['prompts']) && $_GET['prompts'] !== ''
             </div>
         </div>
     </div>
-    <div class="hasaki-chat-bubble" id="hasakiChatBubble" title="Chat với Hasaki">
+    <div class="hasaki-chat-bubble" id="hasakiChatBubble" title="Chat với Xuân Hiệp Beauty">
         <!-- chat icon -->
         <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path
@@ -373,7 +412,40 @@ $PROMPTS = isset($_GET['prompts']) && $_GET['prompts'] !== ''
                 }
             }
 
-            function setLoading(s) { loading.style.display = s ? 'block' : 'none'; sendBtn.disabled = s; }
+            let loadingMsgElement = null;
+
+            function setLoading(s) {
+                if (s) {
+                    // Disable input and button
+                    input.disabled = true;
+                    sendBtn.disabled = true;
+                    
+                    // Add loading message to chat
+                    const wrap = document.createElement('div');
+                    wrap.className = 'hasaki-msg hasaki-msg-bot hasaki-loading-msg';
+                    const content = document.createElement('div');
+                    content.className = 'hasaki-msg-content';
+                    const spinner = document.createElement('span');
+                    spinner.className = 'hasaki-spinner';
+                    const text = document.createTextNode('Đang tìm kiếm...');
+                    content.appendChild(spinner);
+                    content.appendChild(text);
+                    wrap.appendChild(content);
+                    messages.appendChild(wrap);
+                    loadingMsgElement = wrap;
+                    scrollToBottom();
+                } else {
+                    // Enable input and button
+                    input.disabled = false;
+                    sendBtn.disabled = false;
+                    
+                    // Remove loading message
+                    if (loadingMsgElement && loadingMsgElement.parentNode) {
+                        loadingMsgElement.parentNode.removeChild(loadingMsgElement);
+                        loadingMsgElement = null;
+                    }
+                }
+            }
 
             function attachQuickPrompts() {
                 if (!Array.isArray(QUICK_PROMPTS) || !quickButtonsWrap) return;
@@ -403,9 +475,16 @@ $PROMPTS = isset($_GET['prompts']) && $_GET['prompts'] !== ''
                 if (quick) quick.style.display = 'none';
             }
 
+            let isSending = false;
+
             async function send() {
+                // Prevent multiple simultaneous requests
+                if (isSending) return;
+                
                 const q = (input.value || '').trim();
                 if (!q) return;
+                
+                isSending = true;
                 addMsg(q, 'user');
                 input.value = '';
                 // Mark that user has sent a message and hide quick prompts permanently for this session
@@ -424,6 +503,7 @@ $PROMPTS = isset($_GET['prompts']) && $_GET['prompts'] !== ''
                     addMsg(`Lỗi kết nối: ${err && err.message ? err.message : err}`, 'bot');
                 } finally {
                     setLoading(false);
+                    isSending = false;
                 }
             }
 
@@ -431,7 +511,7 @@ $PROMPTS = isset($_GET['prompts']) && $_GET['prompts'] !== ''
             input.addEventListener('keypress', (e) => { if (e.key === 'Enter') send(); });
 
             // Greeting
-            addBotMessage('👋 Xin chào! Tôi là trợ lý tìm kiếm sản phẩm Hasaki. Hãy hỏi tôi bất kỳ sản phẩm nào bạn quan tâm nhé!', []);
+            addBotMessage('👋 Xin chào! Tôi là trợ lý tìm kiếm sản phẩm Xuân Hiệp Beauty. Hãy hỏi tôi bất kỳ sản phẩm nào bạn quan tâm nhé!', []);
             attachQuickPrompts();
             showQuickIfEligible();
         })();
