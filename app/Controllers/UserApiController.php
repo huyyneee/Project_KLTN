@@ -34,6 +34,7 @@ class UserApiController extends ApiController
                     u.full_name,
                     u.birthday,
                     u.gender,
+                    u.avatar,
                     u.created_at,
                     u.updated_at,
                     a.email,
@@ -144,6 +145,7 @@ class UserApiController extends ApiController
                 'account_status' => $account['status'] ?? 'active',
                 'birthday' => $user['birthday'],
                 'gender' => $user['gender'],
+                'avatar' => $user['avatar'] ?? null,
                 'created_at' => $user['created_at'],
                 'updated_at' => $user['updated_at']
             ];
@@ -177,6 +179,7 @@ class UserApiController extends ApiController
                     u.full_name,
                     u.birthday,
                     u.gender,
+                    u.avatar,
                     u.created_at,
                     u.updated_at,
                     a.email,
@@ -219,6 +222,7 @@ class UserApiController extends ApiController
                     'account_status' => $user['account_status'] ?? 'active',
                     'birthday' => $user['birthday'],
                     'gender' => $user['gender'],
+                    'avatar' => $user['avatar'] ?? null,
                     'created_at' => $user['created_at'],
                     'updated_at' => $user['updated_at']
                 ];
@@ -267,6 +271,7 @@ class UserApiController extends ApiController
                     u.full_name,
                     u.birthday,
                     u.gender,
+                    u.avatar,
                     u.created_at,
                     u.updated_at,
                     a.email,
@@ -311,6 +316,7 @@ class UserApiController extends ApiController
                     'account_status' => $user['account_status'] ?? 'active',
                     'birthday' => $user['birthday'],
                     'gender' => $user['gender'],
+                    'avatar' => $user['avatar'] ?? null,
                     'created_at' => $user['created_at'],
                     'updated_at' => $user['updated_at']
                 ];
@@ -389,6 +395,229 @@ class UserApiController extends ApiController
             $this->sendResponse(null, 'Tài khoản đã được bỏ cấm thành công');
         } catch (\Exception $e) {
             $this->sendError('Lỗi khi bỏ cấm tài khoản: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * POST /api/users - Tạo khách hàng mới
+     */
+    public function store()
+    {
+        try {
+            $input = $this->getInput();
+
+            // Validate input
+            if (empty($input['full_name'])) {
+                $this->sendError('Họ tên là bắt buộc', 400);
+                return;
+            }
+
+            if (empty($input['email'])) {
+                $this->sendError('Email là bắt buộc', 400);
+                return;
+            }
+
+            // Validate email format
+            if (!filter_var($input['email'], FILTER_VALIDATE_EMAIL)) {
+                $this->sendError('Email không hợp lệ', 400);
+                return;
+            }
+
+            $db = Database::getInstance()->getConnection();
+            $db->beginTransaction();
+
+            // Kiểm tra email đã tồn tại chưa
+            $checkStmt = $db->prepare("SELECT id FROM accounts WHERE email = :email LIMIT 1");
+            $checkStmt->execute([':email' => $input['email']]);
+            if ($checkStmt->fetch()) {
+                $db->rollBack();
+                $this->sendError('Email đã tồn tại trong hệ thống', 400);
+                return;
+            }
+
+            // Hash password với md5 (theo hệ thống hiện tại)
+            // Password validation được thực hiện ở client
+            $hashedPassword = md5($input['password'] ?? '123456'); // Default password nếu không có
+
+            // Tạo account với role = 'user'
+            $accountData = [
+                'email' => $input['email'],
+                'password' => $hashedPassword,
+                'role' => 'user',
+                'status' => 'active',
+                'created_at' => date('Y-m-d H:i:s')
+            ];
+
+            $accountSql = "INSERT INTO accounts (email, password, role, status, created_at) VALUES (:email, :password, :role, :status, :created_at)";
+            $accountStmt = $db->prepare($accountSql);
+            $accountStmt->execute($accountData);
+            $accountId = $db->lastInsertId();
+
+            // Xử lý avatar (nếu có) - chỉ lưu URL
+            $avatar = null;
+            if (!empty($input['avatar'])) {
+                // Chỉ lưu URL, không lưu base64
+                if (strpos($input['avatar'], 'data:image') === 0) {
+                    // Nếu là base64, bỏ qua (nên upload trước)
+                    $avatar = null;
+                } else {
+                    // Nếu là URL, lưu trực tiếp
+                    $avatar = $input['avatar'];
+                }
+            }
+
+            // Tạo user profile
+            $now = date('Y-m-d H:i:s');
+            $userData = [
+                'account_id' => $accountId,
+                'full_name' => $input['full_name'],
+                'birthday' => !empty($input['birthday']) ? $input['birthday'] : null,
+                'gender' => $input['gender'] ?? '',
+                'avatar' => $avatar,
+                'created_at' => $now,
+                'updated_at' => $now
+            ];
+
+            $userSql = "INSERT INTO users (account_id, full_name, birthday, gender, avatar, created_at, updated_at) 
+                        VALUES (:account_id, :full_name, :birthday, :gender, :avatar, :created_at, :updated_at)";
+            $userStmt = $db->prepare($userSql);
+            $userStmt->execute($userData);
+            $userId = $db->lastInsertId();
+
+            $db->commit();
+
+            $this->sendResponse([
+                'id' => (int) $userId,
+                'account_id' => (int) $accountId,
+                'email' => $input['email'],
+                'full_name' => $input['full_name']
+            ], 'Tạo khách hàng thành công');
+
+        } catch (\Exception $e) {
+            if (isset($db)) {
+                $db->rollBack();
+            }
+            $this->sendError('Lỗi khi tạo khách hàng: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * PUT /api/users/{id} - Cập nhật khách hàng
+     */
+    public function update($id)
+    {
+        try {
+            $input = $this->getInput();
+
+            $db = Database::getInstance()->getConnection();
+            $db->beginTransaction();
+
+            // Kiểm tra user có tồn tại không
+            $userStmt = $db->prepare("SELECT account_id FROM users WHERE id = :id LIMIT 1");
+            $userStmt->execute([':id' => $id]);
+            $user = $userStmt->fetch(\PDO::FETCH_ASSOC);
+
+            if (!$user) {
+                $db->rollBack();
+                $this->sendError('Không tìm thấy khách hàng với ID: ' . $id, 404);
+                return;
+            }
+
+            // Cập nhật user profile
+            $now = date('Y-m-d H:i:s');
+            $updateFields = [];
+            $updateValues = [':id' => $id];
+
+            if (isset($input['full_name'])) {
+                $updateFields[] = 'full_name = :full_name';
+                $updateValues[':full_name'] = $input['full_name'];
+            }
+
+            if (isset($input['birthday'])) {
+                $updateFields[] = 'birthday = :birthday';
+                $updateValues[':birthday'] = $input['birthday'];
+            }
+
+            if (isset($input['gender'])) {
+                $updateFields[] = 'gender = :gender';
+                $updateValues[':gender'] = $input['gender'];
+            }
+
+            if (isset($input['avatar'])) {
+                $updateFields[] = 'avatar = :avatar';
+                $updateValues[':avatar'] = $input['avatar'];
+            }
+
+            $updateFields[] = 'updated_at = :updated_at';
+            $updateValues[':updated_at'] = $now;
+
+            if (count($updateFields) > 1) {
+                $updateSql = "UPDATE users SET " . implode(', ', $updateFields) . " WHERE id = :id";
+                $updateStmt = $db->prepare($updateSql);
+                $updateStmt->execute($updateValues);
+            }
+
+            // Cập nhật email nếu có
+            if (isset($input['email'])) {
+                // Kiểm tra email đã tồn tại chưa (trừ chính account này)
+                $checkStmt = $db->prepare("SELECT id FROM accounts WHERE email = :email AND id != :account_id LIMIT 1");
+                $checkStmt->execute([
+                    ':email' => $input['email'],
+                    ':account_id' => $user['account_id']
+                ]);
+                if ($checkStmt->fetch()) {
+                    $db->rollBack();
+                    $this->sendError('Email đã tồn tại trong hệ thống', 400);
+                    return;
+                }
+
+                $emailUpdateSql = "UPDATE accounts SET email = :email WHERE id = :account_id";
+                $emailUpdateStmt = $db->prepare($emailUpdateSql);
+                $emailUpdateStmt->execute([
+                    ':email' => $input['email'],
+                    ':account_id' => $user['account_id']
+                ]);
+            }
+
+            $db->commit();
+
+            $this->sendResponse(null, 'Cập nhật khách hàng thành công');
+
+        } catch (\Exception $e) {
+            if (isset($db)) {
+                $db->rollBack();
+            }
+            $this->sendError('Lỗi khi cập nhật khách hàng: ' . $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * DELETE /api/users/{id} - Xóa khách hàng (soft delete)
+     */
+    public function destroy($id)
+    {
+        try {
+            $db = Database::getInstance()->getConnection();
+
+            // Lấy account_id từ user_id
+            $userStmt = $db->prepare("SELECT account_id FROM users WHERE id = :id LIMIT 1");
+            $userStmt->execute([':id' => $id]);
+            $user = $userStmt->fetch(\PDO::FETCH_ASSOC);
+
+            if (!$user) {
+                $this->sendError('Không tìm thấy khách hàng với ID: ' . $id, 404);
+                return;
+            }
+
+            // Soft delete: Cập nhật status thành 'deleted' hoặc xóa account
+            // Tùy vào yêu cầu, có thể soft delete account hoặc hard delete
+            // Ở đây tôi sẽ soft delete bằng cách cập nhật status
+            $updateStmt = $db->prepare("UPDATE accounts SET status = 'deleted' WHERE id = :account_id");
+            $updateStmt->execute([':account_id' => $user['account_id']]);
+
+            $this->sendResponse(null, 'Xóa khách hàng thành công');
+        } catch (\Exception $e) {
+            $this->sendError('Lỗi khi xóa khách hàng: ' . $e->getMessage(), 500);
         }
     }
 }
