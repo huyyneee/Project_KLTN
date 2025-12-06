@@ -18,7 +18,8 @@ if (file_exists($vendorAutoload)) {
 
 // helper to read environment which falls back to $_ENV and $_SERVER when getenv() is empty
 if (!function_exists('env')) {
-    function env(string $key, $default = null) {
+    function env(string $key, $default = null)
+    {
         $val = @getenv($key);
         if ($val === false || $val === null || $val === '') {
             if (isset($_ENV[$key]) && $_ENV[$key] !== '') {
@@ -47,7 +48,7 @@ return [
     ],
     'mail' => [
         // cấu hình email cửa hàng: thay đổi theo môi trường của bạn
-        'from' => env('MAIL_FROM') ?: 'no-reply@xuanhiep.com',
+        'from' => env('MAIL_FROM') ?: 'no-reply@xuanhiepbeauty.id.vn',
         'from_name' => env('MAIL_FROM_NAME') ?: 'Cửa Hàng Mỹ Phẩm Xuân Hiệp',
         // Resend API settings
         'resend_api_key' => env('RESEND_API_KEY') ?: 're_PKJijqiw_2J8JZL1QTQibNXY7sVfbRzPd',
