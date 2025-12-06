@@ -281,43 +281,246 @@ class DashboardApiController extends ApiController
     public function getRecentActivity()
     {
         try {
-            // Mock data for recent activity
-            $activities = [
-                [
-                    'id' => 1,
-                    'action' => 'Thêm sản phẩm mới',
-                    'time' => '2 phút trước',
-                    'type' => 'create'
-                ],
-                [
-                    'id' => 2,
-                    'action' => 'Cập nhật danh mục',
-                    'time' => '15 phút trước',
-                    'type' => 'update'
-                ],
-                [
-                    'id' => 3,
-                    'action' => 'Xóa sản phẩm',
-                    'time' => '1 giờ trước',
-                    'type' => 'delete'
-                ],
-                [
-                    'id' => 4,
-                    'action' => 'Thêm danh mục',
-                    'time' => '2 giờ trước',
-                    'type' => 'create'
-                ],
-                [
-                    'id' => 5,
-                    'action' => 'Cập nhật sản phẩm',
-                    'time' => '3 giờ trước',
-                    'type' => 'update'
-                ]
-            ];
+            $db = \App\Core\Database::getInstance();
+            $conn = $db->getConnection();
+
+            $limit = 10; // Lấy 10 hoạt động gần đây nhất
+            $threeDaysAgo = date('Y-m-d H:i:s', strtotime('-3 days'));
+
+            // Kiểm tra xem bảng inventory_entries có tồn tại không
+            $tableCheckQuery = "SHOW TABLES LIKE 'inventory_entries'";
+            $tableStmt = $conn->query($tableCheckQuery);
+            $hasInventoryTable = $tableStmt->rowCount() > 0;
+
+            // Kiểm tra xem bảng orders có tồn tại không
+            $ordersTableCheckQuery = "SHOW TABLES LIKE 'orders'";
+            $ordersTableStmt = $conn->query($ordersTableCheckQuery);
+            $hasOrdersTable = $ordersTableStmt->rowCount() > 0;
+
+            $activities = [];
+
+            // 1. Thêm sản phẩm mới (products.created_at)
+            $productsCreatedQuery = "SELECT 
+                id,
+                CONCAT('Thêm sản phẩm mới: ', name) as action,
+                created_at as activity_time,
+                'create' as type
+            FROM products 
+            WHERE deleted_at IS NULL
+                AND created_at >= :three_days_ago
+            ORDER BY created_at DESC 
+            LIMIT 10";
+            $stmt = $conn->prepare($productsCreatedQuery);
+            $stmt->bindParam(':three_days_ago', $threeDaysAgo);
+            $stmt->execute();
+            $productsCreated = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            foreach ($productsCreated as $row) {
+                $activities[] = [
+                    'id' => 'product_create_' . $row['id'],
+                    'action' => $row['action'],
+                    'time' => $this->formatTimeAgo($row['activity_time']),
+                    'type' => $row['type'],
+                    'timestamp' => strtotime($row['activity_time'])
+                ];
+            }
+
+            // 2. Cập nhật sản phẩm (products.updated_at khác created_at)
+            $productsUpdatedQuery = "SELECT 
+                id,
+                CONCAT('Cập nhật sản phẩm: ', name) as action,
+                updated_at as activity_time,
+                'update' as type
+            FROM products 
+            WHERE deleted_at IS NULL 
+                AND updated_at != created_at
+                AND updated_at >= :three_days_ago
+            ORDER BY updated_at DESC 
+            LIMIT 10";
+            $stmt = $conn->prepare($productsUpdatedQuery);
+            $stmt->bindParam(':three_days_ago', $threeDaysAgo);
+            $stmt->execute();
+            $productsUpdated = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            foreach ($productsUpdated as $row) {
+                $activities[] = [
+                    'id' => 'product_update_' . $row['id'],
+                    'action' => $row['action'],
+                    'time' => $this->formatTimeAgo($row['activity_time']),
+                    'type' => $row['type'],
+                    'timestamp' => strtotime($row['activity_time'])
+                ];
+            }
+
+            // 3. Thêm danh mục mới (categories.created_at)
+            $categoriesCreatedQuery = "SELECT 
+                id,
+                CONCAT('Thêm danh mục: ', name) as action,
+                created_at as activity_time,
+                'create' as type
+            FROM categories 
+            WHERE deleted_at IS NULL
+                AND created_at >= :three_days_ago
+            ORDER BY created_at DESC 
+            LIMIT 10";
+            $stmt = $conn->prepare($categoriesCreatedQuery);
+            $stmt->bindParam(':three_days_ago', $threeDaysAgo);
+            $stmt->execute();
+            $categoriesCreated = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            foreach ($categoriesCreated as $row) {
+                $activities[] = [
+                    'id' => 'category_create_' . $row['id'],
+                    'action' => $row['action'],
+                    'time' => $this->formatTimeAgo($row['activity_time']),
+                    'type' => $row['type'],
+                    'timestamp' => strtotime($row['activity_time'])
+                ];
+            }
+
+            // 4. Cập nhật danh mục (categories.updated_at khác created_at)
+            $categoriesUpdatedQuery = "SELECT 
+                id,
+                CONCAT('Cập nhật danh mục: ', name) as action,
+                updated_at as activity_time,
+                'update' as type
+            FROM categories 
+            WHERE deleted_at IS NULL 
+                AND updated_at != created_at
+                AND updated_at >= :three_days_ago
+            ORDER BY updated_at DESC 
+            LIMIT 10";
+            $stmt = $conn->prepare($categoriesUpdatedQuery);
+            $stmt->bindParam(':three_days_ago', $threeDaysAgo);
+            $stmt->execute();
+            $categoriesUpdated = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            foreach ($categoriesUpdated as $row) {
+                $activities[] = [
+                    'id' => 'category_update_' . $row['id'],
+                    'action' => $row['action'],
+                    'time' => $this->formatTimeAgo($row['activity_time']),
+                    'type' => $row['type'],
+                    'timestamp' => strtotime($row['activity_time'])
+                ];
+            }
+
+            // 5. Khách hàng mới (accounts với role='user')
+            $customersQuery = "SELECT 
+                a.id,
+                CONCAT('Khách hàng mới: ', COALESCE(u.full_name, a.email)) as action,
+                a.created_at as activity_time,
+                'create' as type
+            FROM accounts a
+            LEFT JOIN users u ON u.account_id = a.id
+            WHERE a.role = 'user' AND a.status = 'active'
+                AND a.created_at >= :three_days_ago
+            ORDER BY a.created_at DESC 
+            LIMIT 10";
+            $stmt = $conn->prepare($customersQuery);
+            $stmt->bindParam(':three_days_ago', $threeDaysAgo);
+            $stmt->execute();
+            $customers = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+            foreach ($customers as $row) {
+                $activities[] = [
+                    'id' => 'customer_create_' . $row['id'],
+                    'action' => $row['action'],
+                    'time' => $this->formatTimeAgo($row['activity_time']),
+                    'type' => $row['type'],
+                    'timestamp' => strtotime($row['activity_time'])
+                ];
+            }
+
+            // 6. Đơn hàng mới (orders.created_at)
+            if ($hasOrdersTable) {
+                $ordersQuery = "SELECT 
+                    id,
+                    CONCAT('Đơn hàng mới #', id) as action,
+                    created_at as activity_time,
+                    'create' as type
+                FROM orders 
+                WHERE created_at >= :three_days_ago
+                ORDER BY created_at DESC 
+                LIMIT 10";
+                $stmt = $conn->prepare($ordersQuery);
+                $stmt->bindParam(':three_days_ago', $threeDaysAgo);
+                $stmt->execute();
+                $orders = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+                foreach ($orders as $row) {
+                    $activities[] = [
+                        'id' => 'order_create_' . $row['id'],
+                        'action' => $row['action'],
+                        'time' => $this->formatTimeAgo($row['activity_time']),
+                        'type' => $row['type'],
+                        'timestamp' => strtotime($row['activity_time'])
+                    ];
+                }
+            }
+
+            // 7. Nhập kho (inventory_entries.created_at)
+            if ($hasInventoryTable) {
+                $inventoryQuery = "SELECT 
+                    ie.id,
+                    CONCAT('Nhập kho: ', p.name, ' (', ie.quantity, ' sản phẩm)') as action,
+                    ie.created_at as activity_time,
+                    'create' as type
+                FROM inventory_entries ie
+                JOIN products p ON p.id = ie.product_id
+                WHERE p.deleted_at IS NULL
+                    AND ie.created_at >= :three_days_ago
+                ORDER BY ie.created_at DESC 
+                LIMIT 10";
+                $stmt = $conn->prepare($inventoryQuery);
+                $stmt->bindParam(':three_days_ago', $threeDaysAgo);
+                $stmt->execute();
+                $inventoryEntries = $stmt->fetchAll(\PDO::FETCH_ASSOC);
+                foreach ($inventoryEntries as $row) {
+                    $activities[] = [
+                        'id' => 'inventory_' . $row['id'],
+                        'action' => $row['action'],
+                        'time' => $this->formatTimeAgo($row['activity_time']),
+                        'type' => $row['type'],
+                        'timestamp' => strtotime($row['activity_time'])
+                    ];
+                }
+            }
+
+            // Sắp xếp theo thời gian (mới nhất trước) và lấy top N
+            usort($activities, function ($a, $b) {
+                return $b['timestamp'] - $a['timestamp'];
+            });
+
+            // Lấy top N và loại bỏ timestamp (nếu không đủ thì lấy những cái có)
+            $activities = array_slice($activities, 0, $limit);
+            foreach ($activities as &$activity) {
+                unset($activity['timestamp']);
+            }
 
             $this->sendResponse($activities, 'Recent activity retrieved successfully');
         } catch (Exception $e) {
             $this->sendError('Failed to retrieve recent activity: ' . $e->getMessage(), 500);
+        }
+    }
+
+    // Helper function để format thời gian "X phút/giờ/ngày trước"
+    private function formatTimeAgo($datetime)
+    {
+        $timestamp = strtotime($datetime);
+        $diff = time() - $timestamp;
+
+        if ($diff < 60) {
+            return $diff . ' giây trước';
+        } elseif ($diff < 3600) {
+            $minutes = floor($diff / 60);
+            return $minutes . ' phút trước';
+        } elseif ($diff < 86400) {
+            $hours = floor($diff / 3600);
+            return $hours . ' giờ trước';
+        } elseif ($diff < 2592000) {
+            $days = floor($diff / 86400);
+            return $days . ' ngày trước';
+        } elseif ($diff < 31536000) {
+            $months = floor($diff / 2592000);
+            return $months . ' tháng trước';
+        } else {
+            $years = floor($diff / 31536000);
+            return $years . ' năm trước';
         }
     }
 
@@ -487,13 +690,16 @@ class DashboardApiController extends ApiController
             $growth = $prevCustomers > 0 ? round((($newCustomers - $prevCustomers) / $prevCustomers) * 100) : 0;
             $growthText = $growth >= 0 ? '+' . $growth . '%' : $growth . '%';
 
-            // Get customer distribution by city (from users table)
-            $cityQuery = "SELECT u.address, COUNT(*) as count 
+            // Get customer distribution by city (from addresses table)
+            $cityQuery = "SELECT 
+                            COALESCE(addr.city, addr.province, 'Không xác định') as city_name,
+                            COUNT(DISTINCT u.id) as count 
                          FROM users u 
                          JOIN accounts a ON u.account_id = a.id 
+                         LEFT JOIN addresses addr ON u.id = addr.user_id AND addr.is_default = 1
                          WHERE a.role = 'user' AND a.status = 'active' 
-                         AND u.address IS NOT NULL AND u.address != ''
-                         GROUP BY u.address 
+                         AND (addr.city IS NOT NULL OR addr.province IS NOT NULL)
+                         GROUP BY COALESCE(addr.city, addr.province, 'Không xác định')
                          ORDER BY count DESC 
                          LIMIT 5";
             $cityStmt = $conn->query($cityQuery);
@@ -502,7 +708,7 @@ class DashboardApiController extends ApiController
             $topCities = [];
             foreach ($cityResults as $row) {
                 $topCities[] = [
-                    'name' => $row['address'] ?: 'Không xác định',
+                    'name' => $row['city_name'] ?: 'Không xác định',
                     'count' => (int) $row['count']
                 ];
             }

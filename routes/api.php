@@ -316,6 +316,9 @@ switch ($path) {
             case 'GET':
                 $controller->index();
                 break;
+            case 'POST':
+                $controller->store();
+                break;
             default:
                 http_response_code(405);
                 echo json_encode(['error' => 'Method not allowed']);
@@ -328,6 +331,12 @@ switch ($path) {
         switch ($method) {
             case 'GET':
                 $controller->show($id);
+                break;
+            case 'PUT':
+                $controller->update($id);
+                break;
+            case 'DELETE':
+                $controller->destroy($id);
                 break;
             default:
                 http_response_code(405);

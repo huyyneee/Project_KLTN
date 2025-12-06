@@ -32,10 +32,15 @@ class ProductImage extends Model
 
     public function findByProductId($productId)
     {
-        $sql = "SELECT * FROM {$this->table} WHERE product_id = :product_id ORDER BY is_main DESC, id ASC";
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute([':product_id' => $productId]);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        try {
+            $sql = "SELECT * FROM {$this->table} WHERE product_id = :product_id ORDER BY is_main DESC, id ASC LIMIT 50";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([':product_id' => $productId]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        } catch (\Exception $e) {
+            error_log("Error in findByProductId for product_id $productId: " . $e->getMessage());
+            return [];
+        }
     }
 
     public function deleteByProductId($productId)
