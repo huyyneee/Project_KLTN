@@ -19,9 +19,9 @@ $old = $old ?? [];
 
     <?php if (!empty($errors)): ?>
         <div class="mb-3 text-sm text-red-600">
-            <ul class="list-disc pl-5">
+            <ul class="list-disc pl-5" style="margin:0; padding:0;">
                 <?php foreach ($errors as $e): ?>
-                    <li><?php echo htmlspecialchars($e); ?></li>
+                    <li style="margin-bottom:4px;"><?php echo htmlspecialchars($e); ?></li>
                 <?php endforeach; ?>
             </ul>
         </div>
@@ -54,7 +54,7 @@ $old = $old ?? [];
                     <?php if (!empty($message) && !empty($require_verification)): ?>
                         <!-- inline hint removed as requested; message will be shown via modal. -->
                     <?php endif; ?>
-                    <button type="button" id="send-code" class="bg-green-700 text-white rounded px-3 py-1 text-sm" style="height:32px; min-width:70px; text-align:center;">Lấy mã</button>
+                    <button type="button" id="send-code" class="bg-green-700 text-white rounded px-3 py-1 text-sm" style="height:32px; min-width:90px; text-align:center; white-space:nowrap;">Lấy mã</button>
                 </div>
             </div>
             <!-- password with hint -->
@@ -250,10 +250,16 @@ $old = $old ?? [];
         if (sendBtn) sendBtn.addEventListener('click', function() {
             if (cooldown > 0) return;
             var emailInput = document.querySelector('input[name="email"]');
-            if (!emailInput) return alert('Vui lòng nhập email trước khi lấy mã');
+            if (!emailInput) {
+                showDialog('Vui lòng nhập email trước khi lấy mã');
+                return;
+            }
             var emailVal = emailInput.value.trim();
             var emailRe = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
-            if (!emailRe.test(emailVal)) return alert('Email không hợp lệ');
+            if (!emailRe.test(emailVal)) {
+                showDialog('Email không hợp lệ');
+                return;
+            }
             // check if email already exists first
             fetch('/account/check-email', {
                 method: 'POST',
@@ -290,7 +296,7 @@ $old = $old ?? [];
                         if (cooldown <= 0) {
                             clearInterval(cooldownTimer);
                             cooldownTimer = null;
-                            sendBtn.textContent = 'lấy mã';
+                            sendBtn.textContent = 'Lấy mã';
                         } else {
                             sendBtn.textContent = 'Gửi lại (' + cooldown + 's)';
                         }
@@ -308,7 +314,7 @@ $old = $old ?? [];
         var form = document.getElementById('register-form');
         if (!form) return;
 
-        // dialog helper (matches screenshot style)
+        // dialog helper (matches screenshot style) - supports multi-line messages
         function showDialog(msg) {
             var existing = document.getElementById('simple-dialog');
             if (existing) existing.parentNode.removeChild(existing);
@@ -325,7 +331,10 @@ $old = $old ?? [];
             d.style.zIndex = 9999;
             d.style.borderRadius = '6px';
             d.style.minWidth = '260px';
-            d.innerHTML = '<div style="display:flex;align-items:center;gap:8px;"><div style="width:28px;height:28px;background:#fff;border-radius:6px;display:flex;align-items:center;justify-content:center;border:2px solid #f59e0b;color:#f59e0b;font-weight:700">!</div><div style="font-size:13px;color:#111">' + msg + '</div></div>';
+            d.style.maxWidth = '400px';
+            // Convert \n to <br> for multi-line messages
+            var msgHtml = String(msg).replace(/\n/g, '<br>');
+            d.innerHTML = '<div style="display:flex;align-items:flex-start;gap:8px;"><div style="width:28px;height:28px;background:#fff;border-radius:6px;display:flex;align-items:center;justify-content:center;border:2px solid #f59e0b;color:#f59e0b;font-weight:700;flex-shrink:0;">!</div><div style="font-size:13px;color:#111;line-height:1.5;">' + msgHtml + '</div></div>';
             document.body.appendChild(d);
             setTimeout(function() {
                 try {
@@ -478,7 +487,6 @@ $old = $old ?? [];
             var errors = [];
             var emailRe = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
             if (!emailRe.test(email)) errors.push('Email không hợp lệ.');
-            if (!email.toLowerCase().endsWith('@gmail.com')) errors.push('Email phải có định dạng @gmail.com');
             var passRe = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]).{8,32}$/;
             if (!passRe.test(password)) errors.push('Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt.');
             if (!fullname) errors.push('Vui lòng điền họ tên.');
@@ -501,7 +509,8 @@ $old = $old ?? [];
 
             if (errors.length) {
                 e.preventDefault();
-                showDialog(errors.join('\n'));
+                // Show each error on a new line
+                showDialog(errors.join('<br>'));
                 var newc = randomCaptcha();
                 if (captchaBox) drawCaptcha(newc);
                 if (captchaHidden) captchaHidden.value = newc;
