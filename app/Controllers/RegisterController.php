@@ -249,15 +249,28 @@ class RegisterController extends Controller
         // store code in session keyed by email
         $_SESSION['verif_codes'][$email] = ['code' => $code, 'ts' => time()];
 
+        // Return response immediately, send email in background (fire and forget)
+        // This prevents blocking the user while waiting for SMTP server
+        header('Content-Type: application/json');
+        echo json_encode(['ok' => true]);
+        
+        // Close connection to client so they get response immediately
+        if (function_exists('fastcgi_finish_request')) {
+            fastcgi_finish_request();
+        } else {
+            // For non-FastCGI environments, flush output
+            if (ob_get_level() > 0) {
+                ob_end_flush();
+            }
+            flush();
+        }
+        
+        // Now send email in background (user already got response)
         $subject = 'Mã xác thực đăng ký - Cửa Hàng Mỹ Phẩm Xuân Hiệp';
         $body = "Mã xác thực của bạn là: <strong>{$code}</strong>. Mã có hiệu lực 5 phút.";
-        $sent = \send_mail($email, $subject, $body);
-        if ($sent) {
-            echo json_encode(['ok' => true]);
-        } else {
-            http_response_code(500);
-            echo json_encode(['ok' => false, 'message' => 'Không thể gửi email (kiểm tra cấu hình mail)']);
-        }
+        \send_mail($email, $subject, $body);
+        // Note: We don't check result here since user already got success response
+        // Email errors will be logged but won't block user experience
     }
 
     // AJAX: check email exists

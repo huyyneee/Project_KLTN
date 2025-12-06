@@ -1,9 +1,8 @@
 <?php
-// Helpers: PHPMailer-based send_mail using SMTP (SendGrid example)
-// Requires: composer require phpmailer/phpmailer
+// Helpers: Resend API-based send_mail
+// Requires: composer require resend/resend-php
 
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
+use Resend\Resend;
 
 // Attempt to load composer autoload (optional)
 @include_once __DIR__ . '/../vendor/autoload.php';
@@ -17,23 +16,28 @@ function send_mail($to, $subject, $body)
 	$config = require __DIR__ . '/../config/config.php';
 	$from = $config['mail']['from'] ?? 'no-reply@example.com';
 	$fromName = $config['mail']['from_name'] ?? 'No Reply';
-	$smtp = $config['mail']['smtp'] ?? null;
+	$resendApiKey = $config['mail']['resend_api_key'] ?? null;
 
-	// If PHPMailer is not installed, fail fast with a helpful log
-	if (!class_exists(\PHPMailer\PHPMailer\PHPMailer::class)) {
-		$msg = 'Mail error: PHPMailer not installed. Run "composer require phpmailer/phpmailer"';
+	// Check if Resend is available
+	if (!class_exists(\Resend\Resend::class)) {
+		$msg = 'Mail error: Resend PHP SDK not installed. Run "composer require resend/resend-php"';
 		error_log($msg);
 		$GLOBALS['LAST_MAIL_ERROR'] = $msg;
 		return false;
 	}
 
-	$mail = new PHPMailer(true);
+	if (empty($resendApiKey)) {
+		$msg = 'Mail error: Resend API key not configured';
+		error_log($msg);
+		$GLOBALS['LAST_MAIL_ERROR'] = $msg;
+		return false;
+	}
+
 	try {
-		// ensure strings are UTF-8 to avoid garbled subjects / names in recipients (Gmail)
+		// Ensure strings are UTF-8
 		$ensure_utf8 = function($s) {
 			if ($s === null) return $s;
 			if (mb_detect_encoding($s, 'UTF-8', true) === false) {
-				// try to convert from common encodings
 				return mb_convert_encoding($s, 'UTF-8', 'auto');
 			}
 			return $s;
@@ -42,46 +46,37 @@ function send_mail($to, $subject, $body)
 		$fromName = $ensure_utf8($fromName);
 		$body = $ensure_utf8($body);
 
-		// enforce UTF-8 charset and safe encoding
-		$mail->CharSet = 'UTF-8';
-		$mail->Encoding = 'base64';
-	$env = env('APP_ENV') ?: 'production';
-		$debugOutput = '';
-		if ($env === 'development') {
-			// capture debug output from PHPMailer
-			$mail->SMTPDebug = 2; // verbose
-			$mail->Debugoutput = function ($str, $level) use (&$debugOutput) {
-				$debugOutput .= "[debug:$level] " . trim($str) . "\n";
-			};
-		}
-		if ($smtp) {
-			$mail->isSMTP();
-			$mail->Host = $smtp['host'];
-			$mail->SMTPAuth = $smtp['auth'] ?? true;
-			$mail->Username = $smtp['username'];
-			$mail->Password = $smtp['password'];
-			$mail->SMTPSecure = $smtp['encryption'] ?? 'tls';
-			$mail->Port = $smtp['port'] ?? 587;
+		// Initialize Resend client
+		$resend = Resend::client($resendApiKey);
+
+		// Send email via Resend API
+		$result = $resend->emails->send([
+			'from' => $fromName . ' <' . $from . '>',
+			'to' => [$to],
+			'subject' => $subject,
+			'html' => $body,
+		]);
+
+		// Resend returns an object with 'id' on success
+		// Check both object property and array key for compatibility
+		$hasId = false;
+		if (is_object($result)) {
+			$hasId = isset($result->id) || property_exists($result, 'id');
+		} elseif (is_array($result)) {
+			$hasId = isset($result['id']);
 		}
 
-		$mail->setFrom($from, $fromName);
-		$mail->addAddress($to);
-		$mail->isHTML(true);
-		$mail->Subject = $subject;
-		$mail->Body = $body;
-		$mail->AltBody = strip_tags($body);
-		$mail->send();
-		return true;
-	} catch (\PHPMailer\PHPMailer\Exception $e) {
-		$msg = '';
-		// Prefer captured debug output in development
-		if (!empty($debugOutput)) {
-			$msg = "Mail debug output:\n" . $debugOutput;
-		} else {
-			$msg = 'Mail error: ' . ($mail->ErrorInfo ?? $e->getMessage());
+		if ($hasId) {
+			return true;
 		}
+
+		$msg = 'Mail error: Resend API returned unexpected response';
+		error_log($msg . ' - Response: ' . json_encode($result));
+		$GLOBALS['LAST_MAIL_ERROR'] = $msg;
+		return false;
+	} catch (\Exception $e) {
+		$msg = 'Mail error: ' . $e->getMessage();
 		error_log($msg);
-		// Expose last error for debugging (only stored, not printed here)
 		$GLOBALS['LAST_MAIL_ERROR'] = $msg;
 		return false;
 	}

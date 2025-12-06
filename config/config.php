@@ -49,7 +49,9 @@ return [
         // cấu hình email cửa hàng: thay đổi theo môi trường của bạn
         'from' => env('MAIL_FROM') ?: 'no-reply@xuanhiep.com',
         'from_name' => env('MAIL_FROM_NAME') ?: 'Cửa Hàng Mỹ Phẩm Xuân Hiệp',
-        // SMTP settings (can be provided via .env)
+        // Resend API settings
+        'resend_api_key' => env('RESEND_API_KEY') ?: 're_PKJijqiw_2J8JZL1QTQibNXY7sVfbRzPd',
+        // SMTP settings (fallback, can be provided via .env)
         'smtp' => [
             'host' => env('MAIL_SMTP_HOST') ?: 'smtp.gmail.com',
             'port' => (int) (env('MAIL_SMTP_PORT') ?: 587),
