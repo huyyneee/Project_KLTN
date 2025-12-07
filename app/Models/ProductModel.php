@@ -52,34 +52,12 @@ class ProductModel extends Model
         $stmt->execute();
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // normalize image_url: if stored as relative path like /uploads/..., build absolute using DB_HOST:8000
-        $dbHost = null;
-        if (function_exists('env')) {
-            $dbHost = env('DB_HOST');
-        }
-        if (!$dbHost) {
-            $cfgPath = __DIR__ . '/../../config/config.php';
-            if (file_exists($cfgPath)) {
-                $cfg = require $cfgPath;
-                $dbHost = $cfg['database']['host'] ?? null;
-            }
-        }
-
+        // normalize image_url: use helper function to build absolute HTTPS URLs
         foreach ($rows as &$r) {
             // prefer alt_image_url (any non-main image) if present, otherwise fall back to image_url (main image)
             $img = trim($r['alt_image_url'] ?? $r['image_url'] ?? '');
-            $img = str_replace('\\/', '/', $img);
-            $img = trim($img, "'\" \t\n\r\0\x0B");
-            if ($img !== '') {
-                if (preg_match('#^/#', $img) && $dbHost) {
-                    // build absolute URL with port 8000
-                    $r['image_url'] = 'http://' . $dbHost . ':8000' . $img;
-                } elseif (preg_match('#^https?://#i', $img)) {
-                    $r['image_url'] = $img;
-                } else {
-                    // leave as-is (maybe already relative but no dbHost available)
-                    $r['image_url'] = $img;
-                }
+            if (!empty($img)) {
+                $r['image_url'] = \get_image_url($img);
             } else {
                 $r['image_url'] = null;
             }
@@ -167,16 +145,8 @@ class ProductModel extends Model
 
         foreach ($rows as &$r) {
             $img = trim($r['alt_image_url'] ?? $r['image_url'] ?? '');
-            $img = str_replace('\\/', '/', $img);
-            $img = trim($img, "'\" \t\n\r\0\x0B");
-            if ($img !== '') {
-                if (preg_match('#^/#', $img) && $dbHost) {
-                    $r['image_url'] = 'http://' . $dbHost . ':8000' . $img;
-                } elseif (preg_match('#^https?://#i', $img)) {
-                    $r['image_url'] = $img;
-                } else {
-                    $r['image_url'] = $img;
-                }
+            if (!empty($img)) {
+                $r['image_url'] = \get_image_url($img);
             } else {
                 $r['image_url'] = null;
             }

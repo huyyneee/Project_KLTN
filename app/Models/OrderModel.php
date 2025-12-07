@@ -102,18 +102,8 @@ class OrderModel extends Model
 
             foreach ($items as &$item) {
                 $img = trim($item['product_image'] ?? '');
-                $img = str_replace('\\/', '/', $img);
-                $img = trim($img, "'\" \t\n\r\0\x0B");
-
-                if ($img !== '') {
-                    // Nếu đường dẫn là tương đối → thêm host
-                    if (preg_match('#^/#', $img) && $dbHost) {
-                        $item['product_image'] = 'http://' . $dbHost . ':8000' . $img;
-                    }
-                    // Nếu là URL đầy đủ → giữ nguyên
-                    elseif (preg_match('#^https?://#i', $img)) {
-                        $item['product_image'] = $img;
-                    }
+                if (!empty($img)) {
+                    $item['product_image'] = \get_image_url($img);
                 } else {
                     $item['product_image'] = null;
                 }

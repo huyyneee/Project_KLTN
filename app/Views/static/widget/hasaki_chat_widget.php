@@ -9,7 +9,7 @@ $API_BASE = isset($_GET['api_base']) ? $_GET['api_base'] : 'http://159.65.2.46:6
 
 // Product URL building (choose either path+param or slug style)
 // Pattern A (query style): <domain><PRODUCT_DETAIL_PATH>?<PRODUCT_DETAIL_QUERY_PARAM>=<id>
-$PRODUCT_DOMAIN = isset($_GET['product_domain']) ? $_GET['product_domain'] : 'http://159.65.2.46:8000';
+$PRODUCT_DOMAIN = isset($_GET['product_domain']) ? $_GET['product_domain'] : 'https://xuanhiepbeauty.id.vn';
 $PRODUCT_DETAIL_PATH = isset($_GET['product_detail_path']) ? $_GET['product_detail_path'] : '/san-pham'; // e.g., /san-pham
 $PRODUCT_DETAIL_QUERY_PARAM = isset($_GET['product_detail_param']) ? $_GET['product_detail_param'] : 'product'; // e.g., product
 

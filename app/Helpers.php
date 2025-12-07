@@ -87,3 +87,41 @@ function generate_verification_code()
 	return str_pad(strval(rand(0, 999999)), 6, '0', STR_PAD_LEFT);
 }
 
+/**
+ * Get absolute URL for an image path
+ * Converts relative paths like /uploads/... to full HTTPS URLs
+ * 
+ * @param string $path Relative or absolute image path
+ * @return string Full URL
+ */
+function get_image_url($path)
+{
+	if (empty($path)) {
+		return null;
+	}
+
+	// Normalize path
+	$path = trim($path);
+	$path = str_replace('\\/', '/', $path);
+	$path = trim($path, "'\" \t\n\r\0\x0B");
+
+	// If already absolute URL, return as-is
+	if (preg_match('#^https?://#i', $path)) {
+		return $path;
+	}
+
+	// Get base URL from config
+	$config = require __DIR__ . '/../config/config.php';
+	$baseUrl = $config['app']['base_url'] ?? 'https://xuanhiepbeauty.id.vn';
+	
+	// Ensure base URL doesn't end with slash
+	$baseUrl = rtrim($baseUrl, '/');
+	
+	// Ensure path starts with /
+	if (strpos($path, '/') !== 0) {
+		$path = '/' . $path;
+	}
+
+	return $baseUrl . $path;
+}
+

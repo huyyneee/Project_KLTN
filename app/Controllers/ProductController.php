@@ -60,28 +60,11 @@ class ProductController extends Controller
             // ignore
         }
 
-        // normalize image urls (relative -> absolute using DB_HOST if available)
-        $dbHost = null;
-        if (function_exists('env')) $dbHost = env('DB_HOST');
-        if (!$dbHost) {
-            $cfgPath = __DIR__ . '/../../config/config.php';
-            if (file_exists($cfgPath)) {
-                $cfg = require $cfgPath;
-                $dbHost = $cfg['database']['host'] ?? null;
-            }
-        }
+        // normalize image urls using helper function
         foreach ($images as &$im) {
-            $u = trim($im['url']);
-            $u = str_replace('\\/', '/', $u);
-            $u = trim($u, "'\" \t\n\r\0\x0B");
-            if ($u !== '') {
-                if (preg_match('#^/#', $u) && $dbHost) {
-                    $im['url'] = 'http://' . $dbHost . ':8000' . $u;
-                } elseif (preg_match('#^https?://#i', $u)) {
-                    $im['url'] = $u;
-                } else {
-                    $im['url'] = $u;
-                }
+            $u = trim($im['url'] ?? '');
+            if (!empty($u)) {
+                $im['url'] = \get_image_url($u);
             } else {
                 $im['url'] = null;
             }

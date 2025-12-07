@@ -125,21 +125,10 @@ if ($host) {
     }
 }
 
-// Additional fallback: try using DB host (if configured) with port 8000
-$dbHost = null;
-if (function_exists('env')) {
-    $dbHost = env('DB_HOST');
-}
-if (!$dbHost) {
-    // try config file as a last resort
-    $cfgPath = __DIR__ . '/../config/config.php';
-    if (file_exists($cfgPath)) {
-        $cfg = require $cfgPath;
-        $dbHost = $cfg['database']['host'] ?? null;
-    }
-}
-if ($dbHost && strpos($url, '/') === 0) {
-    $remote = 'http://' . $dbHost . ':8000' . $url;
+// Additional fallback: try using base URL from config
+require_once __DIR__ . '/../app/Helpers.php';
+if (strpos($url, '/') === 0) {
+    $remote = \get_image_url($url);
     $ch = curl_init($remote);
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);

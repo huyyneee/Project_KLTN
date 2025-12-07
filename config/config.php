@@ -46,6 +46,10 @@ return [
         'username' => env('DB_USER') ?: 'kaiser',
         'password' => env('DB_PASS') ?: 'r!8R%OMm@=H{cVH6LZpqV]nye1G',
     ],
+    'app' => [
+        // Base URL for generating absolute URLs (images, assets, etc.)
+        'base_url' => env('APP_BASE_URL') ?: 'https://xuanhiepbeauty.id.vn',
+    ],
     'mail' => [
         // cấu hình email cửa hàng: thay đổi theo môi trường của bạn
         'from' => env('MAIL_FROM') ?: 'no-reply@xuanhiepbeauty.id.vn',

@@ -50,16 +50,8 @@ class CartItemModel extends Model
 
         foreach ($rows as &$row) {
             $img = trim($row['image'] ?? '');
-            $img = str_replace('\\/', '/', $img);
-            $img = trim($img, "'\" \t\n\r\0\x0B");
-            if ($img !== '') {
-                if (preg_match('#^/#', $img) && $dbHost) {
-                    $row['image'] = 'http://' . $dbHost . ':8000' . $img;
-                } elseif (preg_match('#^https?://#i', $img)) {
-                    $row['image'] = $img;
-                } else {
-                    $row['image'] = $img;
-                }
+            if (!empty($img)) {
+                $row['image'] = \get_image_url($img);
             } else {
                 $row['image'] = null;
             }
