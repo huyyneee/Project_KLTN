@@ -50,12 +50,11 @@ $mainUrl = $image ?? ($imagesList[0]['url'] ?? '/imgs/product/placeholder.svg');
                 } elseif ($qty > 0) {
                     echo "<div style='color:#777;font-size:15px;font-weight:400;margin-bottom:10px;'>Chỉ còn lại $qty sản phẩm!</div>";
                 } else {
-                    echo "<div style='color:#cc0000;font-size:15px;font-weight:400;margin-bottom:10px;'>Hết hàng</div>";
+                    echo "<div style='color:#cc0000;font-size:18px;font-weight:400;margin-bottom:10px;'>Hết hàng</div>";
                 }
                 ?>
                 <!-- quantity (compact) -->
                 <div style="margin-bottom:35px;">
-
                     <div style="display:flex; align-items:center; gap:14px;">
                         <a style="font-size:13px; color:#444; margin-bottom:6px;">Số lượng:</a>
                         <div style="display:flex; align-items:center; gap:8px;">
@@ -74,28 +73,36 @@ $mainUrl = $image ?? ($imagesList[0]['url'] ?? '/imgs/product/placeholder.svg');
                     <div style="color:#777;">Bạn muốn nhận hàng trước <strong>10h</strong> ngày mai. Đặt hàng trước <strong>24h</strong></div>
                 </div>
 
+                <?php
+                $isOut = ($qty == 0);
+                ?>
                 <div style="margin-bottom:12px;">
                     <div style="display:flex; gap:12px;">
+                        <!-- GIỎ HÀNG -->
                         <button id="add-to-cart" type="button"
                             data-product-id="<?= $product['id'] ?>"
                             data-product-price="<?= $product['price'] ?>"
-                            style="display:inline-flex; align-items:center; gap:8px; background:#ff7a00;color:#fff;border:none;padding:10px 18px;border-radius:6px;cursor:pointer; box-shadow:0 2px 0 rgba(0,0,0,0.04);">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                                <path d="M7 4h-2l-1 2" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
-                                <path d="M10 20a1 1 0 100-2 1 1 0 000 2zM18 20a1 1 0 100-2 1 1 0 000 2z" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
-                                <path d="M3 6h2l1.5 9h11l1.5-6.5H8" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+                            <?= $isOut
+                                ? 'disabled style="display:inline-flex; align-items:center; gap:8px;background:#ff7a00; color:#fff; border:none; padding:10px 18px; border-radius:6px;cursor:not-allowed; opacity:0.4; filter:brightness(85%);"'
+                                : 'style="display:inline-flex; align-items:center; gap:8px; background:#ff7a00; color:#fff; border:none;padding:10px 18px; border-radius:6px;cursor:pointer; box-shadow:0 2px 0 rgba(0,0,0,0.04);"' ?>>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                                <path d="M7 4h-2l-1 2" stroke="#fff" stroke-width="1.6" stroke-linecap="round" />
+                                <path d="M10 20a1 1 0 100-2 1 1 0 000 2zM18 20a1 1 0 100-2 1 1 0 000 2z" stroke="#fff" stroke-width="1.6" />
+                                <path d="M3 6h2l1.5 9h11l1.5-6.5H8" stroke="#fff" stroke-width="1.6" />
                             </svg>
                             GIỎ HÀNG
                         </button>
+                        <!-- MUA NGAY -->
                         <button id="buy-now" type="button"
                             data-product-id="<?= $product['id'] ?>"
                             data-product-price="<?= $product['price'] ?>"
-                            style="background:#ff7a00;color:#fff;border:none;padding:10px 18px;border-radius:6px;cursor:pointer; box-shadow:0 2px 0 rgba(0,0,0,0.04);">MUA NGAY NOWFREE 2H</button>
+                            <?= $isOut
+                                ? 'disabled style="background:#ff7a00; color:#fff; border:none; padding:10px 18px;border-radius:6px;cursor:not-allowed; opacity:0.4; filter:brightness(85%);"'
+                                : 'style="background:#ff7a00; color:#fff; border:none; padding:10px 18px; border-radius:6px; cursor:pointer; box-shadow:0 2px 0 rgba(0,0,0,0.04);"' ?>>
+                            MUA NGAY NOWFREE 2H
+                        </button>
                     </div>
                 </div>
-
-                <!-- product description (moved below as full-width card) -->
-
                 <!-- product specifications -->
                 <?php
                 // build a specs array from common fields and optional `specifications` blob
@@ -320,50 +327,73 @@ $mainUrl = $image ?? ($imagesList[0]['url'] ?? '/imgs/product/placeholder.svg');
             const thumbs = document.querySelectorAll('.thumb-img');
             const main = document.getElementById('main-image');
             const zoomed = document.getElementById('zoomed');
-            const mainWrap = main.parentElement; // position:relative wrapper
-            const ZOOM_FACTOR = 2.2; // how much larger the background should be
+            const mainWrap = main.parentElement;
+            const ZOOM_FACTOR = 2.2;
 
             // Quantity controls
             const qtyInput = document.getElementById('qty');
             const btnDecr = document.getElementById('qty-decr');
             const btnIncr = document.getElementById('qty-incr');
 
+            const maxQty = <?= (int)$product['quantity'] ?>;
+
+            // --------- CHUẨN HÓA GIÁ TRỊ ---------
             function normalizeQty(v) {
                 v = parseInt(v, 10);
                 if (isNaN(v) || v < 1) return 1;
+                if (v > maxQty) return maxQty;
                 return v;
             }
 
+            // --------- CẬP NHẬT UI ---------
             function updateQtyUI(v) {
                 const n = normalizeQty(v);
                 qtyInput.value = n;
+
+                // Disable nút "-"
                 if (n <= 1) {
-                    btnDecr.setAttribute('disabled', 'disabled');
-                    btnDecr.style.opacity = '0.6';
-                    btnDecr.style.cursor = 'not-allowed';
+                    btnDecr.disabled = true;
+                    btnDecr.style.opacity = "0.6";
+                    btnDecr.style.cursor = "not-allowed";
                 } else {
-                    btnDecr.removeAttribute('disabled');
-                    btnDecr.style.opacity = '1';
-                    btnDecr.style.cursor = 'pointer';
+                    btnDecr.disabled = false;
+                    btnDecr.style.opacity = "1";
+                    btnDecr.style.cursor = "pointer";
+                }
+
+                // Disable nút "+"
+                if (n >= maxQty) {
+                    btnIncr.disabled = true;
+                    btnIncr.style.opacity = "0.6";
+                    btnIncr.style.cursor = "not-allowed";
+                } else {
+                    btnIncr.disabled = false;
+                    btnIncr.style.opacity = "1";
+                    btnIncr.style.cursor = "pointer";
                 }
             }
 
             if (qtyInput) {
-                // init
                 updateQtyUI(qtyInput.value || 1);
 
+                // Nút -
                 btnDecr.addEventListener('click', function() {
                     updateQtyUI(normalizeQty(qtyInput.value) - 1);
                 });
+
+                // Nút +
                 btnIncr.addEventListener('click', function() {
                     updateQtyUI(normalizeQty(qtyInput.value) + 1);
                 });
-                qtyInput.addEventListener('change', function() {
+
+                // Nhập tay
+                qtyInput.addEventListener('input', function() {
+                    this.value = this.value.replace(/[^0-9]/g, '');
                     updateQtyUI(this.value);
                 });
-                qtyInput.addEventListener('input', function() {
-                    // allow only digits while typing
-                    this.value = this.value.replace(/[^0-9]/g, '');
+
+                qtyInput.addEventListener('change', function() {
+                    updateQtyUI(this.value);
                 });
             }
 

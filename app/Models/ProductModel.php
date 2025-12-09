@@ -98,9 +98,6 @@ class ProductModel extends Model
         return $result === false ? null : $result;
     }
 
-    /**
-     * Alias for findByCategory
-     */
     public function getProductsByCategory(int $categoryId, ?int $limit = null, int $offset = 0): array
     {
         return $this->findByCategory($categoryId, $limit, $offset);
@@ -130,7 +127,6 @@ class ProductModel extends Model
 
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // normalize image URL giống findByCategory
         $dbHost = null;
         if (function_exists('env')) {
             $dbHost = env('DB_HOST');
@@ -153,5 +149,15 @@ class ProductModel extends Model
         }
 
         return $rows;
+    }
+    public function getProductStock($productId)
+    {
+        $sql = "SELECT id, name, quantity AS stock 
+            FROM products 
+            WHERE id = :id AND deleted_at IS NULL 
+            LIMIT 1";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute(['id' => $productId]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 }

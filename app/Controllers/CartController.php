@@ -6,18 +6,22 @@ use App\Core\Controller;
 use App\Models\UserModel;
 use App\Models\CartModel;
 use App\Models\CartItemModel;
+use App\Models\ProductModel;
+
 
 class CartController extends Controller
 {
     private $cartModel;
     private $cartItemModel;
     private $userModel;
+    private $productModel;
 
     public function __construct()
     {
         $this->cartModel = new CartModel();
         $this->cartItemModel = new CartItemModel();
         $this->userModel = new UserModel();
+        $this->productModel = new ProductModel();
     }
 
     // Hiển thị trang giỏ hàng
@@ -40,6 +44,10 @@ class CartController extends Controller
 
         $cart = $this->cartModel->getCartByUser($userId);
         $items = $cart ? $this->cartItemModel->getItemsByCart($cart['id']) : [];
+        foreach ($items as &$item) {
+            $productStock = $this->productModel->getProductStock($item['product_id']);
+            $item['stock'] = (int)($productStock['stock'] ?? 0);
+        }
 
         $this->render('cart', [
             'cart'  => $cart,
@@ -56,11 +64,8 @@ class CartController extends Controller
         $price     = isset($_POST['price']) ? (float)$_POST['price'] : 0;
 
         if (!$productId || $quantity <= 0) {
-            http_response_code(400);
-            return $this->json(['error' => 'Dữ liệu không hợp lệ']);
+            return $this->json(['error' => 'Dữ liệu không hợp lệ'], 400);
         }
-
-        // Nếu chưa login
         if (!$accountId) {
             if (session_status() === PHP_SESSION_NONE) session_start();
             $_SESSION['cart_pending'] = [
@@ -76,20 +81,26 @@ class CartController extends Controller
         }
 
         $user = $this->userModel->findByAccountId($accountId);
-        if (!$user) {
-            http_response_code(400);
-            return $this->json(['error' => 'User chưa tồn tại trong bảng users']);
-        }
-        $userId = $user['id'];
+        if (!$user) return $this->json(['error' => 'User không tồn tại'], 400);
 
-        $cart = $this->cartModel->getCartByUser($userId);
-        $cartId = $cart ? $cart['id'] : $this->cartModel->createCart($userId);
+        $cart = $this->cartModel->getCartByUser($user['id']);
+        $cartId = $cart ? $cart['id'] : $this->cartModel->createCart($user['id']);
 
+        $product = $this->productModel->getProductStock($productId);
+        $stock = (int)$product['stock'];  // Số lượng thực tế
         $existingItem = $this->cartItemModel->getItemByCartAndProduct($cartId, $productId);
+        $currentQty = $existingItem ? (int)$existingItem['quantity'] : 0;
+
+        $total = $currentQty + $quantity;
+
+        if ($total > $stock) {
+            return $this->json([
+                'error' => "Không thể thêm sản phẩm. Số lượng yêu cầu vượt quá tồn kho. Vui lòng kiểm tra giỏ hàng "
+            ]);
+        }
 
         if ($existingItem) {
-            $newQuantity = $existingItem['quantity'] + $quantity;
-            $this->cartItemModel->updateQuantity($existingItem['id'], $newQuantity);
+            $this->cartItemModel->updateQuantity($existingItem['id'], $total);
         } else {
             $this->cartItemModel->addItem($cartId, $productId, $quantity, $price);
         }
@@ -123,11 +134,27 @@ class CartController extends Controller
             http_response_code(400);
             return $this->json(['error' => 'Thiếu dữ liệu']);
         }
+        $item = $this->cartItemModel->find($itemId);
+        if (!$item) {
+            http_response_code(404);
+            return $this->json(['error' => 'Không tìm thấy sản phẩm trong giỏ']);
+        }
+        $productId = (int)$item['product_id'];
+        $productStock = $this->productModel->getProductStock($productId);
 
+        if (!$productStock) {
+            return $this->json(['error' => 'Sản phẩm không tồn tại hoặc đã bị xoá']);
+        }
+
+        $stock = (int)$productStock['stock'];
+        if ($quantity > $stock) {
+            return $this->json([
+                'error' => "Số lượng yêu cầu vượt quá tồn kho. Tồn kho hiện tại: $stock"
+            ]);
+        }
         $this->cartItemModel->updateQuantity($itemId, $quantity);
         return $this->json(['success' => true]);
     }
-
     // Đếm tổng sản phẩm trong giỏ
     public function count()
     {
@@ -149,7 +176,6 @@ class CartController extends Controller
 
         $total = $this->cartItemModel->getTotalQuantity($cart['id']);
         $display = $total > 99 ? 99 : $total;
-
         return $this->json(['count' => $display]);
     }
 }
