@@ -158,7 +158,7 @@ if (!empty($userBirthday)) {
             </div>
             <div class="ml-3">
               <label for="privacy" class="text-sm text-gray-600">
-                Tôi đồng ý với <a href="/privacy" class="text-blue-600 hover:underline">chính sách xử lý dữ liệu cá nhân</a> của Hasaki
+                Tôi đồng ý với <a href="/privacy" class="text-blue-600 hover:underline">chính sách xử lý dữ liệu cá nhân</a> của Xuân Hiệp
               </label>
             </div>
           </div>

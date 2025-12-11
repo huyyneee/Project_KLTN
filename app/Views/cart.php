@@ -103,6 +103,7 @@ require_once __DIR__ . '/layouts/header.php';
     }
 
     .cart-summary button {
+        margin-left: auto;
         background-color: #ff6600;
         color: #fff;
         border: none;
@@ -123,7 +124,6 @@ require_once __DIR__ . '/layouts/header.php';
         text-decoration: underline;
     }
 
-    /* Toast */
     .toast {
         position: fixed;
         top: 20px;
@@ -167,8 +167,7 @@ require_once __DIR__ . '/layouts/header.php';
     <?php if (empty($items)): ?>
         <div class="flex flex-col items-center justify-center h-[60vh] text-center space-y-4">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-1.293 2.293A1 1 0 007 17h10m-4 0a1 1 0 100 2 1 1 0 000-2zm-6 0a1 1 0 100 2 1 1 0 000-2z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-1.293 2.293A1 1 0 007 17h10m-4 0a1 1 0 100 2 1 1 0 000-2zm-6 0a1 1 0 100 2 1 1 0 000-2z" />
             </svg>
             <p class="text-gray-700 text-lg">Bạn chưa chọn sản phẩm.</p>
             <a href="/trang-chu" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded font-semibold">Tiếp tục mua sắm</a>
@@ -185,23 +184,39 @@ require_once __DIR__ . '/layouts/header.php';
                 </tr>
             </thead>
             <tbody id="cart-items">
-                <?php $total = 0;
+                <?php
+                $total = 0;
+                $cartHasIssue = false;
                 foreach ($items as $item):
-                    $subtotal = $item['price'] * $item['quantity'];
+                    $stock = $item['stock'] ?? 0;
+                    // Ràng buộc 2 điều kiện quantity
+                    $stock = max(0, $stock);
+                    $qty   = $item['quantity'];
+                    $isOut = $item['stock'] == 0;
+                    $isOver = $item['quantity'] > $item['stock'];
+                    if ($isOut || $isOver) $cartHasIssue = true;
+                    $subtotal = $item['price'] * $qty;
                     $total += $subtotal;
                 ?>
-                    <tr data-item-id="<?= $item['id'] ?>">
+                    <tr data-item-id="<?= $item['id'] ?>" data-stock="<?= $stock ?>">
                         <td>
                             <div class="product-info">
                                 <img src="<?= $item['image'] ?? '/uploads/products/placeholder.svg' ?>">
-                                <div><?= htmlspecialchars($item['productname']) ?></div>
+                                <div>
+                                    <?= htmlspecialchars($item['productname']) ?>
+                                    <?php if ($isOut): ?>
+                                        <div style="color:#dc2626; font-weight:bold;">Hết hàng</div>
+                                    <?php elseif ($isOver): ?>
+                                        <div style="color:#d97706; font-weight:600;">Chỉ còn <?= $stock ?> sản phẩm</div>
+                                    <?php endif; ?>
+                                </div>
                             </div>
                         </td>
                         <td class="price" data-value="<?= $item['price'] ?>"><?= number_format($item['price'], 0, ',', '.') ?>₫</td>
                         <td>
                             <div style="display:flex; align-items:center;">
-                                <input type="number" class="quantity-input" min="1" value="<?= $item['quantity'] ?>">
-                                <button class="update-btn">Cập nhật</button>
+                                <input type="number" class="quantity-input" min="1" value="<?= $qty ?>" data-last="<?= $qty ?>" <?= $isOut ? 'disabled' : '' ?>>
+                                <button class="update-btn" <?= $isOut ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : '' ?>>Cập nhật</button>
                             </div>
                         </td>
                         <td class="subtotal"><?= number_format($subtotal, 0, ',', '.') ?>₫</td>
@@ -212,10 +227,13 @@ require_once __DIR__ . '/layouts/header.php';
         </table>
 
         <div class="cart-summary">
-            <span class="total">Tạm tính: <span id="cart-total"><?= number_format($total, 0, ',', '.') ?>₫</span> (Đã bao gồm VAT)</span>
-            <button onclick="location.href='/checkout'">Tiến hành đặt hàng</button>
+            <?php if ($cartHasIssue): ?>
+                <button disabled style="background:#ccc; cursor:not-allowed;">Có sản phẩm hết hàng hoặc vượt tồn kho</button>
+            <?php else: ?>
+                <span class="total">Tạm tính: <span id="cart-total"><?= number_format($total, 0, ',', '.') ?>₫</span> (Đã bao gồm VAT)</span>
+                <button onclick="location.href='/checkout'">Tiến hành đặt hàng</button>
+            <?php endif; ?>
         </div>
-
         <a href="/trang-chu" class="continue-shopping">Tiếp tục mua hàng</a>
     <?php endif; ?>
 </div>
@@ -225,33 +243,55 @@ require_once __DIR__ . '/layouts/header.php';
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         const toast = document.getElementById('toast');
-
+        const cartItems = document.getElementById('cart-items');
+        // Hiển thị toast
         const showToast = (msg, type = 'info') => {
-            toast.innerHTML = `
-            ${type==='success' ? '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>' :
-            '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>'}
-            ${msg}
-        `;
+            toast.innerHTML = type === 'success' ?
+                `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>${msg}` :
+                `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>${msg}`;
             toast.className = 'toast show ' + type;
             setTimeout(() => toast.className = 'toast', 3000);
         };
 
-        const cartItems = document.getElementById('cart-items');
-
         const updateTotal = () => {
             let total = 0;
             cartItems.querySelectorAll('tr').forEach(row => {
-                const subtotal = parseInt(row.querySelector('.subtotal').innerText.replace(/\D/g, ''));
-                total += subtotal || 0;
+                const subtotal = parseInt(row.querySelector('.subtotal').innerText.replace(/\D/g, '')) || 0;
+                total += subtotal;
             });
-            document.getElementById('cart-total').innerText = new Intl.NumberFormat('vi-VN', {
-                style: 'currency',
-                currency: 'VND'
-            }).format(total);
+            const totalEl = document.getElementById('cart-total');
+            if (totalEl) {
+                totalEl.innerText = new Intl.NumberFormat('vi-VN', {
+                    style: 'currency',
+                    currency: 'VND'
+                }).format(total);
+            }
         }
 
         const updateCartCount = () => {
-            document.getElementById('cart-count').innerText = cartItems.querySelectorAll('tr').length;
+            const countEl = document.getElementById('cart-count');
+            if (countEl) countEl.innerText = cartItems.querySelectorAll('tr').length;
+        }
+        // Ràng buộc quantity
+        const updateCheckoutButton = () => {
+            const summaryBtn = document.querySelector('.cart-summary button');
+            if (!summaryBtn) return;
+
+            let hasIssue = false;
+            cartItems.querySelectorAll('tr').forEach(row => {
+                const input = row.querySelector('.quantity-input');
+                const qty = parseInt(input.value);
+                const stock = parseInt(row.dataset.stock || 0);
+                if (input.disabled || qty > stock) hasIssue = true;
+            });
+
+            summaryBtn.disabled = hasIssue;
+            summaryBtn.style.background = hasIssue ? '#ccc' : '#ff6600';
+            summaryBtn.style.cursor = hasIssue ? 'not-allowed' : 'pointer';
         }
 
         cartItems.addEventListener('click', e => {
@@ -260,67 +300,69 @@ require_once __DIR__ . '/layouts/header.php';
             const itemId = row.dataset.itemId;
             const input = row.querySelector('.quantity-input');
 
-            // Xóa sản phẩm
             if (e.target.classList.contains('remove-item')) {
                 if (!confirm('Bạn có chắc muốn xóa sản phẩm?')) return;
                 fetch('cart/remove', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded'
-                        },
-                        body: `item_id=${itemId}`
-                    })
-                    .then(res => res.json()).then(data => {
-                        if (data.success) {
-                            row.remove();
-                            updateTotal();
-                            updateCartCount();
-                            showToast('Đã xóa sản phẩm', 'success');
-                            document.dispatchEvent(new CustomEvent('cartUpdated'));
-                            if (cartItems.querySelectorAll('tr').length === 0) {
-                                document.querySelector('.cart-page').innerHTML = `
-                                <div class="flex flex-col items-center justify-center h-[60vh] text-center space-y-4">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-1.293 2.293A1 1 0 007 17h10m-4 0a1 1 0 100 2 1 1 0 000-2zm-6 0a1 1 0 100 2 1 1 0 000-2z"/>
-                                    </svg>
-                                    <p class="text-gray-700 text-lg">Bạn chưa chọn sản phẩm.</p>
-                                    <a href="/trang-chu" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded font-semibold">Tiếp tục mua sắm</a>
-                                </div>`;
-                            }
-                        }
-                    });
-            }
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: `item_id=${itemId}`
+                }).then(res => res.json()).then(data => {
+                    if (data.success) {
+                        row.remove();
+                        updateTotal();
+                        updateCartCount();
+                        updateCheckoutButton();
+                        showToast('Đã xóa sản phẩm', 'success');
 
-            // Cập nhật số lượng
+                        if (cartItems.querySelectorAll('tr').length === 0) {
+                            document.querySelector('.cart-page').innerHTML = `
+                            <div class="flex flex-col items-center justify-center h-[60vh] text-center space-y-4">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-1.293 2.293A1 1 0 007 17h10m-4 0a1 1 0 100 2 1 1 0 000-2zm-6 0a1 1 0 100 2 1 1 0 000-2z"/>
+                                </svg>
+                                <p class="text-gray-700 text-lg">Bạn chưa chọn sản phẩm.</p>
+                                <a href="/trang-chu" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded font-semibold">Tiếp tục mua sắm</a>
+                            </div>`;
+                        }
+                    }
+                });
+            }
+            // update quantity bằng ajax
             if (e.target.classList.contains('update-btn')) {
                 const qty = Math.max(1, parseInt(input.value));
                 input.value = qty;
-                fetch('cart/update', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded'
-                        },
-                        body: `item_id=${itemId}&quantity=${qty}`
-                    })
-                    .then(res => res.json()).then(data => {
-                        if (data.success) {
-                            const price = parseInt(row.querySelector('.price').dataset.value);
-                            row.querySelector('.subtotal').innerText = new Intl.NumberFormat('vi-VN', {
-                                style: 'currency',
-                                currency: 'VND'
-                            }).format(price * qty);
-                            updateTotal();
-                            showToast('Cập nhật số lượng thành công', 'success');
-                            document.dispatchEvent(new CustomEvent('cartUpdated'));
 
-                        }
-                    });
+                fetch('cart/update', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: `item_id=${itemId}&quantity=${qty}`
+                }).then(res => res.json()).then(data => {
+                    if (data.success) {
+                        input.dataset.last = qty;
+                        const price = parseInt(row.querySelector('.price').dataset.value);
+                        row.querySelector('.subtotal').innerText = new Intl.NumberFormat('vi-VN', {
+                            style: 'currency',
+                            currency: 'VND'
+                        }).format(price * qty);
+
+                        updateTotal();
+                        updateCheckoutButton();
+                        showToast('Cập nhật số lượng thành công', 'success');
+                    } else if (data.error) {
+                        showToast(data.error, 'error');
+                        input.value = input.dataset.last || 1;
+                    }
+                });
             }
         });
+        // custom toast
         const headerHeight = document.querySelector('header')?.offsetHeight || 0;
         toast.style.top = (headerHeight + 20) + 'px';
 
-        // Hiển thị message từ session PHP
         <?php if (!empty($_SESSION['success'])): ?>
             showToast("<?= $_SESSION['success'] ?>", 'success');
             <?php unset($_SESSION['success']); ?>

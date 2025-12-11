@@ -74,7 +74,7 @@ class CartItemModel extends Model
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
-    // Thêm sản phẩm mới vào giỏ (debug-ready)
+    // Thêm sản phẩm mới vào giỏ
     public function addItem($cartId, $productId, $quantity, $price)
     {
         $stmt = $this->db->prepare("

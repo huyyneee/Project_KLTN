@@ -97,14 +97,11 @@ if (!$disableAutoLogin) {
 				<img src="/assets/images/logo.png" alt="Logo"
 					class="h-12 w-12 object-contain bg-white rounded-full shadow" />
 				<?php
-				// Ensure $categories is available in the header. If the current controller
-				// didn't pass categories, try to load them here so the dropdown shows on all pages.
 				if (!isset($categories) || !is_array($categories) || empty($categories)) {
 					try {
 						$catModel = new \App\Models\CategoryModel();
 						$categories = $catModel->findAll();
 					} catch (\Throwable $e) {
-						// fail silently — header will render without categories
 						$categories = [];
 					}
 				}
@@ -214,7 +211,6 @@ if (!$disableAutoLogin) {
 							$userDisplay = $u['full_name'];
 						}
 					} catch (\Throwable $e) {
-						// ignore DB errors and fall back to session email
 					}
 				}
 				if ($loggedIn): ?>
@@ -292,14 +288,7 @@ if (!$disableAutoLogin) {
 			</div>
 		</div>
 	</header>
-	<!-- <div class="h-14"></div> -->
-
-
 	<?php
-
-
-	// Add small script to make dropdown easier to interact with (delay hide)
-	// This script runs on pages that include header.php
 	?>
 	<script>
 		(function() {
