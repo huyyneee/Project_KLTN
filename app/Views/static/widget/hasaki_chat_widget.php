@@ -5,7 +5,7 @@
 
 // -------------------- Configuration --------------------
 // API base URL of your Hasaki chatbot backend
-$API_BASE = isset($_GET['api_base']) ? $_GET['api_base'] : 'http://159.65.2.46:6060/api';
+$API_BASE = isset($_GET['api_base']) ? $_GET['api_base'] : 'https://bot.xuanhiepbeauty.id.vn/api';
 
 // Product URL building (choose either path+param or slug style)
 // Pattern A (query style): <domain><PRODUCT_DETAIL_PATH>?<PRODUCT_DETAIL_QUERY_PARAM>=<id>

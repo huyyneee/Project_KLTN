@@ -149,7 +149,10 @@ class OrderController extends Controller
             $vnp_TmnCode = "KXMSLKF7";
             $vnp_HashSecret = "J4G1LA2VT83R0Y9PRCHZ610R5JA3204E";
             $vnp_Url = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
-            $vnp_Returnurl = "http://localhost:8000/checkout/vnpayReturn";
+            // Get base URL from config or use domain
+            $config = require __DIR__ . '/../../config/config.php';
+            $baseUrl = $config['app']['base_url'] ?? 'https://xuanhiepbeauty.id.vn';
+            $vnp_Returnurl = rtrim($baseUrl, '/') . '/checkout/vnpayReturn';
 
             $vnp_TxnRef = $orderCode;
             $vnp_OrderInfo = "Thanh toán đơn hàng #" . $orderCode;
